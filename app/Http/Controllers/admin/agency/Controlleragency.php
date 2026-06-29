@@ -16,7 +16,7 @@ class Controlleragency extends Controller
 
         $data = Agencymodel::query()->paginate(4);
 
-        return view('admin.agency.stady', compact(
+        return view('admin.agency.index', compact(
             'data',
 
         ));
