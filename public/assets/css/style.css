@@ -1,0 +1,122 @@
+﻿* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+a {
+	text-decoration: none;
+}
+
+li {
+	list-style: none;
+}
+
+:root {
+	--poppins: 'poppins', sans-serif;
+	--lato: 'lato', sans-serif;
+	--light: #f9f9f9;
+	--blue: #3c91e6;
+	--light-blue: #cfe0ff;
+	--grey: #eee;
+	--dark-grey: #aaaaaa;
+	--dark: #342e37;
+	--red: #db504a;
+	--yellow: #ffce26;
+	--light-yellow: #fca6a690;
+	--orange: #f9a11ce0;
+	--light-orange: #faf0a7e0;
+
+	/* * متغيرات  تنسيقات صفحه الظبط العام */
+	--primary-color: #3498db;
+	--hover-color: #f1f9ff;
+	--even-row: #f8f9fa;
+	--border-color: #dee2e6;
+	--text-color: #333;
+	--title-color: #2c3e50;
+
+
+	/* * متغيرات تصميم صفحة عرض تفاصيل الخزنه مع عرض الخزن الفرعية التي تقوم بي التسليم لها*/
+	--primary-color: #3498db;
+	--hover-color: #f1f9ff;
+	--even-row: #f8f9fa;
+	--border-color: #dee2e6;
+	--text-color: #333;
+	--title-color: #2c3e50;
+	--edit-color: #ffc107;
+	--delete-color: #dc3545;
+	--save-color: #28a745;
+
+
+}
+
+html {
+	overflow-x: hidden;
+
+}
+
+body {
+	background: var(--grey);
+	/* overflow: hidden; */
+	height: 700px;
+	/* margin-bottom: 50px; */
+	padding-bottom: 33%;
+}
+
+/* الشكل الطبيعي */
+.brand-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 10px;
+}
+
+/* الدائرة */
+.logo-circle {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #7bd1ed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.logo-circle img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+/* النص */
+.brand-text {
+  font-weight: 500;
+  color: white;
+}
+
+/* ========================= */
+/* عند إغلاق السايدبار (AdminLTE class) */
+/* ========================= */
+
+.sidebar-collapse .brand-container {
+  justify-content: center;
+  padding: 15px 0;
+}
+
+/* إخفاء النص عند الإغلاق */
+.sidebar-collapse .brand-text {
+  display: none;
+}
+
+/* تكبير الدائرة وتوسيطها */
+.sidebar-collapse .logo-circle {
+  width: 50px;
+  height: 50px;
+}
+
+/* منع أي انحراف */
+.sidebar-collapse .brand-container {
+  margin: 0 auto;
+}
