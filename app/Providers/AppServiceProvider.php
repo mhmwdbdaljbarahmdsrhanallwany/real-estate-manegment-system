@@ -26,30 +26,30 @@ class AppServiceProvider extends ServiceProvider
             $links = [
                 [
                     'title' => ' المؤسسات',
-                    'route' => route('admin.agencies.index'),
-                    'active_pattern' => 'admin.agencies.*'
+                    'route' => route('admin.organizations.index'),
+                    'active_pattern' => 'admin.organizations.*'
                 ],
                 [
                     'title' => ' الباقات',
-                    'route' => route('admin.subscription.index'),
-                    'active_pattern' => 'admin.subscription.*'
+                    'route' => route('admin.packages.index'),
+                    'active_pattern' => 'admin.packages.*'
                 ],
                 [
                     'title' => ' الاشتراكات',
-                    'route' => route('admin.agencysubscription.index'),
-                    'active_pattern' => 'admin.agencysubscription.*'
+                    'route' => route('admin.subscriptions.index'),
+                    'active_pattern' => 'admin.subscriptions.*'
                 ],
-                [
-                    'title' => ' المستندات',
-                    'route' => route('admin.agencies.documents'),
-                    'active_pattern' => 'admin.agencies.*'
-                ],
+                // [
+                //     'title' => ' المستندات',
+                //     'route' =>'admin.agencies.documents',
+                //     'active_pattern' => 'gggg'
+                // ],
             ];
     
             $menu = [
-                ['title' => 'إضافة مؤسسة', 'route' => route('admin.agencies.create')],
-                ['title' => 'إضافة باقة جديدة', 'route' => route('admin.subscription.create')],
-                ['title' => 'إضافة اشتراك جديد', 'route' => route('admin.agencysubscription.create')],
+                ['title' => 'إضافة مؤسسة', 'route' => route('admin.organizations.create')],
+                ['title' => 'إضافة باقة جديدة', 'route' => route('admin.packages.create')],
+                ['title' => 'إضافة اشتراك جديد', 'route' => route('admin.subscriptions.create')],
             ];
     
             $view->with(compact('links', 'menu'));

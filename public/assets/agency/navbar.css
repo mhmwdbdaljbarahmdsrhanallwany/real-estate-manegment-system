@@ -3,7 +3,8 @@
 .custom-navbar {
     display: flex;
     align-items: center;
-    background-color: #FFFFFF;
+    background-color: #0B132B;
+    /* تم تغييره للأزرق الداكن المستوحى من الشعار */
     padding: 0.5rem 1rem;
     direction: rtl;
     /* للغة العربية */
@@ -13,7 +14,8 @@
 /* Logo */
 
 .custom-navbar .navbar-brand {
-    color: #080808;
+    color: #FFFFFF;
+    /* نص أبيض ليوضح فوق الخلفية الداكنة */
     font-weight: bold;
     margin-left: 1rem;
 }
@@ -22,12 +24,13 @@
 /* الروابط أفقية */
 
 .nav-links .nav-link {
-    color: #0d0d0e;
+    color: #F8FAFC;
     transition: color 0.3s ease;
 }
 
 .nav-links .nav-link:hover {
-    color: #8e8979;
+    color: #00F5D4;
+    /* الأخضر الذكي عند التحويم */
 }
 
 
@@ -39,50 +42,50 @@
 }
 
 .dropdown-left .nav-link {
-    color: #0c0e10;
+    color: #FFFFFF;
 }
 
 .dropdown-left .nav-link:hover {
-    color: #17a2b8;
+    color: #00F5D4;
 }
 
 
 /* القائمة المنسدلة */
 
+.dropdown-menu {
+    background-color: #0B132B;
+    /* خلفية داكنة متناسقة للقائمة */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .dropdown-item {
     display: flex;
-    /* يجعل الأيقونة والنص في خط واحد */
     align-items: center;
-    /* يضبط المحاذاة عموديًا */
     justify-content: flex-start;
-    /* يدفع المحتوى لليسار */
     text-align: left;
-    /* محاذاة النص لليسار */
     gap: 0.5rem;
-    /* مسافة بين الأيقونة والنص */
     direction: ltr;
-    /* يجبر العنصر أن يكون من اليسار لليمين */
-}
-
-.dropdown-menu {
-    background-color: #FFFFFF;
-    /* عرض ثابت حتى لا يخرب التصميم */
-}
-
-.dropdown-item {
-    color: #020f1c;
+    color: #F8FAFC;
+    transition: all 0.3s ease;
 }
 
 .dropdown-item:hover {
-    background-color: #eae8e8;
-    color: #3f77d1;
+    background-color: rgba(0, 245, 212, 0.1);
+    /* لمسة خفيفة بالأخضر الذكي */
+    color: #00F5D4;
+    transform: scale(1.05);
+    /* تكبير خفيف */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
 }
 
 
 /* الخط تحت الرابط عند التفعيل */
 
 .nav-links-horizontal .nav-link.active {
-    border-bottom: 2px solid #3f77d1;
+    border-bottom: 2px solid #00F5D4;
+    /* أخضر ذكي */
+    color: #00F5D4 !important;
 }
 
 
@@ -90,84 +93,61 @@
 
 .nav-links-horizontal {
     display: flex;
-    /* يجعل العناصر أفقية */
     flex-direction: row;
-    /* اتجاه أفقي */
     gap: 1rem;
-    /* مسافة بين الروابط */
 }
 
 .nav-links-horizontal .nav-link {
-    color: #0c1013;
-    padding: 0.5rem 1rem;
-    transition: color 0.3s ease;
-}
-
-.nav-links-horizontal .nav-link:hover {
-    color: #3f77d1;
-}
-
-.btn1 {
-    background-color: #3f77d1;
-}
-
-
-/* تأثير عام على الروابط */
-
-.nav-links-horizontal .nav-link {
-    color: #0c1013;
+    color: #F8FAFC;
     padding: 0.5rem 1rem;
     transition: all 0.3s ease;
     /* انتقال سلس */
 }
 
 
-/* عند المرور */
+/* عند المرور على الروابط الأفقية */
 
 .nav-links-horizontal .nav-link:hover {
-    color: #3f77d1;
+    color: #00F5D4;
+    /* الأخضر الرقمي */
     transform: translateY(-3px);
     /* يرتفع قليلاً */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    /* ظل ناعم */
-    border-radius: 4px;
-    /* زوايا ناعمة */
-}
-
-
-/* عناصر القائمة المنسدلة */
-
-.dropdown-item {
-    transition: all 0.3s ease;
-}
-
-.dropdown-item:hover {
-    background-color: #eae8e8;
-    color: #3f77d1;
-    transform: scale(1.05);
-    /* تكبير خفيف */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     border-radius: 4px;
 }
+
+
+/* أزرار النظام */
+
+.btn1 {
+    background-color: #00F5D4;
+    /* الأخضر الذكي البارز للأزرار */
+    color: #0B132B;
+    font-weight: 600;
+}
+
+.btn1:hover {
+    background-color: #00d4b8;
+    color: #0B132B;
+}
+
+
+/* زر الرجوع */
 
 .back-btn {
     padding: 0.5rem 1rem;
     transition: all 0.3s ease;
     border-radius: 4px;
+    color: #F8FAFC;
 }
-
-
-/* عند المرور */
 
 .back-btn:hover {
     transform: translateX(-5px);
     /* يتحرك للخلف قليلاً */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    color: #00F5D4;
 }
 
-
-/* عند التفعيل (إذا أردت خط تحته مثل الروابط الأخرى) */
-
 .back-btn.active {
-    border-bottom: 2px solid #3f77d1;
+    border-bottom: 2px solid #00F5D4;
 }

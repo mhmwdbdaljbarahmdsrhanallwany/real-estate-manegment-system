@@ -34,5 +34,13 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    // الدومين الاساسي للمنصه
+    'tenant' => [
+    'domain' => env('TENANT_DOMAIN'),
+],
+// الخريطه
+'maptiler' => [
+    'api_key' => env('MAPTILER_API_KEY'),
+],
 
 ];

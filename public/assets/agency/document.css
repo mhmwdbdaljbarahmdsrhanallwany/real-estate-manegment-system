@@ -1,0 +1,64 @@
+.document-card {
+    transition: .2s;
+    background: #fff;
+}
+
+.document-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .08);
+}
+
+.timeline {
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+    display: flex;
+    margin-bottom: 25px;
+}
+
+.timeline-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+}
+
+.timeline-content {
+    border-bottom: 1px solid #eee;
+    flex: 1;
+    padding-bottom: 15px;
+}
+
+.timeline-content h6 {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-box {
+    transition: .2s;
+}
+
+.action-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .08);
+}
+
+.status-card {
+    background: #fafafa;
+}

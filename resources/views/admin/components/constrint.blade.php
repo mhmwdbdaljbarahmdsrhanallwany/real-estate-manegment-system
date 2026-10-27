@@ -1,4 +1,3 @@
-<!-- resources/views/components/action-buttons.blade.php -->
 <div class="action-group">
     {{-- زر العرض --}}
     @if ($showRoute ?? false)
@@ -18,13 +17,44 @@
         </a>
     @endif
 
-    {{-- زر الحذف --}}
-    @if ($deleteRoute ?? false)
-        <a href="javascript:void(0);" class="btn btn-sm btn-danger text-dark deleteBtn" data-id="{{ $deletedId }}"
-            data-url="{{ $deleteRoute }}">
-            <i class="fas fa-trash"></i>
-        </a>
-    @endif
+  {{-- زر الحذف --}}
+@if ($deleteRoute ?? false)
+<a href="javascript:void(0);"
+   class="btn btn-sm btn-danger text-dark deleteBtn"
+   data-id="{{ $deletedId }}"
+   data-url="{{ $deleteRoute }}"
+   data-entity="{{ $entity ?? 'السجل' }}"
+   data-entity-plural="{{ $entityPlural ?? 'السجلات' }}"
+   title="حذف {{ $entity ?? 'السجل' }}">
+
+    <i class="fas fa-trash"></i>
+</a>
+@endif
+    {{-- زر الاستعادة --}}
+    @if ($restoreRoute ?? false)
+    <a href="javascript:void(0);"
+       class="btn btn-sm btn-success text-white restoreBtn"
+       data-id="{{ $deletedId }}"
+       data-url="{{ $restoreRoute }}"
+       data-entity="{{ $entity }}"
+       data-entity-plural="{{ $entityPlural }}">
+        <i class="fas fa-undo"></i>
+    </a>
+@endif
+
+{{-- زر الحذف النهائي --}}
+@if ($forceDeleteRoute ?? false)
+    <a href="javascript:void(0);"
+       class="btn btn-sm btn-danger text-white forceDeleteBtn"
+       data-id="{{ $deletedId }}"
+       data-url="{{ $forceDeleteRoute }}"
+       data-entity="{{ $entity ?? 'السجل' }}"
+       data-entity-plural="{{ $entityPlural ?? 'السجلات' }}"
+       title="حذف نهائي">
+
+        <i class="fas fa-trash-alt"></i>
+    </a>
+@endif
 
     {{-- زر الإضافة --}}
     @if ($create ?? false)

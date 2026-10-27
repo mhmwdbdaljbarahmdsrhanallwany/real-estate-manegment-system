@@ -24,10 +24,12 @@ class ConstructorTable extends Component
     public $lastItem;
     public $total;
     public $pagination;
+    public $entity;
+public $entityPlural;
 
     public function __construct(
        
-        $title, 
+        $title=null, 
         $id=null,
         $icon = 'fas fa-table',
         $filters = null,
@@ -42,7 +44,9 @@ class ConstructorTable extends Component
         $lastItem = null,
         $total = null,
         $files = null,
-        $pagination = null
+        $pagination = null,
+        $entity = null,
+$entityPlural = null,
     ) {
         $this->files=$files;
         $this->title= $title;
@@ -60,6 +64,8 @@ class ConstructorTable extends Component
         $this->lastItem= $lastItem;
         $this->total= $total;
         $this->pagination= $pagination;
+        $this->entity = $entity;
+$this->entityPlural = $entityPlural;
   //
     }
 

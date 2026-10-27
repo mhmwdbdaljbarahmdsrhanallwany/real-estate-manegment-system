@@ -1,0 +1,455 @@
+/* =========================================================
+   SmartEstate Table (Updated)
+   ========================================================= */
+
+.sTable-card {
+    background: #ffffff;
+    border: 1px solid #d9e3ee;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(11, 19, 43, .06);
+    overflow: hidden;
+    color: #0B132B;
+    /* الأزرق الداكن الأساسي */
+}
+
+.sTable-header {
+    padding: 1.1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid #d9e3ee;
+    flex-wrap: wrap;
+    background: #ffffff;
+}
+
+.sTable-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0;
+    color: #0B132B !important;
+    /* الأزرق الداكن المستوحى من خلفية الشعار */
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.sTable-title i {
+    color: #00F5D4 !important;
+    /* الأخضر الرقمي الذكي */
+    font-size: .95rem;
+}
+
+.sTable-refresh {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d9e3ee;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #64748B;
+    cursor: pointer;
+    font-size: .8rem;
+    transition: background-color .15s, border-color .15s, color .15s;
+}
+
+.sTable-refresh:hover {
+    background: #f0faf7;
+    border-color: #00F5D4;
+    color: #00F5D4;
+}
+
+.sTable-body {
+    padding: 1.25rem 1.5rem;
+    background: #ffffff;
+}
+
+
+/* الفلاتر */
+
+.sTable-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+}
+
+.sTable-filter-group {
+    flex: 1;
+    min-width: 180px;
+}
+
+.sTable-filter-group label,
+.sTable-sort-label {
+    display: block;
+    margin-bottom: .25rem;
+    color: #64748B !important;
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.sTable-filter,
+.sTable-sort-select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d9e3ee;
+    border-radius: 10px;
+    outline: none;
+    background-color: #ffffff !important;
+    color: #0B132B !important;
+    font-size: .82rem;
+}
+
+.sTable-filter {
+    padding: .45rem .75rem .45rem 2.2rem;
+}
+
+.sTable-sort-select {
+    min-width: 100px;
+    padding: .4rem .7rem;
+    border-radius: 8px;
+}
+
+.sTable-filter:focus,
+.sTable-sort-select:focus {
+    border-color: #00F5D4 !important;
+    box-shadow: 0 0 0 3px rgba(0, 245, 212, .15) !important;
+    color: #0B132B !important;
+}
+
+.sTable-filter::placeholder {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+}
+
+.sTable-filter-wrap {
+    position: relative;
+}
+
+.sTable-filter-wrap .sTable-filter-icon {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    color: #64748B !important;
+    font-size: .7rem;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+select.sTable-filter {
+    appearance: none;
+    padding-right: .75rem;
+    padding-left: 2rem;
+}
+
+
+/* الجدول */
+
+.sTable-wrap {
+    overflow-x: auto;
+    border: 1px solid #d9e3ee;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.sTable {
+    width: 100%;
+    border-collapse: collapse;
+    color: #0B132B !important;
+    font-size: .82rem;
+    opacity: 1 !important;
+}
+
+
+/* رأس الجدول */
+
+.sTable thead {
+    background: #F8FAFC !important;
+    opacity: 1 !important;
+}
+
+.sTable thead th {
+    padding: .7rem .85rem;
+    border-bottom: 1px solid #d9e3ee;
+    color: #0B132B !important;
+    background: #F8FAFC !important;
+    font-size: .78rem;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+    opacity: 1 !important;
+}
+
+
+/* صفوف الجدول */
+
+.sTable tbody tr {
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff !important;
+    color: #334155 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.sTable tbody tr:last-child {
+    border-bottom: none;
+}
+
+.sTable tbody tr:hover {
+    background: #f0faf7 !important;
+    /* لمسة خضراء فاتحة جداً عند التحويم */
+    color: #0B132B !important;
+}
+
+
+/* خلايا البيانات */
+
+.sTable tbody td,
+.sTable tbody td span,
+.sTable tbody td p,
+.sTable tbody td strong,
+.sTable tbody td small,
+.sTable tbody td label {
+    padding: .65rem .85rem;
+    color: #334155 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    text-align: center;
+    vertical-align: middle;
+}
+
+
+/* تثبيت لون البيانات عند المرور */
+
+.sTable tbody tr:hover td,
+.sTable tbody tr:hover td span,
+.sTable tbody tr:hover td p,
+.sTable tbody tr:hover td strong,
+.sTable tbody tr:hover td small {
+    color: #0B132B !important;
+    opacity: 1 !important;
+}
+
+.sTable,
+.sTable *,
+.sTable tbody,
+.sTable tbody tr,
+.sTable tbody td {
+    filter: none !important;
+    text-shadow: none !important;
+}
+
+
+/* الشارات (Badges) */
+
+.sTable-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .15rem .65rem;
+    border-radius: 40px;
+    font-size: .72rem;
+    font-weight: 600;
+    opacity: 1 !important;
+}
+
+.sTable-badge-success {
+    background: #e6f8f2 !important;
+    color: #00875a !important;
+}
+
+.sTable-badge-primary {
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+}
+
+.sTable-badge-danger {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+}
+
+.sTable-badge-warning {
+    background: #fffbeb !important;
+    color: #a16207 !important;
+}
+
+
+/* الروابط */
+
+.sTable-file-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: #0369a1 !important;
+    text-decoration: none;
+    font-size: .8rem;
+    font-weight: 600;
+    transition: color .15s;
+}
+
+.sTable-file-link:hover {
+    color: #0B132B !important;
+    text-decoration: underline;
+}
+
+
+/* الحالة الفارغة */
+
+.sTable-empty {
+    padding: 2.5rem 1rem;
+    color: #64748B !important;
+    font-size: .88rem;
+    text-align: center;
+}
+
+.sTable-empty i {
+    display: block;
+    margin-bottom: .5rem;
+    color: #94a3b8 !important;
+    font-size: 1.5rem;
+}
+
+
+/* الترقيم (Pagination) */
+
+.sTable-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #d9e3ee;
+}
+
+.sTable-info {
+    color: #64748B !important;
+    font-size: .78rem;
+}
+
+.sTable-info strong {
+    color: #0B132B !important;
+}
+
+.sTable-pagination {
+    display: flex;
+    align-items: center;
+    gap: .15rem;
+}
+
+.sTable-pagination .pagination {
+    margin: 0;
+}
+
+.sTable-pagination .page-item .page-link {
+    margin: 0 .1rem;
+    padding: .3rem .65rem;
+    border: 1px solid #d9e3ee;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334155 !important;
+    font-size: .78rem;
+    transition: background-color .15s, border-color .15s, color .15s;
+}
+
+.sTable-pagination .page-item.active .page-link {
+    border-color: #00F5D4 !important;
+    background: #00F5D4 !important;
+    color: #0B132B !important;
+    font-weight: 700;
+}
+
+.sTable-pagination .page-item .page-link:hover {
+    border-color: #00F5D4 !important;
+    background: #f0faf7 !important;
+    color: #0B132B !important;
+}
+
+
+/* الأزرار والإجراءات داخل الجدول */
+
+.sTable-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.sTable-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .3rem .65rem;
+    border: 1px solid #d9e3ee;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334155 !important;
+    cursor: pointer;
+    font-size: .75rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color .15s, border-color .15s, color .15s;
+}
+
+.sTable-btn:hover {
+    border-color: #00F5D4;
+    background: #f0faf7;
+    color: #0B132B !important;
+    text-decoration: none;
+}
+
+.sTable-btn-primary {
+    border-color: #a7e8d4;
+    background: #e6f8f2;
+    color: #00875a !important;
+}
+
+.sTable-btn-primary:hover {
+    border-color: #00F5D4;
+    background: #d3f3e8;
+}
+
+.sTable-btn-success {
+    border-color: #a7e8d4;
+    background: #e6f8f2;
+    color: #00875a !important;
+}
+
+.sTable-btn-success:hover {
+    background: #d3f3e8;
+}
+
+.sTable-btn-danger {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #dc2626 !important;
+}
+
+.sTable-btn-danger:hover {
+    background: #fee2e2;
+}
+
+.sTable-btn-warning {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #a16207 !important;
+}
+
+.sTable-btn-warning:hover {
+    background: #fef3c7;
+}
+
+.sTable tbody tr {
+    transition: background-color .1s !important;
+}
+
+.sTable td,
+.sTable th {
+    opacity: 1 !important;
+    visibility: visible !important;
+}

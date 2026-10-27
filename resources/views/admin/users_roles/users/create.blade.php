@@ -1,3 +1,4 @@
+
 @extends('admin.layout.master')
 
 @section('title')
@@ -6,154 +7,199 @@
 
 @section('contect')
 
-<div class="card shadow-lg border-0 rounded-4 overflow-hidden">
-  <!-- الهيدر -->
-  <div class="card-header bg-gradient bg-light d-flex align-items-center">
-    <h4 class="mb-0 fw-bold text-primary">
-      <i class="fas fa-users me-2"></i> إدارة المستخدمين
-    </h4>
-  </div>
+<div class="card card-outline card-primary shadow-sm">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-user-plus ml-1"></i>
+            إضافة مستخدم جديد
+        </h3>
+    </div>
 
-  <!-- الجسم -->
-  <div class="card-body bg-white">
-    <form class="row g-3">
-      <!-- المؤسسة -->
-      <div class="col-md-6">
-        <label for="agency_id" class="form-label fw-semibold">
-          <i class="fas fa-building text-primary me-1"></i> المؤسسة
-        </label>
-        <select id="agency_id" class="form-select shadow-sm">
-          <option value="">اختر المؤسسة</option>
-        </select>
+    <form action="{{ route('admin.users.store') }}" method="POST">
+        @csrf
 
-        
-      </div>
+        <div class="card-body">
 
-      <!-- الفرع -->
-      <div class="col-md-6">
-        <label for="branch_id" class="form-label fw-semibold">
-          <i class="fas fa-code-branch text-success me-1"></i> الفرع
-        </label>
-        <select id="branch_id" class="form-select shadow-sm">
-          <option value="">اختر الفرع</option>
-        </select>
-      </div>
+            {{-- رسائل التحقق --}}
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-      <!-- اسم المستخدم -->
-      <div class="col-md-6">
-        <label for="username" class="form-label fw-semibold">
-          <i class="fas fa-user text-info me-1"></i> اسم المستخدم
-        </label>
-        <input type="text" id="username" class="form-control shadow-sm" placeholder="اسم المستخدم للدخول">
-      </div>
+            {{-- بيانات الحساب --}}
+            <h6 class="text-primary font-weight-bold mb-3">
+                <i class="fas fa-user ml-1"></i>
+                بيانات الحساب
+            </h6>
 
-      <!-- الاسم الكامل -->
-      <div class="col-md-6">
-        <label for="name" class="form-label fw-semibold">
-          <i class="fas fa-id-card text-warning me-1"></i> الاسم الكامل
-        </label>
-        <input type="text" id="name" class="form-control shadow-sm" placeholder="الاسم الكامل">
-      </div>
+            <div class="row">
+                <x-constructor-form
+                    :rows="null"
+                    :types="[
+                        'name' => [
+                            'label' => 'اسم المستخدم المعروض',
+                            'name' => 'name',
+                            'icon' => 'fas fa-user',
+                            'required' => true,
+                        ],
+                        'email' => [
+                            'label' => 'البريد الإلكتروني',
+                            'name' => 'email',
+                            'type' => 'email',
+                            'icon' => 'fas fa-envelope',
+                            'required' => true,
+                        ],
+                        'password' => [
+                            'label' => 'كلمة المرور',
+                            'name' => 'password',
+                            'type' => 'password',
+                            'icon' => 'fas fa-lock',
+                            'required' => true,
+                        ],
+                        'password_confirmation' => [
+                            'label' => 'تأكيد كلمة المرور',
+                            'name' => 'password_confirmation',
+                            'type' => 'password',
+                            'icon' => 'fas fa-lock',
+                            'required' => true,
+                        ],
+                    ]"
+                />
+            </div>
 
-      <!-- البريد الإلكتروني -->
-      <div class="col-md-6">
-        <label for="email" class="form-label fw-semibold">
-          <i class="fas fa-envelope text-danger me-1"></i> البريد الإلكتروني
-        </label>
-        <input type="email" id="email" class="form-control shadow-sm" placeholder="example@mail.com">
-      </div>
+            <hr>
 
-      <!-- رقم الجوال -->
-      <div class="col-md-6">
-        <label for="phone_number" class="form-label fw-semibold">
-          <i class="fas fa-phone text-success me-1"></i> رقم الجوال
-        </label>
-        <input type="text" id="phone_number" class="form-control shadow-sm" placeholder="05XXXXXXXX">
-      </div>
+            {{-- سياق الوصول --}}
+            <h6 class="text-primary font-weight-bold mb-3">
+                <i class="fas fa-sitemap ml-1"></i>
+                سياق الوصول
+            </h6>
 
-      <!-- كلمة المرور -->
-      <div class="col-md-6">
-        <label for="password" class="form-label fw-semibold">
-          <i class="fas fa-lock text-secondary me-1"></i> كلمة المرور
-        </label>
-        <input type="password" id="password" class="form-control shadow-sm" placeholder="••••••••">
-      </div>
+            <div class="form-group">
+                <label for="access_context_id">سياق الوصول</label>
 
-      <!-- الدور -->
-      <div class="col-md-6">
-        <label for="role" class="form-label fw-semibold">
-          <i class="fas fa-user-shield text-primary me-1"></i> الدور
-        </label>
-        <select id="role" class="form-select shadow-sm">
-          <option value="super_admin">مدير عام</option>
-          <option value="agency_admin">مدير مؤسسة</option>
-          <option value="branch_manager">مدير فرع</option>
-          <option value="staff">موظف</option>
-          <option value="accountant">محاسب</option>
-          <option value="inspector">مفتش</option>
-          <option value="maintenance">صيانة</option>
-        </select>
-      </div>
+                <select
+                    name="access_context_id"
+                    id="access_context_id"
+                    class="form-control @error('access_context_id') is-invalid @enderror"
+                    required
+                >
+                    <option value="">اختر سياق الوصول</option>
 
-      <!-- صورة الملف الشخصي -->
-      <div class="col-md-6">
-        <label for="profile_image" class="form-label fw-semibold">
-          <i class="fas fa-image text-info me-1"></i> صورة الملف الشخصي
-        </label>
-        <input type="file" id="profile_image" class="form-control shadow-sm">
-      </div>
+                    @foreach ($accessContexts as $context)
+                        <option
+                            value="{{ $context->id }}"
+                            {{ (string) old('access_context_id') === (string) $context->id ? 'selected' : '' }}
+                        >
+                            {{ $context->name }}
+                            ({{ $context->context_type }})
+                        </option>
+                    @endforeach
+                </select>
 
-      <!-- اللغة -->
-      <div class="col-md-3">
-        <label for="language" class="form-label fw-semibold">
-          <i class="fas fa-language text-success me-1"></i> اللغة
-        </label>
-        <select id="language" class="form-select shadow-sm">
-          <option value="ar">العربية</option>
-          <option value="en">English</option>
-        </select>
-      </div>
+                @error('access_context_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
 
-      <!-- الثيم -->
-      <div class="col-md-3">
-        <label for="theme" class="form-label fw-semibold">
-          <i class="fas fa-paint-brush text-warning me-1"></i> الثيم
-        </label>
-        <select id="theme" class="form-select shadow-sm">
-          <option value="light">فاتح</option>
-          <option value="dark">داكن</option>
-        </select>
-      </div>
+                <small class="form-text text-muted">
+                    يحدد السياق الذي سيُنشأ للمستخدم ضمنه التعيين.
+                </small>
+            </div>
 
-      <!-- الإشعارات -->
-      <div class="col-md-3 d-flex align-items-center">
-        <div class="form-check mt-4">
-          <input class="form-check-input" type="checkbox" id="notifications_enabled" checked>
-          <label class="form-check-label fw-semibold" for="notifications_enabled">
-            <i class="fas fa-bell text-danger me-1"></i> تفعيل الإشعارات
-          </label>
+            <hr>
+
+            {{-- الدور --}}
+            <h6 class="text-primary font-weight-bold mb-3">
+                <i class="fas fa-user-shield ml-1"></i>
+                الدور والصلاحيات (اختياري)
+            </h6>
+
+            <div class="form-group">
+                <label for="role_id">الدور</label>
+
+                <select
+                    name="role_id"
+                    id="role_id"
+                    class="form-control @error('role_id') is-invalid @enderror"
+                >
+                    <option value="">إنشاء المستخدم دون دور</option>
+
+                    @foreach ($roles as $role)
+                        <option
+                            value="{{ $role->id }}"
+                            {{ (string) old('role_id') === (string) $role->id ? 'selected' : '' }}
+                        >
+                            {{ $role->display_name ?? $role->name }}
+                        </option>
+                    @endforeach
+                </select>
+
+                @error('role_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+
+                <small class="form-text text-muted">
+                    يمكنك إنشاء المستخدم دون دور وإسناده لاحقًا.
+                </small>
+            </div>
+
+            <hr>
+
+            {{-- تاريخ نهاية التعيين --}}
+            <h6 class="text-primary font-weight-bold mb-3">
+                <i class="fas fa-calendar-alt ml-1"></i>
+                مدة التعيين
+            </h6>
+
+            <div class="row">
+                <x-constructor-form
+                    :rows="null"
+                    :types="[
+                        'end_date' => [
+                            'label' => 'تاريخ نهاية التعيين (اختياري)',
+                            'name' => 'end_date',
+                            'type' => 'date',
+                            'icon' => 'fas fa-calendar-alt',
+                            'min' => now()->addDay()->toDateString(),
+                        ],
+                    ]"
+                />
+            </div>
+
+            <div class="text-muted small mb-3">
+                اترك التاريخ فارغًا إذا كان التعيين مفتوح المدة.
+            </div>
+
+            {{-- الصلاحيات المباشرة --}}
+            <div class="alert alert-light border mb-0">
+                <i class="fas fa-info-circle text-info ml-1"></i>
+                الصلاحيات الممنوحة عبر الأدوار ستُدار من شاشة الأدوار.
+                لم تتم إضافة صلاحيات مباشرة للمستخدم لأن آلية تخزينها
+                والتحقق منها تحتاج إلى توافق مع نظام الصلاحيات الحالي.
+            </div>
+
         </div>
-      </div>
 
-      <!-- التحقق بخطوتين -->
-      <div class="col-md-3 d-flex align-items-center">
-        <div class="form-check mt-4">
-          <input class="form-check-input" type="checkbox" id="two_factor_enabled">
-          <label class="form-check-label fw-semibold" for="two_factor_enabled">
-            <i class="fas fa-shield-alt text-primary me-1"></i> التحقق بخطوتين
-          </label>
+        <div class="card-footer d-flex justify-content-between">
+            <a
+                href="{{ route('admin.users.index') }}"
+                class="btn btn-secondary"
+            >
+                <i class="fas fa-arrow-right ml-1"></i>
+                إلغاء
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save ml-1"></i>
+                حفظ المستخدم
+            </button>
         </div>
-      </div>
-
-      <!-- زر الحفظ -->
-      <div class="col-12 text-end">
-        <button type="submit" class="btn btn-gradient btn-primary px-4 py-2 shadow-sm rounded-pill">
-          <i class="fas fa-save me-1"></i> حفظ المستخدم
-        </button>
-      </div>
     </form>
-  </div>
 </div>
 
-    
 @endsection

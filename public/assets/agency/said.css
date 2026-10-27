@@ -1,0 +1,979 @@
+/* =========================================================
+   GLOBAL ADMIN SIDEBAR
+   ========================================================= */
+
+.main-sidebar {
+    width: 250px;
+    background: #0f172a;
+    color: #cbd5e1;
+    border: 0;
+    box-shadow: none;
+    direction: rtl;
+}
+
+
+/* =========================================================
+   BRAND / SIDEBAR HEADER
+   ========================================================= */
+
+.main-sidebar .brand-link {
+    width: 250px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: #0f172a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.main-sidebar .brand-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.main-sidebar .logo-container {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-sidebar .logo-container img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+}
+
+.main-sidebar .brand-text-container {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.main-sidebar .brand-text {
+    color: #f8fafc;
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.main-sidebar .brand-context {
+    margin-top: 3px;
+    color: #94a3b8;
+    font-size: 0.68rem;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   SIDEBAR BODY
+   ========================================================= */
+
+.main-sidebar .sidebar {
+    height: calc(100vh - 64px);
+    padding: 10px 10px 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+.main-sidebar .sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.main-sidebar .sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.main-sidebar .sidebar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 10px;
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+.main-sidebar .nav-sidebar {
+    width: 100%;
+}
+
+.main-sidebar .nav-sidebar>.nav-header {
+    margin: 18px 10px 7px;
+    padding: 0;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.main-sidebar .nav-sidebar>.nav-header:first-child {
+    margin-top: 5px;
+}
+
+
+/* =========================================================
+   MAIN NAV ITEMS
+   ========================================================= */
+
+.main-sidebar .nav-sidebar>.nav-item {
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+.main-sidebar .nav-sidebar>.nav-item>.nav-link {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0 11px;
+    border-radius: 7px;
+    color: #cbd5e1;
+    font-size: 0.84rem;
+    font-weight: 400;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+
+/* =========================================================
+   MAIN ICON
+   ========================================================= */
+
+.main-sidebar .nav-sidebar>.nav-item>.nav-link>.nav-icon {
+    width: 21px;
+    min-width: 21px;
+    margin: 0 0 0 10px;
+    color: #94a3b8;
+    font-size: 0.92rem;
+    text-align: center;
+}
+
+
+/* =========================================================
+   MAIN TEXT
+   ========================================================= */
+
+.main-sidebar .nav-sidebar>.nav-item>.nav-link p {
+    margin: 0;
+    flex: 1;
+    text-align: right;
+}
+
+
+/* =========================================================
+   HOVER
+   ========================================================= */
+
+.main-sidebar .nav-sidebar>.nav-item>.nav-link:hover {
+    background: rgba(255, 255, 255, 0.055);
+    color: #f8fafc;
+}
+
+.main-sidebar .nav-sidebar>.nav-item>.nav-link:hover>.nav-icon {
+    color: #cbd5e1;
+}
+
+
+/* =========================================================
+   ACTIVE
+   ========================================================= */
+
+.main-sidebar .nav-sidebar>.nav-item>.nav-link.active {
+    background: rgba(99, 102, 241, 0.16);
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.main-sidebar .nav-sidebar>.nav-item>.nav-link.active>.nav-icon {
+    color: #818cf8;
+}
+
+
+/* =========================================================
+   TREEVIEW / PARENT ITEMS
+   ========================================================= */
+
+.main-sidebar .nav-sidebar .has-treeview>.nav-link {
+    position: relative;
+}
+
+.main-sidebar .nav-sidebar .has-treeview>.nav-link>p {
+    display: flex;
+    align-items: center;
+}
+
+.main-sidebar .nav-sidebar .has-treeview>.nav-link>p>.right {
+    position: static;
+    margin-right: auto;
+    margin-left: 0;
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+
+/* Open parent */
+
+.main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link {
+    color: #f1f5f9;
+}
+
+.main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link>.nav-icon {
+    color: #a5b4fc;
+}
+
+
+/* =========================================================
+   CHILD ITEMS
+   ========================================================= */
+
+.main-sidebar .nav-sidebar .nav-treeview {
+    padding: 3px 0 4px;
+}
+
+.main-sidebar .nav-sidebar .nav-treeview>.nav-item {
+    margin: 1px 0;
+}
+
+.main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link {
+    min-height: 36px;
+    margin: 0;
+    padding: 0 10px 0 8px;
+    border-radius: 6px;
+    color: #94a3b8;
+    font-size: 0.78rem;
+}
+
+
+/* Child icon */
+
+.main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link>.nav-icon {
+    width: 16px;
+    min-width: 16px;
+    margin: 0 0 0 10px;
+    color: #64748b;
+    font-size: 0.42rem;
+    text-align: center;
+}
+
+
+/* Child text */
+
+.main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link p {
+    margin: 0;
+    text-align: right;
+}
+
+
+/* Child hover */
+
+.main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: #e2e8f0;
+}
+
+
+/* Child active */
+
+.main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active {
+    background: rgba(99, 102, 241, 0.13);
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active>.nav-icon {
+    color: #818cf8;
+}
+
+
+/* =========================================================
+   BADGE
+   ========================================================= */
+
+.main-sidebar .nav-sidebar .nav-link .badge {
+    margin-right: auto;
+    min-width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+.main-sidebar .nav-sidebar>.nav-item:last-child {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.main-sidebar .nav-sidebar>.nav-item:last-child form {
+    width: 100%;
+}
+
+.main-sidebar .nav-sidebar>.nav-item:last-child .nav-link {
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.main-sidebar .nav-sidebar>.nav-item:last-child .nav-link:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: #fca5a5;
+}
+
+.main-sidebar .nav-sidebar>.nav-item:last-child .nav-link:hover .nav-icon {
+    color: #fca5a5;
+}
+
+
+/* =========================================================
+   LIGHT THEME
+   ========================================================= */
+
+html[data-dashboard-theme="light"] .main-sidebar {
+    background: #ffffff;
+    color: #334155;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .brand-link {
+    background: #ffffff;
+    border-bottom-color: #e2e8f0;
+    color: #0f172a;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .brand-text {
+    color: #0f172a;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .brand-context {
+    color: #64748b;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-header {
+    color: #64748b;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item>.nav-link {
+    color: #334155;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item>.nav-link>.nav-icon {
+    color: #64748b;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover>.nav-icon {
+    color: #475569;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active {
+    background: rgba(99, 102, 241, 0.10);
+    color: #312e81;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active>.nav-icon {
+    color: #6366f1;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link {
+    color: #1e293b;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link>.nav-icon {
+    color: #6366f1;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar .has-treeview>.nav-link>p>.right {
+    color: #64748b;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link {
+    color: #64748b;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link>.nav-icon {
+    color: #94a3b8;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link:hover {
+    background: #f8fafc;
+    color: #334155;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link:hover>.nav-icon {
+    color: #64748b;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active {
+    background: rgba(99, 102, 241, 0.08);
+    color: #312e81;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active>.nav-icon {
+    color: #6366f1;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item:last-child {
+    border-top-color: #e2e8f0;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item:last-child .nav-link {
+    color: #64748b;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item:last-child .nav-link:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .nav-sidebar>.nav-item:last-child .nav-link:hover .nav-icon {
+    color: #b91c1c;
+}
+
+html[data-dashboard-theme="light"] .main-sidebar .sidebar::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.25);
+}
+
+
+/* =========================================================
+   INDIGO THEME
+   ========================================================= */
+
+html[data-dashboard-theme="indigo"] .main-sidebar {
+    background: #111827;
+    color: #c7d2fe;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .brand-link {
+    background: #111827;
+    border-bottom-color: rgba(129, 140, 248, 0.16);
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .brand-text {
+    color: #eef2ff;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .brand-context {
+    color: #a5b4fc;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar>.nav-header {
+    color: #818cf8;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar>.nav-item>.nav-link {
+    color: #cbd5e1;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar>.nav-item>.nav-link>.nav-icon {
+    color: #a5b4fc;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover {
+    background: rgba(99, 102, 241, 0.12);
+    color: #eef2ff;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover>.nav-icon {
+    color: #c7d2fe;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active {
+    background: rgba(99, 102, 241, 0.22);
+    color: #ffffff;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active>.nav-icon {
+    color: #818cf8;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link {
+    color: #eef2ff;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link>.nav-icon {
+    color: #818cf8;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar .has-treeview>.nav-link>p>.right {
+    color: #818cf8;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link {
+    color: #a5b4fc;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link>.nav-icon {
+    color: #818cf8;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link:hover {
+    background: rgba(99, 102, 241, 0.09);
+    color: #c7d2fe;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active {
+    background: rgba(99, 102, 241, 0.16);
+    color: #eef2ff;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active>.nav-icon {
+    color: #818cf8;
+}
+
+html[data-dashboard-theme="indigo"] .main-sidebar .nav-sidebar>.nav-item:last-child {
+    border-top-color: rgba(129, 140, 248, 0.16);
+}
+
+
+/* =========================================================
+   EMERALD THEME
+   ========================================================= */
+
+html[data-dashboard-theme="emerald"] .main-sidebar {
+    background: #0f1f1a;
+    color: #d1fae5;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .brand-link {
+    background: #0f1f1a;
+    border-bottom-color: rgba(16, 185, 129, 0.16);
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .brand-text {
+    color: #ecfdf5;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .brand-context {
+    color: #6ee7b7;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar>.nav-header {
+    color: #34d399;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar>.nav-item>.nav-link {
+    color: #d1d5db;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar>.nav-item>.nav-link>.nav-icon {
+    color: #6ee7b7;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover {
+    background: rgba(16, 185, 129, 0.12);
+    color: #ecfdf5;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover>.nav-icon {
+    color: #a7f3d0;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active {
+    background: rgba(16, 185, 129, 0.20);
+    color: #ffffff;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active>.nav-icon {
+    color: #34d399;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link {
+    color: #ecfdf5;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link>.nav-icon {
+    color: #34d399;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar .has-treeview>.nav-link>p>.right {
+    color: #34d399;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link {
+    color: #a7f3d0;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link>.nav-icon {
+    color: #34d399;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link:hover {
+    background: rgba(16, 185, 129, 0.08);
+    color: #d1fae5;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #ecfdf5;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active>.nav-icon {
+    color: #34d399;
+}
+
+html[data-dashboard-theme="emerald"] .main-sidebar .nav-sidebar>.nav-item:last-child {
+    border-top-color: rgba(16, 185, 129, 0.16);
+}
+
+
+/* =========================================================
+   NAVY THEME
+   ========================================================= */
+
+html[data-dashboard-theme="navy"] .main-sidebar {
+    background: #0b132b;
+    color: #cbd5e1;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .brand-link {
+    background: #0b132b;
+    border-bottom-color: rgba(148, 163, 184, 0.14);
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .brand-text {
+    color: #f8fafc;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .brand-context {
+    color: #94a3b8;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar>.nav-header {
+    color: #94a3b8;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar>.nav-item>.nav-link {
+    color: #cbd5e1;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar>.nav-item>.nav-link>.nav-icon {
+    color: #94a3b8;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover {
+    background: rgba(59, 130, 246, 0.10);
+    color: #eff6ff;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover>.nav-icon {
+    color: #93c5fd;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active {
+    background: rgba(59, 130, 246, 0.18);
+    color: #ffffff;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active>.nav-icon {
+    color: #60a5fa;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link {
+    color: #eff6ff;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link>.nav-icon {
+    color: #60a5fa;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar .has-treeview>.nav-link>p>.right {
+    color: #60a5fa;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link {
+    color: #94a3b8;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link>.nav-icon {
+    color: #64748b;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link:hover {
+    background: rgba(59, 130, 246, 0.07);
+    color: #dbeafe;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active {
+    background: rgba(59, 130, 246, 0.13);
+    color: #eff6ff;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active>.nav-icon {
+    color: #60a5fa;
+}
+
+html[data-dashboard-theme="navy"] .main-sidebar .nav-sidebar>.nav-item:last-child {
+    border-top-color: rgba(148, 163, 184, 0.14);
+}
+
+
+/* =========================================================
+   ROSE THEME
+   ========================================================= */
+
+html[data-dashboard-theme="rose"] .main-sidebar {
+    background: #1f1118;
+    color: #fce7f3;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .brand-link {
+    background: #1f1118;
+    border-bottom-color: rgba(244, 63, 94, 0.16);
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .brand-text {
+    color: #fff1f2;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .brand-context {
+    color: #fda4af;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar>.nav-header {
+    color: #fb7185;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar>.nav-item>.nav-link {
+    color: #e5e7eb;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar>.nav-item>.nav-link>.nav-icon {
+    color: #fda4af;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover {
+    background: rgba(244, 63, 94, 0.11);
+    color: #fff1f2;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar>.nav-item>.nav-link:hover>.nav-icon {
+    color: #fecdd3;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active {
+    background: rgba(244, 63, 94, 0.20);
+    color: #ffffff;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar>.nav-item>.nav-link.active>.nav-icon {
+    color: #fb7185;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link {
+    color: #fff1f2;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link>.nav-icon {
+    color: #fb7185;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar .has-treeview>.nav-link>p>.right {
+    color: #fb7185;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link {
+    color: #fda4af;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link>.nav-icon {
+    color: #fb7185;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link:hover {
+    background: rgba(244, 63, 94, 0.08);
+    color: #fce7f3;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active {
+    background: rgba(244, 63, 94, 0.15);
+    color: #fff1f2;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar .nav-treeview>.nav-item>.nav-link.active>.nav-icon {
+    color: #fb7185;
+}
+
+html[data-dashboard-theme="rose"] .main-sidebar .nav-sidebar>.nav-item:last-child {
+    border-top-color: rgba(244, 63, 94, 0.16);
+}
+
+
+/* =========================================================
+   COLLAPSED SIDEBAR
+   ========================================================= */
+
+.sidebar-mini.sidebar-collapse .main-sidebar {
+    width: 64px;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .brand-link {
+    width: 64px;
+    justify-content: center;
+    padding: 0;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .brand-container {
+    justify-content: center;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .brand-text-container {
+    display: none;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .logo-container {
+    margin: 0;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .sidebar {
+    padding: 10px 7px;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-header {
+    display: none;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar>.nav-item>.nav-link {
+    justify-content: center;
+    padding: 0;
+    min-height: 42px;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar>.nav-item>.nav-link>.nav-icon {
+    margin: 0;
+    width: 21px;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar>.nav-item>.nav-link p {
+    display: none;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-treeview {
+    display: none;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar .has-treeview>.nav-link>p {
+    display: none;
+}
+
+
+/* =========================================================
+   RTL TREEVIEW ARROWS
+   ========================================================= */
+
+[dir="rtl"] .main-sidebar .nav-sidebar .has-treeview>.nav-link>p>.right {
+    transform: rotate(180deg);
+}
+
+[dir="rtl"] .main-sidebar .nav-sidebar .has-treeview.menu-open>.nav-link>p>.right {
+    transform: rotate(270deg);
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLET
+   ========================================================= */
+
+@media (max-width: 991.98px) {
+    .main-sidebar {
+        width: 64px;
+    }
+    .main-sidebar .brand-link {
+        width: 64px;
+        justify-content: center;
+        padding: 0;
+    }
+    .main-sidebar .brand-text-container {
+        display: none;
+    }
+    .main-sidebar .brand-container {
+        justify-content: center;
+    }
+    .main-sidebar .sidebar {
+        padding: 10px 7px;
+    }
+    .main-sidebar .nav-header {
+        display: none;
+    }
+    .main-sidebar .nav-sidebar>.nav-item>.nav-link {
+        justify-content: center;
+        padding: 0;
+    }
+    .main-sidebar .nav-sidebar>.nav-item>.nav-link>.nav-icon {
+        margin: 0;
+    }
+    .main-sidebar .nav-sidebar>.nav-item>.nav-link p {
+        display: none;
+    }
+    .main-sidebar .nav-treeview {
+        display: none;
+    }
+    .main-sidebar .has-treeview>.nav-link>p {
+        display: none;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+   ========================================================= */
+
+@media (max-width: 575.98px) {
+    .main-sidebar {
+        width: 250px;
+    }
+    .main-sidebar .brand-link {
+        width: 250px;
+        justify-content: flex-start;
+        padding: 0 16px;
+    }
+    .main-sidebar .brand-text-container {
+        display: flex;
+    }
+    .main-sidebar .brand-container {
+        justify-content: flex-start;
+    }
+    .main-sidebar .sidebar {
+        padding: 10px;
+    }
+    .main-sidebar .nav-header {
+        display: block;
+    }
+    .main-sidebar .nav-sidebar>.nav-item>.nav-link {
+        justify-content: flex-start;
+        padding: 0 11px;
+    }
+    .main-sidebar .nav-sidebar>.nav-item>.nav-link>.nav-icon {
+        margin: 0 0 0 10px;
+    }
+    .main-sidebar .nav-sidebar>.nav-item>.nav-link p {
+        display: block;
+    }
+}

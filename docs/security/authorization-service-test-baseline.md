@@ -1,0 +1,63 @@
+﻿# AuthorizationService - Baseline Test Report
+
+## Execution result
+
+- Test suite: Tests\Feature\AuthorizationServiceTest
+- Tests passed: 38
+- Assertions: 152
+- Tests failed: 0
+- Duration: 1.26 seconds
+- Status: PASS
+- Purpose: Baseline before route protection changes
+
+## Test cases
+
+1. test_active_role_grant_allows_permission_in_active_context
+2. test_denies_permission_when_no_role_grants_it
+3. test_denies_inactive_permission_even_when_role_has_it
+4. test_denies_soft_deleted_permission_even_when_role_has_it
+5. test_denies_permission_when_context_is_inactive
+6. test_denies_permission_when_assignment_is_inactive
+7. test_denies_permission_when_assignment_has_expired
+8. test_denies_permission_when_user_role_assignment_is_inactive
+9. test_denies_permission_when_role_is_inactive
+10. test_denies_permission_when_role_is_soft_deleted
+11. test_denies_permission_when_user_role_assignment_is_soft_deleted
+12. test_denies_permission_when_assignment_is_soft_deleted
+13. test_denies_permission_when_context_is_soft_deleted
+14. test_denies_permission_when_assignment_starts_in_future
+15. test_active_allow_override_grants_permission_without_role_grant
+16. test_deny_override_blocks_permission_granted_by_role
+17. test_deny_on_one_role_overrides_grant_from_another_role
+18. test_deny_override_blocks_super_admin_in_system_context
+19. test_super_admin_allows_permission_in_system_context
+20. test_super_admin_does_not_bypass_permissions_in_organization_context
+21. test_super_admin_cannot_use_inactive_permission_in_system_context
+22. test_super_admin_cannot_bypass_inactive_assignment
+23. test_inactive_allow_override_does_not_grant_permission
+24. test_soft_deleted_allow_override_does_not_grant_permission
+25. test_inactive_deny_override_does_not_block_role_grant
+26. test_soft_deleted_deny_override_does_not_block_role_grant
+27. test_deny_override_on_one_role_blocks_allow_override_on_another_role
+28. test_permission_with_different_guard_is_denied
+29. test_soft_deleted_user_is_denied_permission
+30. test_super_admin_cannot_bypass_expired_assignment
+31. test_super_admin_cannot_bypass_soft_deleted_assignment
+32. test_deny_override_blocks_direct_role_grant_from_another_role
+33. test_deny_override_on_inactive_role_does_not_block_role_grant
+34. test_deny_override_on_soft_deleted_user_role_does_not_block_role_grant
+35. test_allow_override_on_soft_deleted_user_role_does_not_grant_permission
+36. test_super_admin_cannot_bypass_soft_deleted_user_role
+37. test_deny_override_on_soft_deleted_user_role_does_not_block_active_role_grant
+38. test_soft_deleted_super_admin_role_does_not_bypass_permission_checks
+
+## Scope and limitations
+
+This result confirms the behavior covered by the current AuthorizationServiceTest
+suite. It does not prove that every application route enforces authorization.
+Route-level and HTTP feature tests are required to verify actual protection.
+
+## Baseline policy
+
+Preserve this baseline while introducing route authentication, access-context
+validation, and permission enforcement. Rerun the suite after security changes.

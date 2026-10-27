@@ -4,23 +4,28 @@
 }
 
 .info-card {
-    background: #fff;
+    background: #FFFFFF;
     border-radius: 12px;
     padding: 1rem;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    border-top: 3px solid #00F5D4;
+    /* لمسة جمالية بالأخضر الذكي المستوحى من الشعار */
 }
 
 .feature-block {
-    background: #fff;
+    background: #FFFFFF;
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
+    border: 1px solid rgba(11, 19, 43, 0.05);
 }
 
 .feature-block:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 20px rgba(0, 245, 212, 0.15);
+    /* ظل مع لمسة أخضر رقمي خفيفة عند التحويم */
+    border-color: rgba(0, 245, 212, 0.3);
 }
 
 .feature-icon {
@@ -32,16 +37,31 @@
     justify-content: center;
     margin: 0 auto 1rem auto;
     font-size: 1.5rem;
+    background-color: rgba(0, 245, 212, 0.1);
+    /* خلفية دائرية خفيفة جداً للأيقونة */
+    color: #0B132B;
+    /* أيقونة بلون الأزرق الداكن للشعار */
+    transition: all 0.3s ease;
+}
+
+
+/* التفاعل عند المرور على الكتلة لتغيير لون الأيقونة */
+
+.feature-block:hover .feature-icon {
+    background-color: #00F5D4;
+    color: #0B132B;
 }
 
 .feature-title {
     font-weight: bold;
     margin-bottom: 0.75rem;
-    color: #333;
+    color: #0B132B;
+    /* تم تحديثه للأزرق الداكن الخاص بالشعار */
 }
 
 .feature-text {
-    color: #555;
+    color: #64748B;
+    /* لون رمادي داكن مريح للقراءة وواضح */
     font-size: 0.9rem;
     line-height: 1.6;
 }

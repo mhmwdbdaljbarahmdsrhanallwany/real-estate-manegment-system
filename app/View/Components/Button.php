@@ -8,6 +8,7 @@ use Illuminate\View\Component;
 //ازرار التفاصيل والتعديل والاضافة القابلة لاعادة الاستخدام 
 class Button extends Component
 {
+
     public $showRoute;
     public $editRoute;
     public $deleteRoute;
@@ -16,35 +17,49 @@ class Button extends Component
     public $text; 
     public $check; 
     public $icon; 
+    public $restoreRoute;
+public $forceDeleteRoute;
+public $entity;
+public $entityPlural;
 
-   
-    public function __construct(
-        $showRoute = null,
-         $editRoute = null,
-          $deleteRoute = null,
-          $deletedId=null,
-          $save = null,
-          $text =null,
-          $check=null,
-          )
+public function __construct(
+    $showRoute = null,
+    $editRoute = null,
+    $deleteRoute = null,
+    $restoreRoute = null,
+    $forceDeleteRoute = null,
+    $deletedId = null,
+    $save = null,
+    $text = null,
+    $check = null,
+    $entity = null,
+$entityPlural = null,
+)
     {
+        $this->restoreRoute = $restoreRoute;
+$this->forceDeleteRoute = $forceDeleteRoute;
         $this->showRoute=$showRoute;
         $this->editRoute=$editRoute;
         $this->deleteRoute=$deleteRoute;
         $this->deletedId=$deletedId;
         $this->save=$save;
         $this->text=$text;
-        $this->check = is_array($check) ? $check : null;
-        $this->icon = match($check['status'] ?? null) {
+        $this->entity = $entity;
+        $this->entityPlural = $entityPlural;
+$this->check = is_array($check) ? $check : null;
 
-            'active' => 'fas fa-check',
+$this->icon = match (strtoupper($check['status'] ?? '')) {
+    'ACTIVE' => 'fas fa-check',
+    'INACTIVE' => 'fas fa-ban',
+    'EXPIRED' => 'fas fa-clock',
 
-            'pending_approval' => 'fas fa-clipboard-list',
+    // الحالات المستخدمة في أزرار المؤسسات الحالية
+    'PENDING_APPROVAL' => 'fas fa-clipboard-list',
+    'SUSPENDED' => 'fas fa-ban',
 
-            'suspended' => 'fas fa-ban',
-            default => 'fas fa-circle-info',
+    default => 'fas fa-circle-info',
+};
 
-        };
         
 
 

@@ -19,4 +19,3 @@
     </div>
 
 </div>
-<link rel="stylesheet" href="{{ asset('assets/agency/notes/notes.css') }}">
