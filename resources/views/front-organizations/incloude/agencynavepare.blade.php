@@ -1,4 +1,4 @@
-<div class="navbar-container mt-2.5">
+{{--  <div class="navbar-container mt-2.5">
     <nav class="navbar custom-navbar">
         <!-- Logo -->
       <a class="navbar-brand" href="#">Logo</a>
@@ -55,4 +55,4 @@
   
 <link rel="stylesheet" href="{{ asset('assets/agency/navbar.css') }}"> 
 <script src="{{ asset('assets/agency/navbar.js') }}"></script> 
- 
+   --}}

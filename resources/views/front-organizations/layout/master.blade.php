@@ -76,11 +76,11 @@
   <div class="wrapper">
 
     <!-- Navbar -->
-    @include('admin.incloude.header')
+    @include('front-organizations.incloude.header')
     <!-- /.navbar -->
 
     <!-- Main Sidebar Container -->
-    @include('admin.incloude.sidbar')
+    @include('front-organizations.incloude.sidbar')
 
     <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper">
@@ -97,7 +97,7 @@
     </div>
     <!-- /.content-wrapper -->
 
-    @include('admin.incloude.footer')
+    @include('front-organizations.incloude.footer')
 
     <!-- Control Sidebar -->
     <aside class="control-sidebar control-sidebar-dark">

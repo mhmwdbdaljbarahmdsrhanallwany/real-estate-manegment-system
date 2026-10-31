@@ -1,11 +1,11 @@
-@extends('admin.layout.master')
+@extends('front-organizations.layout.master')
 
 @section('title')
     جميع الموسسات
 @endsection
 
 @section('contect')
-@include('admin.incloude.agencynavepare')
+{{--  @include('admin.incloude.agencynavepare')  --}}
 
 
 <div class="container py-4">

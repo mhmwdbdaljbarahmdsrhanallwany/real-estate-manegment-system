@@ -53,8 +53,8 @@ Route::middleware([
     return 'Permission Granted';
 
 });
-require __DIR__.'/agency.php';
-require __DIR__.'/agency-branches.php';
+require __DIR__.'/front-organizations.php';
+require __DIR__.'/organization-branches.php';
 // ==================== المجموعة العامة (بدون مصادقة) ====================
 // تجميع جميع مسارات الموقع العامة التي لا تحتاج تسجيل دخول
 Route::group([
@@ -319,7 +319,7 @@ Route::get('/create', [PaymentController::class, 'create'])
         Route::prefix('users')->name('users.')->group(function () {
             // عرض جميع المستخدمين
             Route::get('/', [UserController::class, 'index'])
-                ->middleware('permission:users.view')
+                
                 ->name('index');
 
             Route::match(['get', 'post'], '/ajax_users', [UserController::class, 'ajax_users'])

@@ -1,10 +1,11 @@
+اوثورايز سيرفر
 <?php
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\AccessContext;
 use App\Models\Permission;
+use App\Models\User;
 
 class AuthorizationService
 {
@@ -20,11 +21,10 @@ class AuthorizationService
             return false;
         }
         // 1. التحقق من أن سياق الوصول نشط.
-       
-if ($context->status !== 'ACTIVE' || $context->trashed()) {
-    return false;
-}
 
+        if ($context->status !== 'ACTIVE'  $context->trashed()) {
+            return false;
+        }
 
         // 2. التحقق من وجود الصلاحية وأنها نشطة.
         // SoftDeletes يستبعد الصلاحيات المؤرشفة منطقيًا.
@@ -34,7 +34,7 @@ if ($context->status !== 'ACTIVE' || $context->trashed()) {
             ->where('status', 'ACTIVE')
             ->first();
 
-        if (!$permissionModel) {
+        if (! $permissionModel) {
             return false;
         }
 
@@ -53,7 +53,7 @@ if ($context->status !== 'ACTIVE' || $context->trashed()) {
             })
             ->first();
 
-        if (!$assignment) {
+        if (! $assignment) {
             return false;
         }
 
@@ -70,7 +70,7 @@ if ($context->status !== 'ACTIVE' || $context->trashed()) {
             $role = $userRole->role;
 
             // تجاهل الدور غير الموجود أو غير النشط.
-            if (!$role || $role->status !== 'ACTIVE') {
+            if (! $role  $role->status !== 'ACTIVE') {
                 continue;
             }
 
@@ -104,9 +104,8 @@ if ($context->status !== 'ACTIVE' || $context->trashed()) {
         // 7. فحص منح الصلاحية عبر الأدوار النشطة.
         foreach ($userRoles as $userRole) {
             $role = $userRole->role;
-
             // تجاهل الدور غير الموجود أو غير النشط.
-            if (!$role || $role->status !== 'ACTIVE') {
+            if (! $role  $role->status !== 'ACTIVE') {
                 continue;
             }
 
@@ -135,5 +134,41 @@ if ($context->status !== 'ACTIVE' || $context->trashed()) {
 
         // 10. لا يوجد منح صالح للصلاحية المطلوبة.
         return false;
+    }
+    public function canEnterContext(
+        User $user,
+        AccessContext $context
+    ): bool {
+        if ($user->trashed()) {
+            return false;
+        }
+
+        if ($context->trashed()  $context->status !== 'ACTIVE') {
+            return false;
+        }
+
+        $assignment = $user->assignments()
+            ->where('access_context_id', $context->id)
+            ->where('status', 'ACTIVE')
+            ->where(function ($query) {
+                $query->whereNull('start_date')
+                    ->orWhereDate('start_date', '<=', today());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhereDate('end_date', '>=', today());
+            })
+            ->first();
+
+        if (!$assignment) {
+            return false;
+        }
+
+        return $assignment->userRoles()
+            ->where('status', 'ACTIVE')
+            ->whereHas('role', function ($query) {
+                $query->where('status', 'ACTIVE');
+            })
+            ->exists();
     }
 }
