@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <meta charset="utf-8" name="viewport" >
+  <meta charset="utf-8" name="viewport">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>@yield('title')</title>
 
@@ -14,9 +14,7 @@
   <!-- Ionicons -->
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
 
-  <!-- Bootstrap RTL -->
-  <link rel="stylesheet" href="https://cdn.rtlcss.com/bootstrap/v4.2.1/css/bootstrap.min.css">
-
+  
   <!-- Tempusdominus -->
   <link rel="stylesheet"
     href="{{ asset('assets/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css') }}">
@@ -47,12 +45,10 @@
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
 
   {{-- المستخدمين --}}
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <!-- Chart.js للإحصائيات -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="{{ asset('assets/users/style.css')}}">
   <!-- Tailwind CSS + Font Awesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <!-- Chart.js للإحصائيات -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -62,100 +58,204 @@
   {{-- الكارد العرض --}}
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('assets/components/style.css')}}">
-    <link rel="stylesheet" href="{{ asset('assets/plugins/sweetalert2/dist/sweetalert2.min.css') }}">
-   
+  <link rel="stylesheet" href="{{ asset('assets/components/style.css')}}">
+  <link rel="stylesheet" href="{{ asset('assets/plugins/sweetalert2/dist/sweetalert2.min.css') }}">
 
-<link rel="stylesheet" href="{{ asset('assets/plugins/toastr/toastr.min.css') }}">
-   {{--نهايه الكارد العرض  --}}
-   
+
+  <link rel="stylesheet" href="{{ asset('assets/plugins/toastr/toastr.min.css') }}">
+  {{--نهايه الكارد العرض --}}
+  <link rel="stylesheet" href="{{ asset('assets/front/style.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets\fonts\UniversalForm\UniversalForm.css') }}">
+
+  @livewireStyles
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
-  <div class="wrapper">
+  
+<div class="wrapper">
+
 
     <!-- Navbar -->
     @include('front-organizations.incloude.header')
     <!-- /.navbar -->
 
-    <!-- Main Sidebar Container -->
+
+
+    <!-- Sidebar -->
     @include('front-organizations.incloude.sidbar')
+    <!-- /.sidebar -->
 
-    <!-- Content Wrapper. Contains page content -->
+
+
+    <!-- Content Wrapper -->
     <div class="content-wrapper">
-    
 
-      <!-- Main content -->
-      <section class="content">
-        <div class="container-fluid ">
 
-          @yield('contect')
+        <!-- Main Content Header -->
+        @yield('content-header')
 
-      </section>
-      <!-- /.content -->
+
+
+       <section class="content">
+
+    <div class="container-fluid">
+
+        @yield('content')
+
+    </div>
+
+</section>
+        <!-- /.content -->
+
+
     </div>
     <!-- /.content-wrapper -->
 
+
+
+    <!-- Footer -->
     @include('front-organizations.incloude.footer')
+
+
 
     <!-- Control Sidebar -->
     <aside class="control-sidebar control-sidebar-dark">
-      <!-- Control sidebar content goes here -->
+
     </aside>
-    <!-- /.control-sidebar -->
-  </div>
-  <!-- ./wrapper -->
 
-  <!-- jQuery -->
-  <script src="{{ asset('assets/plugins/jquery/jquery.min.js') }}"></script>
-  <!-- jQuery UI 1.11.4 -->
-  <script src="{{ asset('assets/plugins/jquery-ui/jquery-ui.min.js') }}"></script>
-  <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
-  <script>
+
+</div>
+<!-- ./wrapper -->
+
+
+
+
+<!-- ========================= -->
+<!--       JAVASCRIPT          -->
+<!-- ========================= -->
+
+
+<!-- jQuery -->
+<script src="{{ asset('assets/plugins/jquery/jquery.min.js') }}"></script>
+
+
+<!-- jQuery UI -->
+<script src="{{ asset('assets/plugins/jquery-ui/jquery-ui.min.js') }}"></script>
+
+
+<script>
     $.widget.bridge('uibutton', $.ui.button)
-  </script>
-  <!-- Bootstrap 4 rtl -->
-  <script src="https://cdn.rtlcss.com/bootstrap/v4.2.1/js/bootstrap.min.js"></script>
-  <!-- Bootstrap 4 -->
-  <script src="{{ asset('assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-  <!-- ChartJS -->
-  <script src="{{ asset('assets/plugins/chart.js/Chart.min.js') }}"></script>
-  <!-- Sparkline -->
-  <script src="{{ asset('assets/plugins/sparklines/sparkline.js') }}"></script>
-  <!-- JQVMap -->
-  <script src="{{ asset('assets/plugins/jqvmap/jquery.vmap.min.js') }}"></script>
-  <script src="{{ asset('assets/plugins/jqvmap/maps/jquery.vmap.world.js') }}"></script>
-  <!-- jQuery Knob Chart -->
-  <script src="{{ asset('assets/plugins/jquery-knob/jquery.knob.min.js') }}"></script>
-  <!-- daterangepicker -->
+</script>
 
-  <script src="{{ asset('assets/plugins/moment/moment.min.js') }}"></script>
-  <script src="{{ asset('assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
-  <!-- Tempusdominus Bootstrap 4 -->
-  <script src="{{ asset('assets/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
-  <!-- Summernote -->
-  <script src="{{ asset('assets/plugins/summernote/summernote-bs4.min.js') }}"></script>
-  <!-- overlayScrollbars -->
-  <script src="{{ asset('assets/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
-  <!-- AdminLTE App -->
-  <script src="{{ asset('assets/dist/js/adminlte.js') }}"></script>
-  <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-  {{-- <script src="{{ asset('assets/dist/js/pages/dashboard.js') }}"></script> --}}
-  <!-- AdminLTE for demo purposes -->
-  <script src="{{ asset('assets/dist/js/demo.js') }}"></script>
-  <!-- SweetAlert2 -->
-  <script src="{{ asset('assets/plugins/sweetalert2/dist/sweetalert2.all.js') }}"></script>
+<!-- jQuery -->
+<script src="{{ asset('assets/plugins/jquery/jquery.min.js') }}"></script>
+
+<!-- Bootstrap (واحد فقط) -->
+<script src="{{ asset('assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+<!-- AdminLTE -->
+<script src="{{ asset('assets/dist/js/adminlte.js') }}"></script>
+
+<!-- SweetAlert2 -->
+<script src="{{ asset('assets/plugins/sweetalert2/dist/sweetalert2.all.js') }}"></script>
 
 <!-- Toastr -->
 <script src="{{ asset('assets/plugins/toastr/toastr.min.js') }}"></script>
 
-<script>
+<!-- ✅ Livewire قبل scripts الأخرى -->
+{{--  @livewireScripts  --}}
+
+@yield('script')
+@stack('scripts')
+
+
+</body>
+
+
+</html>
 
 
 
 
-toastr.options = {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  {{--  <script>
+    toastr.options = {
   
   "closeButton": true,
   "progressBar": true,
@@ -221,8 +321,4 @@ toastr.options = {
         });
     });
   });
-  </script>
-  @yield('script')
-</body>
-
-</html>
+  </script>  --}}

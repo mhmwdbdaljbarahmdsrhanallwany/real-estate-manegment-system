@@ -2,10 +2,9 @@
 
 @section('title')
     جميع الموسسات
-@endsection
+
 
 @section('contect')
-{{--  @include('admin.incloude.agencynavepare')  --}}
 
 
 <div class="container py-4">
@@ -80,11 +79,6 @@
     </div>
 
 </div>
-
-
-
-
-
 
 
 @endsection

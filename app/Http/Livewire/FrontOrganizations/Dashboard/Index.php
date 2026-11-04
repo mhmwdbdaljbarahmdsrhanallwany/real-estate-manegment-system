@@ -1,19 +1,24 @@
 <?php
 
-namespace App\Livewire\FrontOrganizations\Dashboard;
+namespace App\Http\Livewire\FrontOrganizations;
 
 use Livewire\Component;
 
 class Index extends Component
 {
    
-    // public function render()
-    // {
-    //     return view('front-organizations.livewire.dashboard.index')
-    //         ->layout('front-organizations.livewire.layouts.dashboard');
-    // }
     public function render()
     {
-        return view('front-organizations.livewire.dashboard.index');
+        return view('front-organizations.index')
+            ->layout('front-organizations.livewire.layout.master', [
+                'title' => 'لوحة تحكم المؤسسة',
+            ]);
     }
+//   public function render()
+//     {
+//         return view('front-organizations.index')
+//             ->layout('front-organizations.layout.master', [
+//                 'title' => 'لوحة تحكم المؤسسة',
+//             ]);
+//     }
 }

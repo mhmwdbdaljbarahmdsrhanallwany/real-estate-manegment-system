@@ -109,18 +109,22 @@
             <span class="badge badge-primary right"></span>
           </a>
           <ul class="nav nav-treeview">
-            <li class="nav-item">
-              <a wire:navigate href="" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>جميع الملاك</p>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a wire:navigate href="" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>إضافة مالك جديد</p>
-              </a>
-            </li>
+       <a wire:navigate
+   href="{{ route('organizations.owners.index', ['subdomain' => request()->route('subdomain')]) }}"
+   class="nav-link">
+    <i class="fas fa-users nav-icon"></i>
+    <p>جميع الملاك</p>
+</a>
+        <li class="nav-item">
+    <a wire:navigate
+       href=""
+       class="nav-link">
+
+        <i class="far fa-circle nav-icon"></i>
+        <p>إضافة مالك جديد</p>
+
+    </a>
+</li>
             <li class="nav-item">
               <a  wire:navigate href="" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
@@ -905,37 +909,6 @@
             </li>
           </ul>
         </li>
-<li class="nav-item">
-
-    <form
-        method="POST"
-        action="{{ route('organizations.logout', [
-            'subdomain' => request()->route('subdomain')
-        ]) }}"
-        style="margin: 0;"
-    >
-        @csrf
-
-        <button
-            type="submit"
-            class="nav-link"
-            style="
-                width: 100%;
-                border: none;
-                background: transparent;
-                color: #dc3545;
-                text-align: right;
-                cursor: pointer;
-                padding: 10px 15px;
-            "
-        >
-            <i class="nav-icon fas fa-sign-out-alt"></i>
-            <p>تسجيل الخروج</p>
-        </button>
-
-    </form>
-
-</li>
         <!-- ===== الفروع ===== -->
         <li class="nav-item has-treeview">
           <a href="#" class="nav-link">
@@ -973,40 +946,7 @@
 
         <!-- ================================================================ -->
         <!-- 🚪 تسجيل الخروج -->
-        <!-- ================================================================ -->
-       <li class="nav-item">
 
-    <form
-        method="POST"
-        action="{{ route('organizations.logout', [
-            'subdomain' => request()->route('subdomain')
-        ]) }}"
-        style="margin: 0;"
-    >
-        @csrf
-
-        <button
-            type="submit"
-            class="nav-link"
-            style="
-                width: 100%;
-                border: none;
-                background: transparent;
-                color: #dc3545;
-                text-align: right;
-                cursor: pointer;
-                padding: 10px 15px;
-            "
-        >
-            <i class="nav-icon fas fa-sign-out-alt"></i>
-
-            <p>تسجيل الخروج</p>
-
-        </button>
-
-    </form>
-
-</li>
 
         <li class="nav-item">
           <a href="login.html" class="nav-link" style="color: #dc3545;">

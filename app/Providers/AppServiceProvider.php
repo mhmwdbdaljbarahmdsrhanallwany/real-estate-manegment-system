@@ -5,7 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Pagination\Paginator;
-
+use Livewire\Livewire;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -21,8 +21,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Livewire::component(
+        'front-organizations.shared.universal-form',
+        \App\Http\Livewire\FrontOrganizations\Shared\UniversalForm::class
+    );
         Paginator::useBootstrap();
         View::composer('admin.incloude.agencynavepare', function ($view) {
+            // إعداد نظام Pagination باستخدام Bootstrap
+            Paginator::useBootstrap();
+
+            // تحميل مسارات Migration الخاصة بالنظام والمؤسسات
+            $this->loadMigrationsFrom([
+                database_path('migrations'),
+                database_path('migrations/organizations'),
+            ]);
             $links = [
                 [
                     'title' => ' المؤسسات',
@@ -45,15 +57,19 @@ class AppServiceProvider extends ServiceProvider
                 //     'active_pattern' => 'gggg'
                 // ],
             ];
-    
+
             $menu = [
                 ['title' => 'إضافة مؤسسة', 'route' => route('admin.organizations.create')],
                 ['title' => 'إضافة باقة جديدة', 'route' => route('admin.packages.create')],
                 ['title' => 'إضافة اشتراك جديد', 'route' => route('admin.subscriptions.create')],
             ];
-    
+
             $view->with(compact('links', 'menu'));
+            // تسجيل مجلدات Migration الخاصة بالنظام والمؤسسات
+            $this->loadMigrationsFrom([
+                database_path('migrations/system'),
+                database_path('migrations/organizations'),
+            ]);
         });
     }
-    
 }

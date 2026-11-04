@@ -2,11 +2,12 @@
 
 namespace App\Http\Livewire\FrontOrganizations\Auth;
 use App\Models\AccessContext;
+use Illuminate\Container\Attributes\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+
 class Login extends Component
 {
     public string $subdomain = '';
@@ -44,14 +45,24 @@ class Login extends Component
                 : null,             
         ];
     }
-    public function login()
+   public function login()
 {
     $this->validate([
         'email' => ['required', 'email'],
         'password' => ['required', 'string'],
     ]);
 
-    if (!Auth::attempt([
+    $context = app(AccessContext::class);
+
+    abort_unless(
+        $context->context_type === 'ORGANIZATION' &&
+        $context->subdomain === $this->subdomain &&
+        $context->status === 'ACTIVE',
+        403
+    );
+
+    // التحقق من بيانات تسجيل الدخول
+    if (!Auth::guard('web')->attempt([
         'email' => $this->email,
         'password' => $this->password,
     ], $this->remember)) {
@@ -64,6 +75,30 @@ class Login extends Component
         return;
     }
 
+    // التحقق من ارتباط المستخدم بالمؤسسة الحالية
+    $isAssigned = DB::table('user_assignments')
+        ->where('user_id', Auth::id())
+        ->where('access_context_id', $context->id)
+        ->where('status', 'ACTIVE')
+        ->whereNull('deleted_at')
+        ->exists();
+
+    if (!$isAssigned) {
+
+        Auth::guard('web')->logout();
+
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        $this->addError(
+            'email',
+            'هذا الحساب غير مرتبط بهذه المؤسسة.'
+        );
+
+        return;
+    }
+
+    // تجديد الجلسة بعد نجاح تسجيل الدخول
     request()->session()->regenerate();
 
     return redirect()->route('organizations.dashboard', [

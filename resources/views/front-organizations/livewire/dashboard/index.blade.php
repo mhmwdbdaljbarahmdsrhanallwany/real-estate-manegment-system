@@ -1,3 +1,7 @@
 <div>
-    {{-- Walk as if you are kissing the Earth with your feet. - Thich Nhat Hanh --}}
+    <div>
+    <h1>لوحة تحكم المؤسسة</h1>
+
+    <p>مرحباً بك في SmartEstate</p>
+</div>
 </div>

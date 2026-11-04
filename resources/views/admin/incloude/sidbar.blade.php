@@ -73,11 +73,14 @@
               </li>
 
               <li class="nav-item">
-                  <a href="#" class="nav-link">
-                      <i class="nav-icon fas fa-tachometer-alt"></i>
-                      <p>لوحة التحكم</p>
-                  </a>
-              </li>
+    <a href="{{ route('organizations.dashboard', [
+        'subdomain' => app(\App\Models\AccessContext::class)->subdomain
+    ]) }}" class="nav-link">
+
+        <i class="nav-icon fas fa-tachometer-alt"></i>
+        <p>لوحة التحكم</p>
+    </a>
+</li>
 
               <li class="nav-item">
                   <a href="#" class="nav-link">
@@ -392,7 +395,7 @@
 
                 
 <li class="nav-item">
-    <a href="{{ route('organizations.dashboard') }}" class="nav-link">
+    <a href="#" class="nav-link">
         <i class="far fa-circle nav-icon"></i>
         <p>سجل التدقيق</p>
     </a>
