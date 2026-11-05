@@ -32,8 +32,8 @@ Route::domain('{subdomain}.' . config('services.tenant.domain'))->where(['subdom
                 Route::livewire('/', Owner::class)
                     ->name('index');
                  // إضافة مالك جديد
-        // Route::livewire('/create', Createowner::class)
-        //     ->name('create');
+        Route::livewire('/create', Createowner::class)
+            ->name('create');
 
             });
 

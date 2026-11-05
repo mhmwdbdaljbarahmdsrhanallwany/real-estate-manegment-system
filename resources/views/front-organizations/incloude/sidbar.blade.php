@@ -110,14 +110,14 @@
           </a>
           <ul class="nav nav-treeview">
        <a wire:navigate
-   href="{{ route('organizations.owners.index', ['subdomain' => request()->route('subdomain')]) }}"
+   href="{{ route('organizations.owners.create', ['subdomain' => request()->route('subdomain')]) }}"
    class="nav-link">
     <i class="fas fa-users nav-icon"></i>
     <p>جميع الملاك</p>
 </a>
         <li class="nav-item">
     <a wire:navigate
-       href=""
+       href="{{ route('organizations.owners.index', ['subdomain' => request()->route('subdomain')]) }}"
        class="nav-link">
 
         <i class="far fa-circle nav-icon"></i>

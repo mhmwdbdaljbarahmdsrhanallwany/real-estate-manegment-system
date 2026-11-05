@@ -1,1527 +1,2251 @@
-<div wire:key="uf-root-{{ $entityKey }}">
-    <div wire:ignore>
+<div>
+    <div>
 
-        <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap"
-            rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-        <div class="uf-wrapper">
-            <div class="content-area">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+/* ============================================================
+   الهوية البصرية — Royal Estate
+============================================================ */
+:root {
+  --royal: #0F2B46;
+  --midnight: #1B4D7A;
+  --gold: #C9A227;
+  --gold-light: #E8CB5C;
+  --emerald: #059669;
+  --terracotta: #D97706;
+  --cherry: #DC2626;
+  --sky: #0284C7;
+  --purple: #7C3AED;
 
-                <div class="page-toolbar">
-                    <div class="toolbar-title">
-                        <div class="toolbar-icon"><i class="{{ $config['icon'] }}"></i></div>
-                        <div class="toolbar-text">
-                            <h1>{{ $config['title'] }}</h1>
-                            <p>{{ $config['subtitle'] }}</p>
-                        </div>
-                    </div>
-                    <div class="toolbar-actions">
-                        <button type="button" class="btn-add-main blue" onclick="openAgentModalStandalone()">
-                            <i class="{{ $config['sub_section_icon'] }}"></i> {{ $config['btn_add_sub'] }}
-                        </button>
-                        <button type="button" class="btn-add-main" onclick="openOwnerModal()">
-                            <i class="fas fa-user-plus"></i> {{ $config['btn_add_main'] }}
-                        </button>
-                    </div>
-                </div>
+  --bg-page: #F7F9FC;
+  --bg-card: #FFFFFF;
+  --bg-field: #EEF2F7;
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --border-soft: #E2E8F0;
 
-                <div class="filters-bar">
-                    <div class="filters-row">
-                        <div class="filter-search">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="searchInput" placeholder="بحث بالاسم، الجوال، الهوية، البريد...">
-                        </div>
-                        <div class="filter-item small">
-                            <label class="filter-label"><i class="fas fa-toggle-on"></i> الحالة</label>
-                            <select class="filter-control" id="filterStatus">
-                                <option value="all">الكل</option>
-                                <option value="active">نشط</option>
-                                <option value="inactive">غير نشط</option>
-                                <option value="blocked">محظور</option>
-                            </select>
-                        </div>
-                        <div class="filter-item small">
-                            <label class="filter-label"><i class="fas fa-building"></i> المؤسسة</label>
-                            <select class="filter-control" id="filterAgency">
-                                <option value="all">الكل</option>
-                            </select>
-                        </div>
-                        <div class="filter-item small">
-                            <label class="filter-label"><i class="fas fa-id-card"></i> نوع الهوية</label>
-                            <select class="filter-control" id="filterIdType">
-                                <option value="all">الكل</option>
-                            </select>
-                        </div>
-                        <div class="filter-item small">
-                            <label class="filter-label"><i class="fas fa-globe"></i> الجنسية</label>
-                            <select class="filter-control" id="filterNationality">
-                                <option value="all">الكل</option>
-                                <option value="سعودي">سعودي</option>
-                                <option value="يمني">يمني</option>
-                                <option value="مقيم">مقيم</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="filters-row">
-                        <div class="filter-item">
-                            <label class="filter-label"><i class="fas fa-calendar-plus"></i> من تاريخ</label>
-                            <input type="date" class="filter-control" id="filterDateFrom">
-                        </div>
-                        <div class="filter-item">
-                            <label class="filter-label"><i class="fas fa-calendar-check"></i> إلى تاريخ</label>
-                            <input type="date" class="filter-control" id="filterDateTo">
-                        </div>
-                        <div class="filter-item small">
-                            <label class="filter-label"><i class="fas fa-wallet"></i> طريقة الدفع</label>
-                            <select class="filter-control" id="filterPayment">
-                                <option value="all">الكل</option>
-                            </select>
-                        </div>
-                        <div class="filter-item small">
-                            <label class="filter-label"><i class="fas fa-user-tie"></i> الوكلاء</label>
-                            <select class="filter-control" id="filterAgents">
-                                <option value="all">الكل</option>
-                                <option value="has">لديه وكلاء</option>
-                                <option value="none">بدون وكلاء</option>
-                            </select>
-                        </div>
-                        <div class="filter-item small">
-                            <label class="filter-label"><i class="fas fa-sort"></i> الترتيب</label>
-                            <select class="filter-control" id="filterSort">
-                                <option value="newest">الأحدث أولاً</option>
-                                <option value="oldest">الأقدم أولاً</option>
-                                <option value="name_asc">الاسم (أ-ي)</option>
-                                <option value="name_desc">الاسم (ي-أ)</option>
-                            </select>
-                        </div>
-                        <div class="filter-actions">
-                            <button type="button" class="btn-filter-action clear" onclick="clearFilters()">
-                                <i class="fas fa-rotate-left"></i> مسح
-                            </button>
-                        </div>
-                    </div>
-                </div>
+  --shadow-sm: 0 1px 3px rgba(15, 43, 70, 0.06);
+  --shadow-md: 0 4px 16px rgba(15, 43, 70, 0.08);
+  --shadow-lg: 0 12px 40px rgba(15, 43, 70, 0.12);
+  --shadow-gold: 0 6px 20px rgba(201, 162, 39, 0.3);
 
-                <div class="stats-row">
-                    <div class="stat-card">
-                        <div class="stat-icon royal"><i class="fas fa-users"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="statTotal">0</div>
-                            <div class="stat-label">إجمالي {{ $config['entity_name'] }}</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon emerald"><i class="fas fa-user-check"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="statActive">0</div>
-                            <div class="stat-label">نشط</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon cherry"><i class="fas fa-user-slash"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="statBlocked">0</div>
-                            <div class="stat-label">محظور</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon sky"><i class="{{ $config['sub_section_icon'] }}"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="statAgents">0</div>
-                            <div class="stat-label">{{ $config['sub_section_title'] }}</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon gold"><i class="fas fa-building"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="statAgencies">0</div>
-                            <div class="stat-label">المؤسسات</div>
-                        </div>
-                    </div>
-                </div>
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-                <div class="workspace">
-                    <aside class="owners-panel">
-                        <div class="panel-header">
-                            <div class="panel-header-title">
-                                <i class="fas fa-list"></i> قائمة {{ $config['entity_name'] }}
-                                <span class="count" id="listCount">0</span>
-                            </div>
-                        </div>
-                        <div class="owners-list" id="ownersList"></div>
-                    </aside>
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-                    <main class="details-panel">
-                        <div class="empty-state" id="emptyState">
-                            <i class="fas fa-user-tie"></i>
-                            <h3>اختر {{ $config['entity_singular'] }}اً لعرض تفاصيله</h3>
-                            <p>انقر على أي {{ $config['entity_singular'] }} من القائمة لعرض بياناته وإدارة {{
-                                $config['entity_sub'] }}</p>
-                            <button type="button" class="btn-add-main" onclick="openOwnerModal()">
-                                <i class="fas fa-user-plus"></i> إضافة {{ $config['entity_singular'] }} جديد
-                            </button>
-                        </div>
+body {
+  font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+  padding: 0;
+}
 
-                        <div class="details-content" id="detailsContent">
-                            <div class="details-header">
-                                <div class="details-avatar" id="detailsAvatar">م</div>
-                                <div class="details-info">
-                                    <div class="details-name">
-                                        <span id="detailsName">—</span>
-                                        <span class="status-tag active" id="detailsStatus"><span></span> نشط</span>
-                                    </div>
-                                    <div class="details-id">
-                                        <span><i class="fas fa-hashtag"></i> <span id="detailsIdNumber">—</span></span>
-                                        <span><i class="fas fa-building"></i> <span id="detailsAgency">—</span></span>
-                                        <span><i class="fas fa-calendar"></i> <span id="detailsCreated">—</span></span>
-                                    </div>
-                                </div>
-                                <div class="details-actions">
-                                    <button type="button" class="btn-action agent" onclick="openAgentModal()"><i
-                                            class="fas fa-user-plus"></i> إضافة {{ $config['entity_sub'] }}</button>
-                                    <button type="button" class="btn-action edit" onclick="editOwnerWithLivewire()">
-                                        <i class="fas fa-pen"></i>
-                                        تعديل
-                                    </button>
-                                    <button type="button" class="btn-action block" id="blockBtn"
-                                        onclick="openBlockOwnerModal()"><i
-                                            class="fas fa-ban"></i><span>حظر</span></button>
-                                    <button type="button" class="btn-action delete" onclick="openDeleteOwnerModal()"><i
-                                            class="fas fa-trash"></i> حذف</button>
-                                </div>
-                            </div>
+.content-area {
+  width: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
 
-                            <div class="details-body">
-                                <div class="info-grid">
-                                    <div class="info-card">
-                                        <div class="info-card-icon blue"><i class="fas fa-mobile-screen"></i></div>
-                                        <div>
-                                            <div class="info-card-label">رقم الجوال</div>
-                                            <div class="info-card-value" id="infoPhone">—</div>
-                                        </div>
-                                    </div>
-                                    <div class="info-card">
-                                        <div class="info-card-icon gold"><i class="fas fa-envelope"></i></div>
-                                        <div>
-                                            <div class="info-card-label">البريد</div>
-                                            <div class="info-card-value" id="infoEmail">—</div>
-                                        </div>
-                                    </div>
-                                    <div class="info-card">
-                                        <div class="info-card-icon green"><i class="fas fa-globe"></i></div>
-                                        <div>
-                                            <div class="info-card-label">الجنسية</div>
-                                            <div class="info-card-value" id="infoNationality">—</div>
-                                        </div>
-                                    </div>
-                                    <div class="info-card">
-                                        <div class="info-card-icon orange"><i class="fas fa-id-card"></i></div>
-                                        <div>
-                                            <div class="info-card-label">نوع الهوية</div>
-                                            <div class="info-card-value" id="infoIdType">—</div>
-                                        </div>
-                                    </div>
-                                    <div class="info-card">
-                                        <div class="info-card-icon purple"><i class="fas fa-location-dot"></i></div>
-                                        <div>
-                                            <div class="info-card-label">العنوان</div>
-                                            <div class="info-card-value" id="infoAddress">—</div>
-                                        </div>
-                                    </div>
-                                    <div class="info-card">
-                                        <div class="info-card-icon sky"><i class="fas fa-building-columns"></i></div>
-                                        <div>
-                                            <div class="info-card-label">البنك</div>
-                                            <div class="info-card-value" id="infoBank">—</div>
-                                        </div>
-                                    </div>
-                                    <div class="info-card">
-                                        <div class="info-card-icon blue"><i class="fas fa-credit-card"></i></div>
-                                        <div>
-                                            <div class="info-card-label">الآيبان</div>
-                                            <div class="info-card-value" id="infoIban">—</div>
-                                        </div>
-                                    </div>
-                                    <div class="info-card">
-                                        <div class="info-card-icon green"><i class="fas fa-wallet"></i></div>
-                                        <div>
-                                            <div class="info-card-label">طريقة الدفع</div>
-                                            <div class="info-card-value" id="infoPayment">—</div>
-                                        </div>
-                                    </div>
-                                </div>
+.page-toolbar {
+  background: var(--bg-card);
+  border-radius: 0;
+  box-shadow: var(--shadow-sm);
+  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  position: relative;
+  border-bottom: 1px solid var(--border-soft);
+}
 
-                                <div class="section-card">
-                                    <div class="section-card-header">
-                                        <i class="{{ $config['sub_section_icon'] }} section-icon"></i>
-                                        <h3>{{ $config['sub_section_title'] }}</h3>
-                                        <span class="badge" id="agentsCount">0</span>
-                                        <div class="agents-tools">
-                                            <div class="agent-search-mini">
-                                                <i class="fas fa-search"></i>
-                                                <input type="text" id="agentSearchInput" placeholder="بحث...">
-                                            </div>
-                                            <button type="button" class="btn-add-small" onclick="openAgentModal()"><i
-                                                    class="fas fa-plus"></i> إضافة</button>
-                                        </div>
-                                    </div>
-                                    <div class="section-card-body">
-                                        <div id="agentsList"></div>
-                                    </div>
-                                </div>
+.toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
 
-                                <div class="section-card">
-                                    <div class="section-card-header"><i class="fas fa-note-sticky section-icon"></i>
-                                        <h3>ملاحظات</h3>
-                                    </div>
-                                    <div class="section-card-body">
-                                        <div class="notes-box" id="infoNotes">لا توجد ملاحظات.</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </main>
-                </div>
+.toolbar-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--royal), var(--midnight));
+  color: var(--gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(15, 43, 70, 0.25);
+}
+
+.toolbar-text h1 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--royal);
+  margin-bottom: 0.05rem;
+}
+
+.toolbar-text p {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-inline-start: auto;
+  flex-wrap: wrap;
+}
+
+.btn-add-main {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--royal);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: var(--transition);
+  box-shadow: 0 3px 10px rgba(201, 162, 39, 0.35);
+  height: 34px;
+  white-space: nowrap;
+}
+
+.btn-add-main:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(201, 162, 39, 0.5);
+}
+
+.btn-add-main.blue {
+  background: linear-gradient(135deg, var(--midnight), #2563EB);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(27, 77, 122, 0.35);
+}
+
+.btn-add-main.blue:hover {
+  box-shadow: 0 6px 16px rgba(27, 77, 122, 0.5);
+}
+
+.btn-add-main i { font-size: 0.72rem; }
+
+.filters-bar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-soft);
+  padding: 0.65rem 1rem;
+}
+
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.filters-row:last-child { margin-bottom: 0; }
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 140px;
+}
+
+.filter-item.small { flex: 0 0 auto; min-width: 120px; }
+
+.filter-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.filter-label i { color: var(--gold); font-size: 0.6rem; }
+
+.filter-control {
+  width: 100%;
+  padding: 0.42rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.76rem;
+  color: var(--text-primary);
+  background: var(--bg-field);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: var(--transition);
+  height: 32px;
+}
+
+.filter-control:focus {
+  border-color: var(--midnight);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(27, 77, 122, 0.1);
+}
+
+.filter-control:hover { background: #E8EEF5; }
+
+select.filter-control { cursor: pointer; }
+
+.filter-segmented {
+  display: flex;
+  align-items: center;
+  background: var(--bg-field);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem;
+  gap: 0.1rem;
+  height: 32px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter-segmented::-webkit-scrollbar { display: none; }
+
+.filter-btn {
+  background: transparent;
+  border: none;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: var(--transition);
+  white-space: nowrap;
+  height: 100%;
+}
+
+.filter-btn:hover { color: var(--midnight); }
+
+.filter-btn.active {
+  background: #fff;
+  color: var(--royal);
+  box-shadow: 0 2px 6px rgba(15, 43, 70, 0.1);
+}
+
+.filter-btn i { font-size: 0.65rem; }
+
+.filter-btn.active i { color: var(--gold); }
+
+.filter-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 2;
+  min-width: 200px;
+}
+
+.filter-search i {
+  position: absolute;
+  right: 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  pointer-events: none;
+}
+
+.filter-search input {
+  width: 100%;
+  padding: 0.42rem 1.9rem 0.42rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  background: var(--bg-field);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  transition: var(--transition);
+  height: 32px;
+}
+
+.filter-search input:focus {
+  border-color: var(--midnight);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(27, 77, 122, 0.1);
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-inline-start: auto;
+}
+
+.btn-filter-action {
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-soft);
+  background: #fff;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: var(--transition);
+  height: 32px;
+  white-space: nowrap;
+}
+
+.btn-filter-action:hover {
+  background: var(--bg-field);
+  color: var(--midnight);
+  border-color: #CBD5E1;
+}
+
+.btn-filter-action.clear:hover {
+  background: #FEF2F2;
+  color: var(--cherry);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.btn-filter-action i { font-size: 0.68rem; }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.stat-card {
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  transition: var(--transition);
+  border-left: 1px solid var(--border-soft);
+}
+
+.stat-card:last-child { border-left: none; }
+
+.stat-card:hover { background: var(--bg-field); }
+
+.stat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.stat-icon.royal   { background: rgba(15, 43, 70, 0.1); color: var(--royal); }
+.stat-icon.emerald { background: rgba(5, 150, 105, 0.12); color: var(--emerald); }
+.stat-icon.gold    { background: rgba(201, 162, 39, 0.15); color: var(--gold); }
+.stat-icon.sky     { background: rgba(2, 132, 199, 0.12); color: var(--sky); }
+.stat-icon.cherry  { background: rgba(220, 38, 38, 0.1); color: var(--cherry); }
+
+.stat-info { flex: 1; min-width: 0; }
+
+.stat-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--royal);
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 0.05rem;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 0;
+  background: var(--bg-page);
+  min-height: calc(100vh - 260px);
+}
+
+.owners-panel {
+  background: var(--bg-card);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-soft);
+  max-height: calc(100vh - 260px);
+  position: sticky;
+  top: 0;
+}
+
+.panel-header {
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid var(--border-soft);
+  background: linear-gradient(135deg, rgba(15, 43, 70, 0.02) 0%, rgba(201, 162, 39, 0.04) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.panel-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--royal);
+}
+
+.panel-header-title i { color: var(--gold); font-size: 0.8rem; }
+
+.panel-header-title .count {
+  background: var(--bg-field);
+  color: var(--midnight);
+  padding: 0.08rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.owners-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.35rem;
+}
+
+.owners-list::-webkit-scrollbar { width: 4px; }
+.owners-list::-webkit-scrollbar-track { background: transparent; }
+.owners-list::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 999px; }
+
+.owner-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1.5px solid transparent;
+  margin-bottom: 0.25rem;
+  position: relative;
+}
+
+.owner-item:hover {
+  background: var(--bg-field);
+  border-color: var(--border-soft);
+}
+
+.owner-item.active {
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.08) 0%, rgba(15, 43, 70, 0.03) 100%);
+  border-color: var(--gold);
+}
+
+.owner-item.active::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-light));
+  border-radius: 999px;
+}
+
+.owner-item.blocked { opacity: 0.7; }
+
+.owner-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--royal), var(--midnight));
+  color: var(--gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.owner-avatar.blocked {
+  background: linear-gradient(135deg, #64748B, #94A3B8);
+  color: #fff;
+}
+
+.owner-avatar.status-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: -2px;
+  width: 10px;
+  height: 10px;
+  background: var(--emerald);
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.owner-avatar.status-inactive::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: -2px;
+  width: 10px;
+  height: 10px;
+  background: var(--cherry);
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.owner-info { flex: 1; min-width: 0; }
+
+.owner-name {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.blocked-tag {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--cherry);
+  padding: 0.02rem 0.35rem;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.owner-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+}
+
+.owner-meta i { font-size: 0.55rem; }
+
+.owner-actions-mini {
+  display: flex;
+  gap: 0.1rem;
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.owner-item:hover .owner-actions-mini { opacity: 1; }
+
+.btn-mini {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.btn-mini:hover { background: var(--bg-field); color: var(--midnight); }
+.btn-mini.danger:hover { background: #FEF2F2; color: var(--cherry); }
+.btn-mini.warning:hover { background: #FFFBEB; color: var(--terracotta); }
+.btn-mini.success:hover { background: #ECFDF5; color: var(--emerald); }
+
+.details-panel {
+  background: var(--bg-card);
+  overflow: hidden;
+  min-height: calc(100vh - 260px);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  min-height: calc(100vh - 260px);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  color: var(--border-soft);
+  margin-bottom: 0.75rem;
+}
+
+.empty-state h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+
+.empty-state p {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  max-width: 260px;
+  margin-bottom: 0.9rem;
+}
+
+.details-content { display: none; }
+.details-content.active { display: block; }
+
+.details-header {
+  padding: 0.85rem 1rem;
+  background: linear-gradient(135deg, rgba(15, 43, 70, 0.03) 0%, rgba(201, 162, 39, 0.05) 100%);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.details-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--royal), var(--midnight));
+  color: var(--gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px rgba(15, 43, 70, 0.25);
+  position: relative;
+}
+
+.details-avatar.blocked {
+  background: linear-gradient(135deg, #64748B, #94A3B8);
+  color: #fff;
+}
+
+.details-avatar.status-active::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: -3px;
+  width: 14px;
+  height: 14px;
+  background: var(--emerald);
+  border: 3px solid #fff;
+  border-radius: 50%;
+}
+
+.details-avatar.status-inactive::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: -3px;
+  width: 14px;
+  height: 14px;
+  background: var(--cherry);
+  border: 3px solid #fff;
+  border-radius: 50%;
+}
+
+.details-info { flex: 1; min-width: 0; }
+
+.details-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--royal);
+  margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.status-tag {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.status-tag.active {
+  background: rgba(5, 150, 105, 0.12);
+  color: var(--emerald);
+}
+
+.status-tag.active::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: var(--emerald);
+  border-radius: 50%;
+}
+
+.status-tag.inactive {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--cherry);
+}
+
+.status-tag.inactive::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: var(--cherry);
+  border-radius: 50%;
+}
+
+.status-tag.blocked {
+  background: rgba(220, 38, 38, 0.15);
+  color: var(--cherry);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.status-tag.blocked::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: var(--cherry);
+  border-radius: 50%;
+}
+
+.details-id {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.details-id span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.details-id i { color: var(--gold); font-size: 0.62rem; }
+
+.details-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.btn-action {
+  padding: 0.42rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-soft);
+  background: #fff;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  transition: var(--transition);
+  height: 32px;
+  white-space: nowrap;
+}
+
+.btn-action:hover {
+  background: var(--bg-field);
+  border-color: #CBD5E1;
+  transform: translateY(-1px);
+}
+
+.btn-action.edit {
+  background: linear-gradient(135deg, var(--midnight), #2563EB);
+  color: #fff;
+  border-color: transparent;
+}
+
+.btn-action.edit:hover { box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+
+.btn-action.delete {
+  background: #fff;
+  color: var(--cherry);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.btn-action.delete:hover { background: #FEF2F2; border-color: var(--cherry); }
+
+.btn-action.block {
+  background: #fff;
+  color: var(--terracotta);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.btn-action.block:hover { background: #FFFBEB; border-color: var(--terracotta); }
+
+.btn-action.unblock {
+  background: #fff;
+  color: var(--emerald);
+  border-color: rgba(5, 150, 105, 0.3);
+}
+
+.btn-action.unblock:hover { background: #ECFDF5; border-color: var(--emerald); }
+
+.btn-action.agent {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--royal);
+  border-color: transparent;
+  box-shadow: 0 3px 10px rgba(201, 162, 39, 0.3);
+}
+
+.btn-action.agent:hover { box-shadow: 0 6px 16px rgba(201, 162, 39, 0.45); }
+
+.details-body { padding: 0.85rem 1rem; }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.info-card {
+  background: var(--bg-field);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  transition: var(--transition);
+  border: 1.5px solid transparent;
+}
+
+.info-card:hover {
+  background: #fff;
+  border-color: var(--border-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.info-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.info-card-icon.blue   { background: rgba(27, 77, 122, 0.12); color: var(--midnight); }
+.info-card-icon.gold   { background: rgba(201, 162, 39, 0.12); color: var(--gold); }
+.info-card-icon.green  { background: rgba(5, 150, 105, 0.12); color: var(--emerald); }
+.info-card-icon.orange { background: rgba(217, 119, 6, 0.12); color: var(--terracotta); }
+.info-card-icon.purple { background: rgba(124, 58, 237, 0.12); color: var(--purple); }
+.info-card-icon.sky    { background: rgba(2, 132, 199, 0.12); color: var(--sky); }
+
+.info-card-content { flex: 1; min-width: 0; }
+
+.info-card-label {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.05rem;
+}
+
+.info-card-value {
+  font-size: 0.76rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-card-value.empty { color: var(--text-muted); font-style: italic; font-weight: 400; }
+
+.section-card {
+  background: #fff;
+  border: 1.5px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.section-card:last-child { margin-bottom: 0; }
+
+.section-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.85rem;
+  background: linear-gradient(135deg, rgba(15, 43, 70, 0.02) 0%, rgba(201, 162, 39, 0.04) 100%);
+  border-bottom: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+
+.section-card-header i.section-icon {
+  color: var(--gold);
+  font-size: 0.78rem;
+}
+
+.section-card-header h3 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--royal);
+}
+
+.section-card-header .badge {
+  background: var(--bg-field);
+  color: var(--midnight);
+  padding: 0.08rem 0.42rem;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.agents-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-inline-start: auto;
+  flex-wrap: wrap;
+}
+
+.agent-search-mini {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.agent-search-mini i {
+  position: absolute;
+  right: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  pointer-events: none;
+}
+
+.agent-search-mini input {
+  width: 140px;
+  padding: 0.28rem 1.4rem 0.28rem 0.45rem;
+  font-family: inherit;
+  font-size: 0.68rem;
+  background: var(--bg-field);
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  color: var(--text-primary);
+  outline: none;
+  transition: var(--transition);
+  height: 26px;
+}
+
+.agent-search-mini input:focus {
+  border-color: var(--midnight);
+  background: #fff;
+}
+
+.btn-add-small {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--royal);
+  border: none;
+  padding: 0.28rem 0.6rem;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  transition: var(--transition);
+  box-shadow: 0 2px 6px rgba(201, 162, 39, 0.3);
+  height: 26px;
+  white-space: nowrap;
+}
+
+.btn-add-small:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.45);
+}
+
+.section-card-body { padding: 0.55rem 0.75rem; }
+
+.agent-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--bg-field);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  border: 1.5px solid transparent;
+  margin-bottom: 0.3rem;
+  position: relative;
+}
+
+.agent-card:last-child { margin-bottom: 0; }
+
+.agent-card:hover {
+  background: #fff;
+  border-color: var(--border-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.agent-card.blocked {
+  background: rgba(220, 38, 38, 0.05);
+  border-color: rgba(220, 38, 38, 0.15);
+}
+
+.agent-card.blocked:hover {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.agent-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--sky), #38BDF8);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.agent-avatar.blocked {
+  background: linear-gradient(135deg, #64748B, #94A3B8);
+}
+
+.agent-info { flex: 1; min-width: 0; }
+
+.agent-name {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.agent-meta {
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.agent-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.agent-meta i { font-size: 0.55rem; }
+
+.agent-type-tag {
+  background: rgba(2, 132, 199, 0.12);
+  color: var(--sky);
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 600;
+}
+
+.agent-actions {
+  display: flex;
+  gap: 0.12rem;
+  flex-shrink: 0;
+}
+
+.btn-agent-action {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: #fff;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  transition: var(--transition);
+}
+
+.btn-agent-action:hover {
+  background: var(--bg-field);
+  border-color: var(--border-soft);
+  transform: translateY(-1px);
+}
+
+.btn-agent-action.view:hover { color: var(--sky); border-color: rgba(2, 132, 199, 0.3); background: rgba(2, 132, 199, 0.08); }
+.btn-agent-action.edit:hover { color: var(--midnight); border-color: rgba(27, 77, 122, 0.3); background: rgba(27, 77, 122, 0.08); }
+.btn-agent-action.delete:hover { color: var(--cherry); border-color: rgba(220, 38, 38, 0.3); background: #FEF2F2; }
+.btn-agent-action.block:hover { color: var(--terracotta); border-color: rgba(217, 119, 6, 0.3); background: #FFFBEB; }
+.btn-agent-action.unblock:hover { color: var(--emerald); border-color: rgba(5, 150, 105, 0.3); background: #ECFDF5; }
+
+.agent-empty {
+  text-align: center;
+  padding: 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.agent-empty i {
+  font-size: 1.4rem;
+  color: var(--border-soft);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.agent-empty .btn-add-small { margin-top: 0.45rem; }
+
+.notes-box {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  padding: 0.5rem 0.7rem;
+  background: var(--bg-field);
+  border-radius: var(--radius-sm);
+  font-style: italic;
+}
+
+.notes-box.has-content {
+  font-style: normal;
+  color: var(--text-primary);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 43, 70, 0.5);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.show { display: flex; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 660px;
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal.small { max-width: 420px; }
+.modal.medium { max-width: 540px; }
+
+.modal-header {
+  padding: 0.8rem 1rem;
+  background: linear-gradient(135deg, var(--royal) 0%, var(--midnight) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  position: relative;
+}
+
+.modal-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+}
+
+.modal-header-icon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--royal);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.modal-header-text h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.05rem;
+}
+
+.modal-header-text p {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.modal-close {
+  margin-inline-start: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  font-size: 0.8rem;
+}
+
+.modal-close:hover { background: rgba(220, 38, 38, 0.3); }
+
+.modal-body {
+  padding: 1rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-body::-webkit-scrollbar { width: 4px; }
+.modal-body::-webkit-scrollbar-track { background: transparent; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 999px; }
+
+.modal-footer {
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  background: var(--bg-field);
+  flex-wrap: wrap;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.form-group.full { grid-column: 1 / -1; }
+
+.form-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+.form-label .required { color: var(--cherry); }
+
+.form-control {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  background: var(--bg-field);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: var(--transition);
+  height: 34px;
+}
+
+.form-control:hover { background: #E8EEF5; }
+
+.form-control:focus {
+  border-color: var(--midnight);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(27, 77, 122, 0.1);
+}
+
+select.form-control { cursor: pointer; }
+
+textarea.form-control {
+  height: auto;
+  min-height: 65px;
+  resize: vertical;
+  padding: 0.45rem 0.6rem;
+  line-height: 1.5;
+}
+
+.btn {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.45rem 1.05rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
+  transition: var(--transition);
+  height: 34px;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-soft);
+}
+
+.btn-secondary:hover { background: var(--bg-page); border-color: #CBD5E1; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--royal), var(--midnight));
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(15, 43, 70, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 43, 70, 0.4);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--cherry), #EF4444);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.3);
+}
+
+.btn-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, var(--terracotta), #F59E0B);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(217, 119, 6, 0.3);
+}
+
+.btn-warning:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.4);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--emerald), #10B981);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(5, 150, 105, 0.3);
+}
+
+.btn-success:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--royal);
+  box-shadow: 0 3px 10px rgba(201, 162, 39, 0.3);
+}
+
+.btn-gold:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(201, 162, 39, 0.45);
+}
+
+.confirm-content {
+  text-align: center;
+  padding: 0.3rem 0;
+}
+
+.confirm-icon {
+  width: 56px;
+  height: 56px;
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--cherry);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin: 0 auto 0.65rem;
+}
+
+.confirm-icon.warning {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--terracotta);
+}
+
+.confirm-icon.success {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--emerald);
+}
+
+.confirm-content h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.confirm-content p {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirm-content strong { color: var(--cherry); }
+
+.agent-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-field);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.35rem;
+}
+
+.agent-detail-row:last-child { margin-bottom: 0; }
+
+.agent-detail-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: rgba(2, 132, 199, 0.12);
+  color: var(--sky);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.agent-detail-content { flex: 1; min-width: 0; }
+
+.agent-detail-label {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.05rem;
+}
+
+.agent-detail-value {
+  font-size: 0.76rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(150%);
+  background: var(--royal);
+  color: #fff;
+  padding: 0.6rem 1.15rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  z-index: 2000;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 90vw;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { border-right: 4px solid var(--emerald); }
+.toast.error { border-right: 4px solid var(--cherry); }
+.toast.success i { color: var(--emerald); }
+.toast.error i { color: var(--cherry); }
+
+@media (max-width: 1200px) {
+  .workspace { grid-template-columns: 300px 1fr; }
+  .stats-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+@media (max-width: 992px) {
+  .stats-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stat-card { border-left: none; border-bottom: 1px solid var(--border-soft); }
+  .stat-card:nth-child(3n) { border-left: none; }
+  .stat-card:nth-child(5) { border-bottom: none; }
+}
+
+@media (max-width: 768px) {
+  .page-toolbar { padding: 0.6rem 0.75rem; }
+  .toolbar-text h1 { font-size: 0.9rem; }
+  .toolbar-text p { font-size: 0.65rem; }
+  .toolbar-icon { width: 34px; height: 34px; font-size: 0.9rem; }
+  .toolbar-actions { width: 100%; }
+  .btn-add-main { flex: 1; justify-content: center; }
+  .workspace { grid-template-columns: 1fr; }
+  .owners-panel { border-left: none; border-bottom: 1px solid var(--border-soft); max-height: 320px; position: relative; }
+  .details-panel { min-height: auto; }
+  .empty-state { min-height: 260px; padding: 1.75rem 1rem; }
+  .details-header { padding: 0.75rem 0.85rem; gap: 0.55rem; }
+  .details-avatar { width: 46px; height: 46px; font-size: 1.05rem; }
+  .details-name { font-size: 0.95rem; }
+  .details-body { padding: 0.75rem 0.85rem; }
+  .info-grid { grid-template-columns: 1fr; }
+  .details-actions { width: 100%; }
+  .btn-action { flex: 1; justify-content: center; }
+  .form-grid { grid-template-columns: 1fr; }
+  .agents-tools { width: 100%; }
+  .agent-search-mini { flex: 1; }
+  .agent-search-mini input { width: 100%; }
+  .filters-row { gap: 0.35rem; }
+  .filter-item { min-width: 110px; }
+}
+
+@media (max-width: 480px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-card:nth-child(4) { border-bottom: none; }
+  .filter-item { min-width: 100%; }
+  .filter-actions { width: 100%; margin-inline-start: 0; }
+  .btn-filter-action { flex: 1; justify-content: center; }
+  .modal { border-radius: var(--radius-md); }
+  .modal-footer { flex-direction: column-reverse; }
+  .modal-footer .btn { width: 100%; }
+  .agent-card { flex-wrap: wrap; }
+  .agent-actions { width: 100%; justify-content: flex-end; margin-top: 0.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+
+
+<div class="content-area">
+
+  <div class="page-toolbar">
+    <div class="toolbar-title">
+      <div class="toolbar-icon"><i class="fas fa-users-gear"></i></div>
+      <div class="toolbar-text">
+        <h1>إدارة المالكين والوكلاء</h1>
+        <p>نظام شامل للعرض والإضافة والتعديل والحظر وإدارة الوكلاء</p>
+      </div>
+    </div>
+
+    <div class="toolbar-actions">
+      <button class="btn-add-main blue" onclick="openAgentModalStandalone()">
+        <i class="fas fa-user-tie"></i>
+        إضافة وكيل
+      </button>
+      <button class="btn-add-main" onclick="openOwnerModal()">
+        <i class="fas fa-user-plus"></i>
+        إضافة مالك
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+
+    <div class="filters-row">
+      <div class="filter-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="بحث بالاسم، الجوال، الهوية، البريد...">
+      </div>
+
+      <div class="filter-item small">
+        <label class="filter-label"><i class="fas fa-toggle-on"></i> الحالة</label>
+        <select class="filter-control" id="filterStatus">
+          <option value="all">الكل</option>
+          <option value="active">نشط</option>
+          <option value="inactive">غير نشط</option>
+          <option value="blocked">محظور</option>
+        </select>
+      </div>
+
+      <div class="filter-item small">
+        <label class="filter-label"><i class="fas fa-building"></i> المؤسسة</label>
+        <select class="filter-control" id="filterAgency">
+          <option value="all">الكل</option>
+          <option value="مؤسسة النخبة">مؤسسة النخبة</option>
+          <option value="مؤسسة الأمانة">مؤسسة الأمانة</option>
+          <option value="مؤسسة الرائد">مؤسسة الرائد</option>
+        </select>
+      </div>
+
+      <div class="filter-item small">
+        <label class="filter-label"><i class="fas fa-id-card"></i> نوع الهوية</label>
+        <select class="filter-control" id="filterIdType">
+          <option value="all">الكل</option>
+          <option value="national_id">هوية وطنية</option>
+          <option value="iqama">إقامة</option>
+          <option value="passport">جواز سفر</option>
+          <option value="commercial_reg">سجل تجاري</option>
+        </select>
+      </div>
+
+      <div class="filter-item small">
+        <label class="filter-label"><i class="fas fa-globe"></i> الجنسية</label>
+        <select class="filter-control" id="filterNationality">
+          <option value="all">الكل</option>
+          <option value="سعودي">سعودي</option>
+          <option value="مقيم">مقيم</option>
+          <option value="خليجي">خليجي</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-item">
+        <label class="filter-label"><i class="fas fa-calendar-plus"></i> من تاريخ</label>
+        <input type="date" class="filter-control" id="filterDateFrom">
+      </div>
+
+      <div class="filter-item">
+        <label class="filter-label"><i class="fas fa-calendar-check"></i> إلى تاريخ</label>
+        <input type="date" class="filter-control" id="filterDateTo">
+      </div>
+
+      <div class="filter-item small">
+        <label class="filter-label"><i class="fas fa-wallet"></i> طريقة الدفع</label>
+        <select class="filter-control" id="filterPayment">
+          <option value="all">الكل</option>
+          <option value="bank_transfer">تحويل بنكي</option>
+          <option value="cheque">شيك</option>
+          <option value="cash">نقداً</option>
+        </select>
+      </div>
+
+      <div class="filter-item small">
+        <label class="filter-label"><i class="fas fa-user-tie"></i> الوكلاء</label>
+        <select class="filter-control" id="filterAgents">
+          <option value="all">الكل</option>
+          <option value="has">لديه وكلاء</option>
+          <option value="none">بدون وكلاء</option>
+        </select>
+      </div>
+
+      <div class="filter-item small">
+        <label class="filter-label"><i class="fas fa-sort"></i> الترتيب</label>
+        <select class="filter-control" id="filterSort">
+          <option value="newest">الأحدث أولاً</option>
+          <option value="oldest">الأقدم أولاً</option>
+          <option value="name_asc">الاسم (أ-ي)</option>
+          <option value="name_desc">الاسم (ي-أ)</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn-filter-action clear" onclick="clearFilters()">
+          <i class="fas fa-rotate-left"></i>
+          مسح
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon royal"><i class="fas fa-users"></i></div>
+      <div class="stat-info">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">إجمالي المالكين</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fas fa-user-check"></i></div>
+      <div class="stat-info">
+        <div class="stat-value" id="statActive">0</div>
+        <div class="stat-label">نشط</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon cherry"><i class="fas fa-user-slash"></i></div>
+      <div class="stat-info">
+        <div class="stat-value" id="statBlocked">0</div>
+        <div class="stat-label">محظور</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon sky"><i class="fas fa-user-tie"></i></div>
+      <div class="stat-info">
+        <div class="stat-value" id="statAgents">0</div>
+        <div class="stat-label">إجمالي الوكلاء</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon gold"><i class="fas fa-building"></i></div>
+      <div class="stat-info">
+        <div class="stat-value" id="statAgencies">0</div>
+        <div class="stat-label">المؤسسات</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+
+    <aside class="owners-panel">
+      <div class="panel-header">
+        <div class="panel-header-title">
+          <i class="fas fa-list"></i>
+          قائمة المالكين
+          <span class="count" id="listCount">0</span>
+        </div>
+      </div>
+      <div class="owners-list" id="ownersList"></div>
+    </aside>
+
+    <main class="details-panel">
+
+      <div class="empty-state" id="emptyState">
+        <i class="fas fa-user-tie"></i>
+        <h3>اختر مالكاً لعرض تفاصيله</h3>
+        <p>انقر على أي مالك من القائمة لعرض بياناته وإدارة وكلائه</p>
+        <button class="btn-add-main" onclick="openOwnerModal()">
+          <i class="fas fa-user-plus"></i>
+          إضافة مالك جديد
+        </button>
+      </div>
+
+      <div class="details-content" id="detailsContent">
+
+        <div class="details-header">
+          <div class="details-avatar" id="detailsAvatar">م</div>
+
+          <div class="details-info">
+            <div class="details-name">
+              <span id="detailsName">—</span>
+              <span class="status-tag active" id="detailsStatus"><span></span> نشط</span>
             </div>
-
-            {{-- Owner Modal --}}
-            <div class="modal-overlay" id="ownerModal">
-                <div class="modal">
-                    <div class="modal-header">
-                        <div class="modal-header-icon"><i class="fas fa-user-plus"></i></div>
-                        <div class="modal-header-text">
-                            <h2 id="ownerModalTitle">إضافة</h2>
-                            <p id="ownerModalSubtitle">أدخل البيانات</p>
-                        </div>
-                        <button type="button" class="modal-close" onclick="closeModal('ownerModal')"><i
-                                class="fas fa-xmark"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="ownerForm" onsubmit="return false">
-                            <div class="form-grid">
-                                <div class="form-group"><label class="form-label">الاسم <span
-                                            class="required">*</span></label><input type="text" class="form-control"
-                                        id="f_full_name"></div>
-                                <div class="form-group"><label class="form-label">الجوال <span
-                                            class="required">*</span></label><input type="tel" class="form-control"
-                                        id="f_phone"></div>
-                                <div class="form-group"><label class="form-label">جوال ثانوي</label><input type="tel"
-                                        class="form-control" id="f_phone2"></div>
-                                <div class="form-group"><label class="form-label">البريد</label><input type="email"
-                                        class="form-control" id="f_email"></div>
-                                <div class="form-group"><label class="form-label">نوع الهوية</label><select
-                                        class="form-control" id="f_id_type"></select></div>
-                                <div class="form-group"><label class="form-label">رقم الهوية</label><input type="text"
-                                        class="form-control" id="f_id_number"></div>
-                                <div class="form-group"><label class="form-label">الجنسية</label><input type="text"
-                                        class="form-control" id="f_nationality" value="سعودي"></div>
-                                <div class="form-group"><label class="form-label">المؤسسة</label><select
-                                        class="form-control" id="f_agency"></select></div>
-                                <div class="form-group full"><label class="form-label">العنوان</label><input type="text"
-                                        class="form-control" id="f_address"></div>
-                                <div class="form-group"><label class="form-label">البنك</label><input type="text"
-                                        class="form-control" id="f_bank_name"></div>
-                                <div class="form-group"><label class="form-label">الآيبان</label><input type="text"
-                                        class="form-control" id="f_bank_iban"></div>
-                                <div class="form-group"><label class="form-label">طريقة الدفع</label><select
-                                        class="form-control" id="f_payment"></select></div>
-                                <div class="form-group"><label class="form-label">الحالة</label>
-                                    <select class="form-control" id="f_status">
-                                        <option value="active">نشط</option>
-                                        <option value="inactive">غير نشط</option>
-                                        <option value="blocked">محظور</option>
-                                    </select>
-                                </div>
-                                <div class="form-group full"><label class="form-label">ملاحظات</label><textarea
-                                        class="form-control" id="f_notes" rows="3"></textarea></div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('ownerModal')">إلغاء</button>
-                        <button type="button" class="btn btn-primary" onclick="saveOwner()"><i
-                                class="fas fa-floppy-disk"></i> <span id="saveOwnerText">حفظ</span></button>
-                    </div>
-                </div>
+            <div class="details-id">
+              <span><i class="fas fa-hashtag"></i> <span id="detailsIdNumber">—</span></span>
+              <span><i class="fas fa-building"></i> <span id="detailsAgency">—</span></span>
+              <span><i class="fas fa-calendar"></i> <span id="detailsCreated">—</span></span>
             </div>
+          </div>
 
-            {{-- Agent Modal --}}
-            <div class="modal-overlay" id="agentModal">
-                <div class="modal medium">
-                    <div class="modal-header">
-                        <div class="modal-header-icon"><i class="{{ $config['sub_section_icon'] }}"></i></div>
-                        <div class="modal-header-text">
-                            <h2 id="agentModalTitle">إضافة وكيل</h2>
-                            <p id="agentModalSubtitle">أضف وكيلاً</p>
-                        </div>
-                        <button type="button" class="modal-close" onclick="closeModal('agentModal')"><i
-                                class="fas fa-xmark"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="agentForm" onsubmit="return false">
-                            <div class="form-grid">
-                                <div class="form-group"><label class="form-label">الاسم <span
-                                            class="required">*</span></label><input type="text" class="form-control"
-                                        id="a_name"></div>
-                                <div class="form-group"><label class="form-label">الجوال <span
-                                            class="required">*</span></label><input type="tel" class="form-control"
-                                        id="a_phone"></div>
-                                <div class="form-group"><label class="form-label">البريد</label><input type="email"
-                                        class="form-control" id="a_email"></div>
-                                <div class="form-group"><label class="form-label">نوع الوكالة</label><select
-                                        class="form-control" id="a_type"></select></div>
-                                <div class="form-group full"><label class="form-label">ملاحظات</label><textarea
-                                        class="form-control" id="a_notes" rows="2"></textarea></div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('agentModal')">إلغاء</button>
-                        <button type="button" class="btn btn-gold" onclick="saveAgent()"><i
-                                class="fas fa-floppy-disk"></i> <span id="saveAgentText">حفظ</span></button>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Agent View --}}
-            <div class="modal-overlay" id="agentViewModal">
-                <div class="modal small">
-                    <div class="modal-header">
-                        <div class="modal-header-icon"><i class="fas fa-id-badge"></i></div>
-                        <div class="modal-header-text">
-                            <h2>تفاصيل الوكيل</h2>
-                            <p>معلومات كاملة</p>
-                        </div>
-                        <button type="button" class="modal-close" onclick="closeModal('agentViewModal')"><i
-                                class="fas fa-xmark"></i></button>
-                    </div>
-                    <div class="modal-body" id="agentViewBody"></div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('agentViewModal')">إغلاق</button>
-                        <button type="button" class="btn btn-primary" onclick="editAgentFromView()"><i
-                                class="fas fa-pen"></i> تعديل</button>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Delete Owner --}}
-            <div class="modal-overlay" id="deleteOwnerModal">
-                <div class="modal small">
-                    <div class="modal-header">
-                        <div class="modal-header-icon"
-                            style="background:linear-gradient(135deg,var(--cherry),#EF4444);color:#fff"><i
-                                class="fas fa-trash"></i></div>
-                        <div class="modal-header-text">
-                            <h2>تأكيد الحذف</h2>
-                            <p>لا يمكن التراجع</p>
-                        </div>
-                        <button type="button" class="modal-close" onclick="closeModal('deleteOwnerModal')"><i
-                                class="fas fa-xmark"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="confirm-content">
-                            <div class="confirm-icon"><i class="fas fa-triangle-exclamation"></i></div>
-                            <h3>هل أنت متأكد؟</h3>
-                            <p>سيتم حذف <strong id="deleteOwnerName">—</strong></p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('deleteOwnerModal')">إلغاء</button>
-                        <button type="button" class="btn btn-danger" onclick="confirmDeleteOwner()"><i
-                                class="fas fa-trash"></i> نعم</button>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Delete Agent --}}
-            <div class="modal-overlay" id="deleteAgentModal">
-                <div class="modal small">
-                    <div class="modal-header">
-                        <div class="modal-header-icon"
-                            style="background:linear-gradient(135deg,var(--cherry),#EF4444);color:#fff"><i
-                                class="fas fa-user-xmark"></i></div>
-                        <div class="modal-header-text">
-                            <h2>حذف الوكيل</h2>
-                            <p>لا يمكن التراجع</p>
-                        </div>
-                        <button type="button" class="modal-close" onclick="closeModal('deleteAgentModal')"><i
-                                class="fas fa-xmark"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="confirm-content">
-                            <div class="confirm-icon"><i class="fas fa-triangle-exclamation"></i></div>
-                            <h3>حذف الوكيل؟</h3>
-                            <p><strong id="deleteAgentName">—</strong></p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('deleteAgentModal')">إلغاء</button>
-                        <button type="button" class="btn btn-danger" onclick="confirmDeleteAgent()"><i
-                                class="fas fa-trash"></i> نعم</button>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Block Owner --}}
-            <div class="modal-overlay" id="blockOwnerModal">
-                <div class="modal small">
-                    <div class="modal-header">
-                        <div class="modal-header-icon" id="blockModalIcon"
-                            style="background:linear-gradient(135deg,var(--terracotta),#F59E0B);color:#fff"><i
-                                class="fas fa-ban"></i></div>
-                        <div class="modal-header-text">
-                            <h2 id="blockModalTitle">حظر</h2>
-                            <p id="blockModalSubtitle">سيتم منع الوصول</p>
-                        </div>
-                        <button type="button" class="modal-close" onclick="closeModal('blockOwnerModal')"><i
-                                class="fas fa-xmark"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="confirm-content">
-                            <div class="confirm-icon warning" id="blockConfirmIcon"><i class="fas fa-ban"></i></div>
-                            <h3 id="blockConfirmTitle">حظر؟</h3>
-                            <p>سيتم حظر <strong id="blockOwnerName">—</strong></p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('blockOwnerModal')">إلغاء</button>
-                        <button type="button" class="btn" id="blockConfirmBtn" onclick="confirmBlockOwner()"><i
-                                class="fas fa-ban"></i> <span>حظر</span></button>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Block Agent --}}
-            <div class="modal-overlay" id="blockAgentModal">
-                <div class="modal small">
-                    <div class="modal-header">
-                        <div class="modal-header-icon" id="blockAgentIcon"
-                            style="background:linear-gradient(135deg,var(--terracotta),#F59E0B);color:#fff"><i
-                                class="fas fa-user-slash"></i></div>
-                        <div class="modal-header-text">
-                            <h2 id="blockAgentTitle">حظر الوكيل</h2>
-                            <p id="blockAgentSubtitle">سيتم التعطيل</p>
-                        </div>
-                        <button type="button" class="modal-close" onclick="closeModal('blockAgentModal')"><i
-                                class="fas fa-xmark"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="confirm-content">
-                            <div class="confirm-icon warning" id="blockAgentConfirmIcon"><i
-                                    class="fas fa-user-slash"></i></div>
-                            <h3 id="blockAgentConfirmTitle">حظر؟</h3>
-                            <p><strong id="blockAgentName">—</strong></p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('blockAgentModal')">إلغاء</button>
-                        <button type="button" class="btn" id="blockAgentConfirmBtn" onclick="confirmBlockAgent()"><i
-                                class="fas fa-user-slash"></i> <span>حظر</span></button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="toast" id="toast"><i class="fas fa-circle-check"></i><span id="toastMsg"></span></div>
+          <div class="details-actions">
+            <button class="btn-action agent" onclick="openAgentModal()">
+              <i class="fas fa-user-plus"></i>
+              إضافة وكيل
+            </button>
+            <button class="btn-action edit" onclick="openOwnerModal(currentOwner?.id)">
+              <i class="fas fa-pen"></i>
+              تعديل
+            </button>
+            <button class="btn-action block" id="blockBtn" onclick="openBlockOwnerModal()">
+              <i class="fas fa-ban"></i>
+              <span>حظر</span>
+            </button>
+            <button class="btn-action delete" onclick="openDeleteOwnerModal()">
+              <i class="fas fa-trash"></i>
+              حذف
+            </button>
+          </div>
         </div>
 
-        <script>
-            // ============================================================
-// البيانات القادمة من Laravel
-// ============================================================
+        <div class="details-body">
 
-window.UF_DATA = {
-    owners: @js($owners ?? []),
-    stats: @js($stats ?? []),
-    organizations: @js($organizations ?? []),
-
-    idTypeLabels: @js(data_get($labels ?? [], 'idType', [])),
-    paymentLabels: @js(data_get($labels ?? [], 'payment', [])),
-    agentTypeLabels: @js(data_get($labels ?? [], 'agent', []))
-};
-
-let owners = window.UF_DATA.owners || [];
-const organizations = window.UF_DATA.organizations || [];
-const idTypeLabels = window.UF_DATA.idTypeLabels || {};
-const paymentLabels = window.UF_DATA.paymentLabels || {};
-const agentTypeLabels = window.UF_DATA.agentTypeLabels || {};
-
-let currentOwner     = null;
-let editingOwnerId   = null;
-let editingAgentId   = null;
-let deletingOwnerId  = null;
-let deletingAgentId  = null;
-let viewingAgentId   = null;
-let blockingOwnerId  = null;
-let blockingAgentId  = null;
-let blockAction      = 'block';
-let blockAgentAction = 'block';
-let agentSearchTerm  = '';
-
-let filters = { search:'', status:'all', agency:'all', id_type:'all', nationality:'all',
-                dateFrom:'', dateTo:'', payment:'all', agents:'all', sort:'newest' };
-// ============================================================
-// تعديل المالك عبر Livewire
-// ============================================================
-// ============================================================
-// تعديل المالك عبر Livewire والنافذة الحالية
-// ============================================================
-async function editOwnerWithLivewire(id = null) {
-
-    const ownerId = Number(id ?? currentOwner?.id);
-
-    if (!ownerId || !Number.isFinite(ownerId)) {
-        showToast('يرجى اختيار مالك أولاً', 'error');
-        return;
-    }
-
-    const owner = owners.find(
-        o => Number(o.id) === ownerId
-    );
-
-    if (!owner) {
-        showToast('لم يتم العثور على بيانات المالك', 'error');
-        return;
-    }
-
-    // تحميل السجل والتحقق منه في Livewire
-    const result = await callLivewire('edit', ownerId);
-
-    if (result !== true) {
-        return;
-    }
-
-    // تحديد المالك وفتح النافذة الموجودة
-    currentOwner = owner;
-
-    openOwnerModal(ownerId);
-}
-// ============================================================
-// استدعاء Livewire
-// ============================================================
-// ============================================================
-// استدعاء Livewire 4 بطريقة آمنة
-// ============================================================
-
-async function callLivewire(method, ...args) {
-    try {
-        // انتظار جاهزية Livewire
-        for (let i = 0; i < 30; i++) {
-            if (
-                window.Livewire &&
-                typeof window.Livewire.find === 'function'
-            ) {
-                break;
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 150));
-        }
-
-        if (!window.Livewire || typeof window.Livewire.find !== 'function') {
-            throw new Error('Livewire JavaScript غير محمّل');
-        }
-
-        // العثور على المكوّن
-        const root =
-            document.querySelector('.uf-wrapper[wire\\:id]') ||
-            document.querySelector('[wire\\:id]');
-
-        if (!root) {
-            throw new Error('لم يتم العثور على عنصر Livewire');
-        }
-
-        const componentId = root.getAttribute('wire:id');
-        const component = window.Livewire.find(componentId);
-
-        if (!component) {
-            throw new Error('تعذر العثور على مكوّن Livewire');
-        }
-
-        // الاستدعاء المباشر وفق نتيجة الفحص
-        if (typeof component.$call !== 'function') {
-            throw new Error('واجهة استدعاء دوال Livewire غير متاحة');
-        }
-
-        const result = await component.$call(method, ...args);
-
-        return result;
-
-    } catch (error) {
-        console.error('UniversalForm Livewire Error:', {
-            method,
-            args,
-            error
-        });
-
-        showToast(
-            error.message || 'تعذر تنفيذ العملية',
-            'error'
-        );
-
-        return false;
-    }
-}
-
-// ============================================================
-// الإحصائيات
-// ============================================================
-function updateStats() {
-    document.getElementById('statTotal').textContent   = owners.length;
-    document.getElementById('statActive').textContent  = owners.filter(o => o.status === 'active').length;
-    document.getElementById('statBlocked').textContent = owners.filter(o => o.status === 'blocked').length;
-    document.getElementById('statAgents').textContent  = owners.reduce((s, o) => s + ((o.agents||[]).length), 0);
-    document.getElementById('statAgencies').textContent = new Set(owners.map(o => o.agency).filter(Boolean)).size;
-}
-
-// ============================================================
-// الفلترة
-// ============================================================
-function applyFilters() {
-    let f = [...owners];
-    if (filters.search) {
-        const t = filters.search.toLowerCase();
-        f = f.filter(o => (o.full_name||'').toLowerCase().includes(t) || (o.phone||'').includes(t)
-            || (o.phone2||'').includes(t) || (o.id_number||'').includes(t) || (o.email||'').toLowerCase().includes(t));
-    }
-    if (filters.status !== 'all')      f = f.filter(o => o.status === filters.status);
-    if (filters.agency !== 'all')      f = f.filter(o => o.agency === filters.agency);
-    if (filters.id_type !== 'all')     f = f.filter(o => o.id_type === filters.id_type);
-    if (filters.nationality !== 'all') f = f.filter(o => o.nationality === filters.nationality);
-    if (filters.payment !== 'all')     f = f.filter(o => o.payment === filters.payment);
-    if (filters.agents === 'has')      f = f.filter(o => (o.agents||[]).length > 0);
-    else if (filters.agents === 'none') f = f.filter(o => !(o.agents||[]).length);
-    if (filters.dateFrom) f = f.filter(o => (o.created_at||'') >= filters.dateFrom);
-    if (filters.dateTo)   f = f.filter(o => (o.created_at||'') <= filters.dateTo);
-    switch (filters.sort) {
-        case 'newest':    f.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||'')); break;
-        case 'oldest':    f.sort((a,b) => (a.created_at||'').localeCompare(b.created_at||'')); break;
-        case 'name_asc':  f.sort((a,b) => (a.full_name||'').localeCompare(b.full_name||'','ar')); break;
-        case 'name_desc': f.sort((a,b) => (b.full_name||'').localeCompare(a.full_name||'','ar')); break;
-    }
-    return f;
-}
-
-// ============================================================
-// العرض
-// ============================================================
-function renderOwnersList() {
-    const list = document.getElementById('ownersList');
-    const filtered = applyFilters();
-    document.getElementById('listCount').textContent = filtered.length;
-    if (!filtered.length) {
-        list.innerHTML = `<div class="agent-empty" style="padding:1.75rem 1rem;"><i class="fas fa-user-slash"></i>لا توجد نتائج</div>`;
-        return;
-    }
-    list.innerHTML = filtered.map(o => {
-        const isBlocked = o.status === 'blocked';
-        const avClass = isBlocked ? 'blocked' : (o.status === 'active' ? 'status-active' : 'status-inactive');
-        return `<div class="owner-item ${currentOwner?.id === o.id ? 'active' : ''} ${isBlocked ? 'blocked' : ''}" onclick="selectOwner(${o.id})">
-            <div class="owner-avatar ${avClass}">${(o.full_name||'?').charAt(0)}</div>
-            <div class="owner-info">
-                <div class="owner-name">${o.full_name||''}${isBlocked?'<span class="blocked-tag">محظور</span>':''}</div>
-                <div class="owner-meta"><i class="fas fa-mobile-screen"></i> ${o.phone||''}</div>
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-card-icon blue"><i class="fas fa-mobile-screen"></i></div>
+              <div class="info-card-content">
+                <div class="info-card-label">رقم الجوال</div>
+                <div class="info-card-value" id="infoPhone">—</div>
+              </div>
             </div>
-            <div class="owner-actions-mini">
-<button type="button" class="btn-mini"
-    onclick="event.stopPropagation(); editOwnerWithLivewire(${o.id})"
-    title="تعديل">
-    <i class="fas fa-pen"></i>
-</button>                <button type="button" class="btn-mini ${isBlocked?'success':'warning'}" onclick="event.stopPropagation(); openBlockOwnerModal(${o.id})" title="${isBlocked?'إلغاء':'حظر'}"><i class="fas fa-${isBlocked?'unlock':'ban'}"></i></button>
-                <button type="button" class="btn-mini danger" onclick="event.stopPropagation(); openDeleteOwnerModal(${o.id})" title="حذف"><i class="fas fa-trash"></i></button>
+            <div class="info-card">
+              <div class="info-card-icon gold"><i class="fas fa-envelope"></i></div>
+              <div class="info-card-content">
+                <div class="info-card-label">البريد الإلكتروني</div>
+                <div class="info-card-value" id="infoEmail">—</div>
+              </div>
             </div>
-        </div>`;
-    }).join('');
-}
+            <div class="info-card">
+              <div class="info-card-icon green"><i class="fas fa-globe"></i></div>
+              <div class="info-card-content">
+                <div class="info-card-label">الجنسية</div>
+                <div class="info-card-value" id="infoNationality">—</div>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-icon orange"><i class="fas fa-id-card"></i></div>
+              <div class="info-card-content">
+                <div class="info-card-label">نوع الهوية</div>
+                <div class="info-card-value" id="infoIdType">—</div>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-icon purple"><i class="fas fa-location-dot"></i></div>
+              <div class="info-card-content">
+                <div class="info-card-label">العنوان</div>
+                <div class="info-card-value" id="infoAddress">—</div>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-icon sky"><i class="fas fa-building-columns"></i></div>
+              <div class="info-card-content">
+                <div class="info-card-label">البنك</div>
+                <div class="info-card-value" id="infoBank">—</div>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-icon blue"><i class="fas fa-credit-card"></i></div>
+              <div class="info-card-content">
+                <div class="info-card-label">رقم الآيبان</div>
+                <div class="info-card-value" id="infoIban">—</div>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-icon green"><i class="fas fa-wallet"></i></div>
+              <div class="info-card-content">
+                <div class="info-card-label">طريقة الدفع</div>
+                <div class="info-card-value" id="infoPayment">—</div>
+              </div>
+            </div>
+          </div>
 
-// ============================================================
-// اختيار المالك وعرض تفاصيله ووكلائه
-// ============================================================
-function selectOwner(id) {
+          <div class="section-card">
+            <div class="section-card-header">
+              <i class="fas fa-user-tie section-icon"></i>
+              <h3>وكلاء المالك</h3>
+              <span class="badge" id="agentsCount">0</span>
+              <div class="agents-tools">
+                <div class="agent-search-mini">
+                  <i class="fas fa-search"></i>
+                  <input type="text" id="agentSearchInput" placeholder="بحث في الوكلاء...">
+                </div>
+                <button class="btn-add-small" onclick="openAgentModal()">
+                  <i class="fas fa-plus"></i>
+                  إضافة
+                </button>
+              </div>
+            </div>
+            <div class="section-card-body">
+              <div id="agentsList"></div>
+            </div>
+          </div>
 
-    const ownerId = Number(id);
+          <div class="section-card">
+            <div class="section-card-header">
+              <i class="fas fa-note-sticky section-icon"></i>
+              <h3>ملاحظات</h3>
+            </div>
+            <div class="section-card-body">
+              <div class="notes-box" id="infoNotes">لا توجد ملاحظات.</div>
+            </div>
+          </div>
 
-    // البحث عن المالك
-    const owner = owners.find(
-        o => Number(o.id) === ownerId
-    );
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
 
-    if (!owner) {
-        showToast('تعذر العثور على بيانات المالك', 'error');
-        return;
-    }
+<div class="modal-overlay" id="ownerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-icon"><i class="fas fa-user-plus"></i></div>
+      <div class="modal-header-text">
+        <h2 id="ownerModalTitle">إضافة مالك جديد</h2>
+        <p id="ownerModalSubtitle">أدخل بيانات المالك الجديد</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('ownerModal')">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
 
-    // تحديد المالك الحالي
-    currentOwner = owner;
+    <div class="modal-body">
+      <form id="ownerForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">الاسم الكامل <span class="required">*</span></label>
+            <input type="text" class="form-control" id="f_full_name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الجوال <span class="required">*</span></label>
+            <input type="tel" class="form-control" id="f_phone" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">جوال ثانوي</label>
+            <input type="tel" class="form-control" id="f_phone2">
+          </div>
+          <div class="form-group">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="f_email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">نوع الهوية</label>
+            <select class="form-control" id="f_id_type">
+              <option value="national_id">هوية وطنية</option>
+              <option value="iqama">إقامة</option>
+              <option value="passport">جواز سفر</option>
+              <option value="commercial_reg">سجل تجاري</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الهوية</label>
+            <input type="text" class="form-control" id="f_id_number">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الجنسية</label>
+            <input type="text" class="form-control" id="f_nationality" value="سعودي">
+          </div>
+          <div class="form-group">
+            <label class="form-label">المؤسسة</label>
+            <select class="form-control" id="f_agency">
+              <option value="">— اختر —</option>
+              <option value="مؤسسة النخبة">مؤسسة النخبة</option>
+              <option value="مؤسسة الأمانة">مؤسسة الأمانة</option>
+              <option value="مؤسسة الرائد">مؤسسة الرائد</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">العنوان</label>
+            <input type="text" class="form-control" id="f_address">
+          </div>
+          <div class="form-group">
+            <label class="form-label">اسم البنك</label>
+            <input type="text" class="form-control" id="f_bank_name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الآيبان</label>
+            <input type="text" class="form-control" id="f_bank_iban">
+          </div>
+          <div class="form-group">
+            <label class="form-label">طريقة الدفع</label>
+            <select class="form-control" id="f_payment">
+              <option value="bank_transfer">تحويل بنكي</option>
+              <option value="cheque">شيك</option>
+              <option value="cash">نقداً</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">الحالة</label>
+            <select class="form-control" id="f_status">
+              <option value="active">نشط</option>
+              <option value="inactive">غير نشط</option>
+              <option value="blocked">محظور</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">ملاحظات</label>
+            <textarea class="form-control" id="f_notes" rows="3"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
 
-    // إعادة ضبط البحث عن الوكلاء
-    agentSearchTerm = '';
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('ownerModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveOwner()">
+        <i class="fas fa-floppy-disk"></i>
+        <span id="saveOwnerText">حفظ المالك</span>
+      </button>
+    </div>
+  </div>
+</div>
 
-    const agentSearch = document.getElementById('agentSearchInput');
-    if (agentSearch) {
-        agentSearch.value = '';
-    }
+<div class="modal-overlay" id="agentModal">
+  <div class="modal medium">
+    <div class="modal-header">
+      <div class="modal-header-icon"><i class="fas fa-user-tie"></i></div>
+      <div class="modal-header-text">
+        <h2 id="agentModalTitle">إضافة وكيل</h2>
+        <p id="agentModalSubtitle">أضف وكيلاً للمالك المحدد</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('agentModal')">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
 
-    // إظهار لوحة التفاصيل وإخفاء الحالة الفارغة
-    const emptyState = document.getElementById('emptyState');
-    const detailsContent = document.getElementById('detailsContent');
+    <div class="modal-body">
+      <form id="agentForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">اسم الوكيل <span class="required">*</span></label>
+            <input type="text" class="form-control" id="a_name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الجوال <span class="required">*</span></label>
+            <input type="tel" class="form-control" id="a_phone" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="a_email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">نوع الوكالة</label>
+            <select class="form-control" id="a_type">
+              <option value="general">وكالة عامة</option>
+              <option value="rental">وكالة إيجار</option>
+              <option value="sale">وكالة بيع</option>
+              <option value="management">وكالة إدارة</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">ملاحظات</label>
+            <textarea class="form-control" id="a_notes" rows="2"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
 
-    if (emptyState) emptyState.style.display = 'none';
-    if (detailsContent) detailsContent.classList.add('active');
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('agentModal')">إلغاء</button>
+      <button class="btn btn-gold" onclick="saveAgent()">
+        <i class="fas fa-floppy-disk"></i>
+        <span id="saveAgentText">إضافة الوكيل</span>
+      </button>
+    </div>
+  </div>
+</div>
 
-    // ========================================================
-    // بيانات المالك الأساسية
-    // ========================================================
+<div class="modal-overlay" id="agentViewModal">
+  <div class="modal small">
+    <div class="modal-header">
+      <div class="modal-header-icon"><i class="fas fa-id-badge"></i></div>
+      <div class="modal-header-text">
+        <h2>تفاصيل الوكيل</h2>
+        <p>معلومات كاملة عن الوكيل</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('agentViewModal')">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
 
-    const avatar = document.getElementById('detailsAvatar');
+    <div class="modal-body" id="agentViewBody"></div>
 
-    if (avatar) {
-        avatar.textContent = (owner.full_name || '?').charAt(0);
-        avatar.className = 'details-avatar';
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('agentViewModal')">إغلاق</button>
+      <button class="btn btn-primary" onclick="editAgentFromView()">
+        <i class="fas fa-pen"></i>
+        تعديل
+      </button>
+    </div>
+  </div>
+</div>
 
-        if (owner.status === 'blocked') {
-            avatar.classList.add('blocked');
-        } else if (owner.status === 'active') {
-            avatar.classList.add('status-active');
-        } else {
-            avatar.classList.add('status-inactive');
-        }
-    }
+<div class="modal-overlay" id="deleteOwnerModal">
+  <div class="modal small">
+    <div class="modal-header">
+      <div class="modal-header-icon" style="background: linear-gradient(135deg, var(--cherry), #EF4444); color: #fff;">
+        <i class="fas fa-trash"></i>
+      </div>
+      <div class="modal-header-text">
+        <h2>تأكيد حذف المالك</h2>
+        <p>هذا الإجراء لا يمكن التراجع عنه</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('deleteOwnerModal')">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
 
-    const detailsName = document.getElementById('detailsName');
-    if (detailsName) {
-        detailsName.textContent = owner.full_name || '—';
-    }
+    <div class="modal-body">
+      <div class="confirm-content">
+        <div class="confirm-icon"><i class="fas fa-triangle-exclamation"></i></div>
+        <h3>هل أنت متأكد من الحذف؟</h3>
+        <p>سيتم حذف المالك <strong id="deleteOwnerName">—</strong> وكل وكلائه نهائياً من النظام.</p>
+      </div>
+    </div>
 
-    // حالة المالك
-    const statusElement = document.getElementById('detailsStatus');
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('deleteOwnerModal')">إلغاء</button>
+      <button class="btn btn-danger" onclick="confirmDeleteOwner()">
+        <i class="fas fa-trash"></i>
+        نعم، احذف
+      </button>
+    </div>
+  </div>
+</div>
 
-    if (statusElement) {
+<div class="modal-overlay" id="deleteAgentModal">
+  <div class="modal small">
+    <div class="modal-header">
+      <div class="modal-header-icon" style="background: linear-gradient(135deg, var(--cherry), #EF4444); color: #fff;">
+        <i class="fas fa-user-xmark"></i>
+      </div>
+      <div class="modal-header-text">
+        <h2>تأكيد حذف الوكيل</h2>
+        <p>هذا الإجراء لا يمكن التراجع عنه</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('deleteAgentModal')">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
 
-        if (owner.status === 'active') {
-            statusElement.className = 'status-tag active';
-            statusElement.innerHTML = '<span></span> نشط';
+    <div class="modal-body">
+      <div class="confirm-content">
+        <div class="confirm-icon"><i class="fas fa-triangle-exclamation"></i></div>
+        <h3>حذف الوكيل؟</h3>
+        <p>سيتم حذف الوكيل <strong id="deleteAgentName">—</strong> نهائياً من قائمة وكلاء المالك.</p>
+      </div>
+    </div>
 
-        } else if (owner.status === 'inactive') {
-            statusElement.className = 'status-tag inactive';
-            statusElement.innerHTML = '<span></span> غير نشط';
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('deleteAgentModal')">إلغاء</button>
+      <button class="btn btn-danger" onclick="confirmDeleteAgent()">
+        <i class="fas fa-trash"></i>
+        نعم، احذف
+      </button>
+    </div>
+  </div>
+</div>
 
-        } else {
-            statusElement.className = 'status-tag blocked';
-            statusElement.innerHTML = '<span></span> محظور';
-        }
-    }
+<div class="modal-overlay" id="blockOwnerModal">
+  <div class="modal small">
+    <div class="modal-header">
+      <div class="modal-header-icon" id="blockModalIcon" style="background: linear-gradient(135deg, var(--terracotta), #F59E0B); color: #fff;">
+        <i class="fas fa-ban"></i>
+      </div>
+      <div class="modal-header-text">
+        <h2 id="blockModalTitle">حظر المالك</h2>
+        <p id="blockModalSubtitle">سيتم منع المالك من الوصول للنظام</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('blockOwnerModal')">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
 
-    // المعلومات المختصرة
-    const setText = (elementId, value, fallback = 'غير محدد') => {
-        const element = document.getElementById(elementId);
+    <div class="modal-body">
+      <div class="confirm-content">
+        <div class="confirm-icon warning" id="blockConfirmIcon"><i class="fas fa-ban"></i></div>
+        <h3 id="blockConfirmTitle">حظر المالك؟</h3>
+        <p id="blockConfirmText">سيتم حظر المالك <strong id="blockOwnerName">—</strong> ولن يتمكن من الوصول للنظام. يمكنك إلغاء الحظر لاحقاً.</p>
+      </div>
+    </div>
 
-        if (element) {
-            element.textContent = value || fallback;
-        }
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('blockOwnerModal')">إلغاء</button>
+      <button class="btn" id="blockConfirmBtn" onclick="confirmBlockOwner()">
+        <i class="fas fa-ban"></i>
+        <span>حظر المالك</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="blockAgentModal">
+  <div class="modal small">
+    <div class="modal-header">
+      <div class="modal-header-icon" id="blockAgentIcon" style="background: linear-gradient(135deg, var(--terracotta), #F59E0B); color: #fff;">
+        <i class="fas fa-user-slash"></i>
+      </div>
+      <div class="modal-header-text">
+        <h2 id="blockAgentTitle">حظر الوكيل</h2>
+        <p id="blockAgentSubtitle">سيتم منع الوكيل من مهامه</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('blockAgentModal')">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="confirm-content">
+        <div class="confirm-icon warning" id="blockAgentConfirmIcon"><i class="fas fa-user-slash"></i></div>
+        <h3 id="blockAgentConfirmTitle">حظر الوكيل؟</h3>
+        <p id="blockAgentConfirmText">سيتم حظر الوكيل <strong id="blockAgentName">—</strong>. يمكنك إلغاء الحظر لاحقاً.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('blockAgentModal')">إلغاء</button>
+      <button class="btn" id="blockAgentConfirmBtn" onclick="confirmBlockAgent()">
+        <i class="fas fa-user-slash"></i>
+        <span>حظر الوكيل</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <i class="fas fa-circle-check"></i>
+  <span id="toastMsg"></span>
+</div>
+
+{{-- في نهاية القالب، بعد </div> الأخير وقبل </body> --}}
+
+{{-- مصدر البيانات الحقيقي --}}<script>
+    window.UF_DATA = {
+        owners:          @js($owners        ?? []),
+        stats:           @js($stats         ?? []),
+        organizations:   @js($organizations ?? []),
+        idTypeLabels:    @js($legacyLabels['idType']  ?? []),
+        paymentLabels:   @js($legacyLabels['payment'] ?? []),
+        agentTypeLabels: @js($legacyLabels['agent']   ?? [])
     };
 
-    setText('detailsIdNumber', owner.id_number);
-    setText('detailsAgency', owner.agency);
-    setText('detailsCreated', owner.created_at, '—');
-
-    // زر الحظر
-    const blockButton = document.getElementById('blockBtn');
-
-    if (blockButton) {
-
-        if (owner.status === 'blocked') {
-            blockButton.className = 'btn-action unblock';
-            blockButton.innerHTML =
-                '<i class="fas fa-unlock"></i><span>إلغاء الحظر</span>';
-        } else {
-            blockButton.className = 'btn-action block';
-            blockButton.innerHTML =
-                '<i class="fas fa-ban"></i><span>حظر</span>';
-        }
-    }
-
-    // ========================================================
-    // المعلومات التفصيلية للمالك
-    // ========================================================
-
-    const setInfo = (elementId, value) => {
-
-        const element = document.getElementById(elementId);
-
-        if (!element) return;
-
-        if (value) {
-            element.textContent = value;
-            element.classList.remove('empty');
-        } else {
-            element.textContent = 'غير محدد';
-            element.classList.add('empty');
-        }
-    };
-
-    setInfo('infoPhone', owner.phone);
-    setInfo('infoEmail', owner.email);
-    setInfo('infoNationality', owner.nationality);
-    setInfo(
-        'infoIdType',
-        idTypeLabels[owner.id_type] || owner.id_type
-    );
-    setInfo('infoAddress', owner.address);
-    setInfo('infoBank', owner.bank_name);
-    setInfo('infoIban', owner.bank_iban);
-    setInfo(
-        'infoPayment',
-        paymentLabels[owner.payment] || owner.payment
-    );
-
-    const notesElement = document.getElementById('infoNotes');
-
-    if (notesElement) {
-        if (owner.notes) {
-            notesElement.textContent = owner.notes;
-            notesElement.classList.add('has-content');
-        } else {
-            notesElement.textContent = 'لا توجد ملاحظات.';
-            notesElement.classList.remove('has-content');
-        }
-    }
-
-    // ========================================================
-    // عرض وكلاء المالك المحدد
-    // ========================================================
-
-    renderAgents();
-
-    // تحديث القائمة لإظهار المالك المحدد
-    renderOwnersList();
-
-    console.log('[UF] Selected owner:', {
-        id: owner.id,
-        name: owner.full_name,
-        agents: (owner.agents || []).length
+    // 🔍 للتشخيص — احذف بعد التأكد
+    console.log('[UF] UF_DATA injected:', {
+        ownersCount:      (window.UF_DATA.owners || []).length,
+        orgsCount:        (window.UF_DATA.organizations || []).length,
+        idTypesCount:     Object.keys(window.UF_DATA.idTypeLabels || {}).length,
+        paymentsCount:    Object.keys(window.UF_DATA.paymentLabels || {}).length,
+        agentTypesCount:  Object.keys(window.UF_DATA.agentTypeLabels || {}).length,
+        sampleOwner:      window.UF_DATA.owners?.[0]
     });
-}
-function renderAgents() {
-    const list = document.getElementById('agentsList');
-    const cnt = document.getElementById('agentsCount');
-    if (!currentOwner) { list.innerHTML = ''; cnt.textContent = '0'; return; }
-    let agents = currentOwner.agents || [];
-    if (agentSearchTerm) {
-        const t = agentSearchTerm.toLowerCase();
-        agents = agents.filter(a => (a.name||'').toLowerCase().includes(t) || (a.phone||'').includes(t) || (a.email||'').toLowerCase().includes(t));
-    }
-    cnt.textContent = (currentOwner.agents||[]).length;
-    if (!(currentOwner.agents||[]).length) {
-        list.innerHTML = `<div class="agent-empty"><i class="fas fa-user-tie"></i>لا يوجد وكلاء<br><button type="button" class="btn-add-small" style="margin-top:.45rem" onclick="openAgentModal()"><i class="fas fa-plus"></i> إضافة أول وكيل</button></div>`;
-        return;
-    }
-    if (!agents.length) {
-        list.innerHTML = `<div class="agent-empty"><i class="fas fa-search"></i>لا توجد نتائج</div>`;
-        return;
-    }
-    list.innerHTML = agents.map(a => {
-        const isBlocked = a.status === 'blocked';
-        return `<div class="agent-card ${isBlocked?'blocked':''}">
-            <div class="agent-avatar ${isBlocked?'blocked':''}">${(a.name||'?').charAt(0)}</div>
-            <div class="agent-info">
-                <div class="agent-name">${a.name||''}${isBlocked?'<span class="blocked-tag">معطل</span>':''}</div>
-                <div class="agent-meta"><span><i class="fas fa-mobile-screen"></i> ${a.phone||''}</span><span class="agent-type-tag">${agentTypeLabels[a.type]||a.type||''}</span></div>
-            </div>
-            <div class="agent-actions">
-                <button type="button" class="btn-agent-action view" onclick="viewAgent(${a.id})" title="عرض"><i class="fas fa-eye"></i></button>
-                <button type="button" class="btn-agent-action edit" onclick="openAgentModal(${a.id})" title="تعديل"><i class="fas fa-pen"></i></button>
-                <button type="button" class="btn-agent-action ${isBlocked?'unblock':'block'}" onclick="openBlockAgentModal(${a.id})" title="${isBlocked?'تفعيل':'تعطيل'}"><i class="fas fa-${isBlocked?'unlock':'user-slash'}"></i></button>
-                <button type="button" class="btn-agent-action delete" onclick="openDeleteAgentModal(${a.id})" title="حذف"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>`;
-    }).join('');
-}
+</script>
+<script>
+    {!! file_get_contents(app_path('Http/Livewire/FrontOrganizations/Shared/UniversalForm/scripts.js')) !!}
+</script>
 
-// ============================================================
-// Modal Owner
-// ============================================================
-function openOwnerModal(id = null) {
-    editingOwnerId = id;
-    const form = document.getElementById('ownerForm');
-    if (form) form.reset();
-
-    const title = document.getElementById('ownerModalTitle');
-    const sub = document.getElementById('ownerModalSubtitle');
-    const st = document.getElementById('saveOwnerText');
-
-    if (id) {
-        const o = owners.find(
-    x => Number(x.id) === Number(id)
-);
-        if (!o) return;
-        title.textContent = 'تعديل البيانات';
-        sub.textContent = 'قم بتحديث البيانات';
-        st.textContent = 'حفظ التعديلات';
-        document.getElementById('f_full_name').value = o.full_name || '';
-        document.getElementById('f_phone').value = o.phone || '';
-        document.getElementById('f_phone2').value = o.phone2 || '';
-        document.getElementById('f_email').value = o.email || '';
-        document.getElementById('f_id_type').value = o.id_type || 'national_id';
-        document.getElementById('f_id_number').value = o.id_number || '';
-        document.getElementById('f_nationality').value = o.nationality || 'سعودي';
-        document.getElementById('f_agency').value = o.organization_id || '';
-        document.getElementById('f_address').value = o.address || '';
-        document.getElementById('f_bank_name').value = o.bank_name || '';
-        document.getElementById('f_bank_iban').value = o.bank_iban || '';
-        document.getElementById('f_payment').value = o.payment || 'bank_transfer';
-        document.getElementById('f_status').value = o.status || 'active';
-        document.getElementById('f_notes').value = o.notes || '';
-    } else {
-        title.textContent = 'إضافة جديد';
-        sub.textContent = 'أدخل البيانات';
-        st.textContent = 'حفظ';
-        document.getElementById('f_nationality').value = 'سعودي';
-        document.getElementById('f_status').value = 'active';
-    }
-    openModal('ownerModal');
-}
-
-function saveOwner() {
-    const name = document.getElementById('f_full_name').value.trim();
-    const phone = document.getElementById('f_phone').value.trim();
-    if (!name || !phone) { showToast('يرجى إدخال الاسم ورقم الجوال', 'error'); return; }
-    const data = {
-        full_name:   name,
-        phone:       phone,
-        phone2:      document.getElementById('f_phone2').value.trim(),
-        email:       document.getElementById('f_email').value.trim(),
-        id_type:     document.getElementById('f_id_type').value,
-        id_number:   document.getElementById('f_id_number').value.trim(),
-        nationality: document.getElementById('f_nationality').value.trim(),
-        organization_id: document.getElementById('f_agency').value,
-        address:     document.getElementById('f_address').value.trim(),
-        bank_name:   document.getElementById('f_bank_name').value.trim(),
-        bank_iban:   document.getElementById('f_bank_iban').value.trim(),
-        payment:     document.getElementById('f_payment').value,
-        status:      document.getElementById('f_status').value,
-        notes:       document.getElementById('f_notes').value.trim(),
-    };
-    callLivewire('saveOwner', data, editingOwnerId);
-}
-
-// ============================================================
-// Block / Delete Owner
-// ============================================================
-function openBlockOwnerModal(id = null) {
-    blockingOwnerId = id || currentOwner?.id;
-    if (!blockingOwnerId) return;
-    const o = owners.find(x => x.id === blockingOwnerId);
-    if (!o) return;
-    const isBlocked = o.status === 'blocked';
-    blockAction = isBlocked ? 'unblock' : 'block';
-    document.getElementById('blockOwnerName').textContent = o.full_name;
-
-    const t = document.getElementById('blockModalTitle');
-    const s = document.getElementById('blockModalSubtitle');
-    const ct = document.getElementById('blockConfirmTitle');
-    const ci = document.getElementById('blockConfirmIcon');
-    const cb = document.getElementById('blockConfirmBtn');
-    const mi = document.getElementById('blockModalIcon');
-
-    if (isBlocked) {
-        t.textContent = 'إلغاء الحظر';
-        s.textContent = 'سيتم إعادة الوصول';
-        ct.textContent = 'إلغاء الحظر؟';
-        ci.className = 'confirm-icon success';
-        ci.innerHTML = '<i class="fas fa-unlock"></i>';
-        cb.className = 'btn btn-success';
-        cb.innerHTML = '<i class="fas fa-unlock"></i><span>إلغاء</span>';
-        mi.style.background = 'linear-gradient(135deg,var(--emerald),#10B981)';
-        mi.innerHTML = '<i class="fas fa-unlock"></i>';
-    } else {
-        t.textContent = 'حظر';
-        s.textContent = 'سيتم منع الوصول';
-        ct.textContent = 'حظر؟';
-        ci.className = 'confirm-icon warning';
-        ci.innerHTML = '<i class="fas fa-ban"></i>';
-        cb.className = 'btn btn-warning';
-        cb.innerHTML = '<i class="fas fa-ban"></i><span>حظر</span>';
-        mi.style.background = 'linear-gradient(135deg,var(--terracotta),#F59E0B)';
-        mi.innerHTML = '<i class="fas fa-ban"></i>';
-    }
-    openModal('blockOwnerModal');
-}
-
-function confirmBlockOwner() {
-    if (!blockingOwnerId) return;
-    callLivewire('blockOwner', blockingOwnerId);
-    closeModal('blockOwnerModal');
-}
-
-function openDeleteOwnerModal(id = null) {
-    deletingOwnerId = id || currentOwner?.id;
-    if (!deletingOwnerId) return;
-    const o = owners.find(x => x.id === deletingOwnerId);
-    if (!o) return;
-    document.getElementById('deleteOwnerName').textContent = o.full_name;
-    openModal('deleteOwnerModal');
-}
-
-function confirmDeleteOwner() {
-    if (!deletingOwnerId) return;
-    callLivewire('deleteOwner', deletingOwnerId);
-    closeModal('deleteOwnerModal');
-}
-
-// ============================================================
-// Modal Agent
-// ============================================================
-function openAgentModalStandalone() {
-    if (!currentOwner && owners.length > 0) selectOwner(owners[0].id);
-    if (!currentOwner) { showToast('يرجى إضافة مالك أولاً', 'error'); return; }
-    openAgentModal();
-}
-
-function openAgentModal(agentId = null) {
-    if (!currentOwner) { showToast('اختر مالكاً أولاً', 'error'); return; }
-    editingAgentId = agentId;
-    const form = document.getElementById('agentForm');
-    if (form) form.reset();
-
-    const t = document.getElementById('agentModalTitle');
-    const s = document.getElementById('agentModalSubtitle');
-    const st = document.getElementById('saveAgentText');
-
-    if (agentId) {
-        const a = (currentOwner.agents||[]).find(x => x.id === agentId);
-        if (!a) return;
-        t.textContent = 'تعديل الوكيل';
-        s.textContent = 'حدّث البيانات';
-        st.textContent = 'حفظ التعديلات';
-        document.getElementById('a_name').value = a.name || '';
-        document.getElementById('a_phone').value = a.phone || '';
-        document.getElementById('a_email').value = a.email || '';
-        document.getElementById('a_type').value = a.type || 'administrative';
-        document.getElementById('a_notes').value = a.notes || '';
-    } else {
-        t.textContent = 'إضافة وكيل';
-        s.textContent = 'أضف وكيلاً';
-        st.textContent = 'إضافة';
-    }
-    openModal('agentModal');
-}
-
-function saveAgent() {
-    const name = document.getElementById('a_name').value.trim();
-    const phone = document.getElementById('a_phone').value.trim();
-    if (!name || !phone) { showToast('يرجى إدخال الاسم والجوال', 'error'); return; }
-    if (!currentOwner) return;
-    const data = {
-        name:  name,
-        phone: phone,
-        email: document.getElementById('a_email').value.trim(),
-        type:  document.getElementById('a_type').value,
-        notes: document.getElementById('a_notes').value.trim(),
-    };
-    callLivewire('saveAgent', currentOwner.id, data, editingAgentId);
-}
-
-function viewAgent(agentId) {
-    if (!currentOwner) return;
-    const a = (currentOwner.agents||[]).find(x => x.id === agentId);
-    if (!a) return;
-    viewingAgentId = agentId;
-    document.getElementById('agentViewBody').innerHTML = `
-        <div class="agent-detail-row"><div class="agent-detail-icon"><i class="fas fa-user"></i></div><div><div class="agent-detail-label">الاسم</div><div class="agent-detail-value">${a.name||''}</div></div></div>
-        <div class="agent-detail-row"><div class="agent-detail-icon"><i class="fas fa-mobile-screen"></i></div><div><div class="agent-detail-label">الجوال</div><div class="agent-detail-value">${a.phone||''}</div></div></div>
-        <div class="agent-detail-row"><div class="agent-detail-icon"><i class="fas fa-envelope"></i></div><div><div class="agent-detail-label">البريد</div><div class="agent-detail-value">${a.email||'غير محدد'}</div></div></div>
-        <div class="agent-detail-row"><div class="agent-detail-icon"><i class="fas fa-briefcase"></i></div><div><div class="agent-detail-label">النوع</div><div class="agent-detail-value">${agentTypeLabels[a.type]||a.type||''}</div></div></div>
-        <div class="agent-detail-row"><div class="agent-detail-icon"><i class="fas fa-circle-info"></i></div><div><div class="agent-detail-label">الحالة</div><div class="agent-detail-value">${a.status==='blocked'?'معطل':'نشط'}</div></div></div>
-        <div class="agent-detail-row"><div class="agent-detail-icon"><i class="fas fa-note-sticky"></i></div><div><div class="agent-detail-label">ملاحظات</div><div class="agent-detail-value">${a.notes||'لا توجد'}</div></div></div>
-    `;
-    openModal('agentViewModal');
-}
-
-function editAgentFromView() {
-    closeModal('agentViewModal');
-    setTimeout(() => openAgentModal(viewingAgentId), 200);
-}
-
-function openBlockAgentModal(agentId) {
-    if (!currentOwner) return;
-    const a = (currentOwner.agents||[]).find(x => x.id === agentId);
-    if (!a) return;
-    blockingAgentId = agentId;
-    const isBlocked = a.status === 'blocked';
-    blockAgentAction = isBlocked ? 'unblock' : 'block';
-    document.getElementById('blockAgentName').textContent = a.name;
-
-    const t = document.getElementById('blockAgentTitle');
-    const s = document.getElementById('blockAgentSubtitle');
-    const ct = document.getElementById('blockAgentConfirmTitle');
-    const ci = document.getElementById('blockAgentConfirmIcon');
-    const cb = document.getElementById('blockAgentConfirmBtn');
-    const mi = document.getElementById('blockAgentIcon');
-
-    if (isBlocked) {
-        t.textContent = 'تفعيل الوكيل';
-        s.textContent = 'سيتم التفعيل';
-        ct.textContent = 'تفعيل؟';
-        ci.className = 'confirm-icon success';
-        ci.innerHTML = '<i class="fas fa-unlock"></i>';
-        cb.className = 'btn btn-success';
-        cb.innerHTML = '<i class="fas fa-unlock"></i><span>تفعيل</span>';
-        mi.style.background = 'linear-gradient(135deg,var(--emerald),#10B981)';
-        mi.innerHTML = '<i class="fas fa-unlock"></i>';
-    } else {
-        t.textContent = 'تعطيل الوكيل';
-        s.textContent = 'سيتم التعطيل';
-        ct.textContent = 'تعطيل؟';
-        ci.className = 'confirm-icon warning';
-        ci.innerHTML = '<i class="fas fa-user-slash"></i>';
-        cb.className = 'btn btn-warning';
-        cb.innerHTML = '<i class="fas fa-user-slash"></i><span>تعطيل</span>';
-        mi.style.background = 'linear-gradient(135deg,var(--terracotta),#F59E0B)';
-        mi.innerHTML = '<i class="fas fa-user-slash"></i>';
-    }
-    openModal('blockAgentModal');
-}
-
-function confirmBlockAgent() {
-    if (!blockingAgentId || !currentOwner) return;
-    callLivewire('blockAgent', blockingAgentId, currentOwner.id);
-    closeModal('blockAgentModal');
-}
-
-function openDeleteAgentModal(agentId) {
-    if (!currentOwner) return;
-    const a = (currentOwner.agents||[]).find(x => x.id === agentId);
-    if (!a) return;
-    deletingAgentId = agentId;
-    document.getElementById('deleteAgentName').textContent = a.name;
-    openModal('deleteAgentModal');
-}
-
-function confirmDeleteAgent() {
-    if (!deletingAgentId || !currentOwner) return;
-    callLivewire('deleteAgent', deletingAgentId, currentOwner.id);
-    closeModal('deleteAgentModal');
-}
-
-// ============================================================
-// Modals + Toast
-// ============================================================
-function openModal(id) { document.getElementById(id).classList.add('show'); document.body.style.overflow = 'hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('show'); document.body.style.overflow = ''; }
-
-document.querySelectorAll('.uf-wrapper .modal-overlay').forEach(o => {
-    o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); });
-});
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.querySelectorAll('.uf-wrapper .modal-overlay.show').forEach(m => closeModal(m.id));
-});
-
-let toastTimeout;
-function showToast(msg, type = 'success') {
-    clearTimeout(toastTimeout);
-    const t = document.getElementById('toast');
-    const m = document.getElementById('toastMsg');
-    t.className = 'toast ' + type;
-    m.textContent = msg;
-    t.querySelector('i').className = type === 'success' ? 'fas fa-circle-check' : 'fas fa-circle-exclamation';
-    t.classList.add('show');
-    toastTimeout = setTimeout(() => t.classList.remove('show'), 3500);
-}
-
-// ============================================================
-// الفلاتر
-// ============================================================
-function bindFilter(id, key, immediate) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener(immediate ? 'input' : 'change', () => {
-        filters[key] = el.value;
-        renderOwnersList();
-    });
-}
-bindFilter('searchInput', 'search', true);
-bindFilter('filterStatus', 'status');
-bindFilter('filterAgency', 'agency');
-bindFilter('filterIdType', 'id_type');
-bindFilter('filterNationality', 'nationality');
-bindFilter('filterDateFrom', 'dateFrom');
-bindFilter('filterDateTo', 'dateTo');
-bindFilter('filterPayment', 'payment');
-bindFilter('filterAgents', 'agents');
-bindFilter('filterSort', 'sort');
-
-document.getElementById('agentSearchInput')?.addEventListener('input', e => {
-    agentSearchTerm = e.target.value;
-    renderAgents();
-});
-
-function clearFilters() {
-    filters = { search:'', status:'all', agency:'all', id_type:'all', nationality:'all', dateFrom:'', dateTo:'', payment:'all', agents:'all', sort:'newest' };
-    const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-    ['searchInput','filterStatus','filterAgency','filterIdType','filterNationality','filterDateFrom','filterDateTo','filterPayment','filterAgents','filterSort'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (id === 'filterSort') el.value = 'newest';
-        else if (id === 'searchInput' || id === 'filterDateFrom' || id === 'filterDateTo') el.value = '';
-        else el.value = 'all';
-    });
-    renderOwnersList();
-    showToast('تم مسح الفلاتر', 'success');
-}
-
-// ============================================================
-// تعبئة القوائم (id_type, payment, agency, agent_type)
-// ============================================================
-function populateStaticOptions() {
-    // id_type
-    const idSel = document.getElementById('f_id_type');
-    if (idSel) {
-        idSel.innerHTML = '';
-        Object.entries(idTypeLabels).forEach(([v, l]) => {
-            idSel.innerHTML += `<option value="${v}">${l}</option>`;
-        });
-    }
-    // payment
-    const paySel = document.getElementById('f_payment');
-    if (paySel) {
-        paySel.innerHTML = '';
-        Object.entries(paymentLabels).forEach(([v, l]) => {
-            paySel.innerHTML += `<option value="${v}">${l}</option>`;
-        });
-    }
-    // agency
-    const agSel = document.getElementById('f_agency');
-    if (agSel) {
-        agSel.innerHTML = '<option value="">— اختر —</option>';
-        organizations.forEach(org => {
-            agSel.innerHTML += `<option value="${org.id}">${org.name}</option>`;
-        });
-    }
-    // filter agency
-    const agFilter = document.getElementById('filterAgency');
-    if (agFilter) {
-        agFilter.innerHTML = '<option value="all">الكل</option>';
-        organizations.forEach(org => {
-            agFilter.innerHTML += `<option value="${org.name}">${org.name}</option>`;
-        });
-    }
-    // filter id_type
-    const idFilter = document.getElementById('filterIdType');
-    if (idFilter) {
-        idFilter.innerHTML = '<option value="all">الكل</option>';
-        Object.entries(idTypeLabels).forEach(([v, l]) => {
-            idFilter.innerHTML += `<option value="${v}">${l}</option>`;
-        });
-    }
-    // filter payment
-    const payFilter = document.getElementById('filterPayment');
-    if (payFilter) {
-        payFilter.innerHTML = '<option value="all">الكل</option>';
-        Object.entries(paymentLabels).forEach(([v, l]) => {
-            payFilter.innerHTML += `<option value="${v}">${l}</option>`;
-        });
-    }
-    // agent type
-    const agTypeSel = document.getElementById('a_type');
-    if (agTypeSel) {
-        agTypeSel.innerHTML = '';
-        Object.entries(agentTypeLabels).forEach(([v, l]) => {
-            agTypeSel.innerHTML += `<option value="${v}">${l}</option>`;
-        });
-    }
-}
-
-// ============================================================
-// Livewire Bridge
-// ============================================================
-// ============================================================
-// Livewire Bridge - Livewire 4
-// ============================================================
-function setupLivewireBridge() {
-
-    const LW = window.Livewire;
-
-    if (!LW || typeof LW.on !== 'function') {
-        console.warn('[UF] Waiting for Livewire...');
-        return;
-    }
-
-    // منع تسجيل الأحداث أكثر من مرة
-    if (window.__ufBridgeReady) {
-        return;
-    }
-
-    window.__ufBridgeReady = true;
-
-    console.log('[UF] Registering Livewire events');
-
-    // ========================================================
-    // تحديث البيانات بعد عمليات CRUD
-    // ========================================================
-    LW.on('uf-data-updated', (payload) => {
-
-        console.log('[UF] Data updated:', payload);
-
-        const data = payload?.detail ?? payload ?? {};
-
-        if (data.owners) {
-            owners = data.owners;
-        }
-
-        // تحديث الإحصائيات
-        updateStats();
-
-        // إعادة عرض القائمة
-        renderOwnersList();
-
-        // المحافظة على المالك المحدد
-        if (data.keepOwner) {
-
-            const found = owners.find(
-                owner => Number(owner.id) === Number(data.keepOwner)
-            );
-
-            if (found) {
-                currentOwner = found;
-                selectOwner(found.id);
-            } else {
-                currentOwner = null;
-            }
-
-        } else if (currentOwner) {
-
-            const found = owners.find(
-                owner => Number(owner.id) === Number(currentOwner.id)
-            );
-
-            if (found) {
-                currentOwner = found;
-                selectOwner(found.id);
-            } else {
-
-                currentOwner = null;
-
-                document.getElementById('detailsContent')
-                    ?.classList.remove('active');
-
-                const emptyState = document.getElementById('emptyState');
-
-                if (emptyState) {
-                    emptyState.style.display = 'flex';
-                }
-            }
-        }
-
-        // إغلاق النوافذ بعد نجاح العملية
-        document.querySelectorAll(
-            '.uf-wrapper .modal-overlay.show'
-        ).forEach(modal => {
-            modal.classList.remove('show');
-        });
-
-        document.body.style.overflow = '';
-
-        if (data.message) {
-            showToast(data.message, 'success');
-        }
-
-    });
-
-    // ========================================================
-    // استقبال أخطاء التحقق والعمليات
-    // ========================================================
-    LW.on('uf-error', (payload) => {
-
-        console.error('[UF] Backend error:', payload);
-
-        const data = payload?.detail ?? payload ?? {};
-
-        showToast(
-            data.message || 'حدث خطأ أثناء تنفيذ العملية',
-            'error'
-        );
-
-    });
-
-    console.log('[UF] Livewire Bridge Ready');
-}
-
-// ============================================================
-// التهيئة الأولية
-// ============================================================
-
-function initializeUniversalForm() {
-
-    console.log('[UF] Initializing Universal Form');
-
-    populateStaticOptions();
-
-    updateStats();
-
-    renderOwnersList();
-
-    if (owners.length > 0) {
-        selectOwner(owners[0].id);
-    }
-
-    setupLivewireBridge();
-
-    console.log('[UF] Initial data:', {
-        owners: owners.length,
-        organizations: organizations.length,
-        idTypes: Object.keys(idTypeLabels).length
-    });
-}
-
-// ============================================================
-// انتظار جاهزية Livewire
-// ============================================================
-
-document.addEventListener('livewire:init', () => {
-
-    console.log('[UF] livewire:init received');
-
-    setupLivewireBridge();
-
-});
-
-// ============================================================
-// تهيئة الواجهة
-// ============================================================
-
-if (document.readyState === 'loading') {
-
-    document.addEventListener(
-        'DOMContentLoaded',
-        initializeUniversalForm,
-        { once: true }
-    );
-
-} else {
-
-    initializeUniversalForm();
-
-}
-// Livewire
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupLivewireBridge);
-} else {
-    setupLivewireBridge();
-}
-
-document.addEventListener('livewire:init', setupLivewireBridge);
-document.addEventListener('livewire:load', setupLivewireBridge);
-
-// Diagnostic
-console.log('[UF] Initial data:', { owners: owners.length, orgs: organizations.length, idTypes: Object.keys(idTypeLabels).length });
-        </script>
 
     </div>
 </div>

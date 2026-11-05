@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Pagination\Paginator;
 use Livewire\Livewire;
+use App\Http\Livewire\FrontOrganizations\Shared\GenericGrid;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -23,8 +24,12 @@ class AppServiceProvider extends ServiceProvider
     {
         Livewire::component(
         'front-organizations.shared.universal-form',
-        \App\Http\Livewire\FrontOrganizations\Shared\UniversalForm::class
+        \App\Http\Livewire\FrontOrganizations\Shared\UniversalForm::class,
     );
+         Livewire::component(
+        'front-organizations.shared.generic-grid',
+        GenericGrid::class
+        );
         Paginator::useBootstrap();
         View::composer('admin.incloude.agencynavepare', function ($view) {
             // إعداد نظام Pagination باستخدام Bootstrap

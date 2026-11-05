@@ -65,7 +65,7 @@
   <link rel="stylesheet" href="{{ asset('assets/plugins/toastr/toastr.min.css') }}">
   {{--نهايه الكارد العرض --}}
   <link rel="stylesheet" href="{{ asset('assets/front/style.css') }}">
-  <link rel="stylesheet" href="{{ asset('assets\fonts\UniversalForm\UniversalForm.css') }}">
+  {{--  <link rel="stylesheet" href="{{ asset('assets\fonts\UniversalForm\UniversalForm.css') }}">  --}}
 
   @livewireStyles
 </head>

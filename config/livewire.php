@@ -14,6 +14,7 @@ return [
     */
 
     'component_locations' => [
+        resource_path('views/front-organizations/livewire'),
         resource_path('views/components'),
         resource_path('views/livewire'),
     ],
@@ -68,15 +69,15 @@ return [
     |
     */
 
-    'make_command' => [
-        'type' => 'sfc', // Options: 'sfc', 'mfc', 'class'
-        'emoji' => true, // Options: true, false
-        'with' => [
-            'js' => false,
-            'css' => false,
-            'test' => false,
-        ],
+  'make_command' => [
+    'type' => 'class',
+    'emoji' => false,
+    'with' => [
+        'js' => false,
+        'css' => false,
+        'test' => false,
     ],
+],
 
     /*
     |---------------------------------------------------------------------------
@@ -89,7 +90,7 @@ return [
     |
     */
 
-    'class_namespace' => 'App\\Livewire',
+    'class_namespace' => 'App\\Http\\Livewire\\FrontOrganizations',
 
     /*
     |---------------------------------------------------------------------------
@@ -102,7 +103,7 @@ return [
     |
     */
 
-    'class_path' => app_path('Livewire'),
+    'class_path' => app_path('Http\Livewire\FrontOrganizations'),
 
     /*
     |---------------------------------------------------------------------------
