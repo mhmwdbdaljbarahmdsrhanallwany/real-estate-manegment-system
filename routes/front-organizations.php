@@ -1,6 +1,8 @@
 <?php
 
 
+use App\Http\Livewire\FrontOrganizations\Building\Building;
+use App\Http\Livewire\FrontOrganizations\Owner\Agents\OwnersAgents;
 use App\Http\Livewire\FrontOrganizations\Owner\Createowner;
 use App\Http\Livewire\FrontOrganizations\Owner\Owner;
 use App\Models\AccessContext;
@@ -20,21 +22,32 @@ Route::domain('{subdomain}.' . config('services.tenant.domain'))->where(['subdom
             //     403
             // );
 
-            return view('front-organizations.index', [
-              
-            ]);
-
+            return view('front-organizations.index', []);
         })->name('dashboard');
 
         // إدارة الملاك
         Route::prefix('owners')->name('owners.')->group(function () {
 
-                Route::livewire('/', Owner::class)
-                    ->name('index');
-                 // إضافة مالك جديد
-        Route::livewire('/create', Createowner::class)
-            ->name('create');
+            Route::livewire('/', Owner::class)
+                ->name('index');
+            // إضافة مالك جديد
+            Route::livewire('/create', Createowner::class)
+                ->name('create');
 
-            });
+          Route::livewire('/Owner/Owner-agents', OwnersAgents::class)
+    ->name('Owner-agents-index');
+        });
 
+        // إدارة المباني
+        Route::prefix('buildings')->name('buildings.')->group(function () {
+
+            Route::livewire('/', Building::class)
+                ->name('buildings-index');
+            // إضافة مبنى جديد
+            // Route::livewire('/create', Createbuilding::class)
+            //     ->name('create');
+
+            // Route::livewire('/Owner/Owner-agents', OwnersAgents::class)
+            //     ->name('Owner-agents-index');
+        });
     });

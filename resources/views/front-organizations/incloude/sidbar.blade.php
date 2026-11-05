@@ -126,23 +126,25 @@
     </a>
 </li>
             <li class="nav-item">
-              <a  wire:navigate href="" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>وكلاء الملاك</p>
-              </a>
-            </li>
+    <a wire:navigate
+       href="{{ route('organizations.owners.Owner-agents-index', ['subdomain' => request()->route('subdomain')]) }}"
+       class="nav-link">
+        <i class="far fa-circle nav-icon"></i>
+        <p>وكلاء الملاك</p>
+    </a>
+</li>
             <li class="nav-item">
               <a wire:navigate href="" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>الحسابات البنكية للملاك</p>
               </a>
             </li>
-            <li class="nav-item">
+            {{--  <li class="nav-item">
               <a href="owners-reports.html" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>تقارير الملاك</p>
               </a>
-            </li>
+            </li>  --}}
             <li class="nav-item">
               <a href="owners-blacklist.html" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
@@ -162,7 +164,7 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="buildings.html" class="nav-link">
+              <a href="{{ route('organizations.buildings.buildings-index', ['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>جميع المباني</p>
               </a>

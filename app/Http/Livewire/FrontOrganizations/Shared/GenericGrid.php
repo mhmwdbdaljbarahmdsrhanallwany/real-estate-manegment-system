@@ -32,28 +32,23 @@ class GenericGrid extends Component
     #[Locked]
     public string $entityKey = 'owners';
 
-    #[Locked]
-    public array $config = [];
-/**
- * بيانات السجل الجاري تعديله.
- */
-public array $editingData = [];
-    /*
-    |--------------------------------------------------------------------------
-    | الفلاتر والبحث
-    |--------------------------------------------------------------------------
-    */
 
+    #[Locked]
+    // تحميل اعدادات الملف الى 
+    public array $config = [];
+
+    //  بيانات السجل الجاري تعديله.
+    public array $editingData = [];
+    // بيانات نموذج إضافة سجل جديد.
+    public array $creatingData = [];
+
+    //  الفلاتر والبحث
     public array $filters = [];
 
     public string $search = '';
 
-    /*
-    |--------------------------------------------------------------------------
-    | حالات النوافذ المنبثقة
-    |--------------------------------------------------------------------------
-    */
 
+    // | حالات النوافذ المنبثقة
     public ?int $viewingId = null;
 
     public ?int $editingId = null;
@@ -64,44 +59,28 @@ public array $editingData = [];
 
     public string $modalType = '';
 
-    /*
-    |--------------------------------------------------------------------------
-    | إعدادات الترقيم والترتيب
-    |--------------------------------------------------------------------------
-    */
 
+    // | إعدادات الترقيم والترتيب
     public int $perPage = 15;
 
     public string $sort = 'newest';
 
-    /*
-    |--------------------------------------------------------------------------
-    | إعدادات النظام الداخلية
-    |--------------------------------------------------------------------------
-    */
 
-    protected string $configFile =
-        'Http/Livewire/FrontOrganizations/Shared/UniversalForm/configs.php';
+    // | إعدادات النظام الداخلية
+    protected string $configFile = 'Http/Livewire/FrontOrganizations/Shared/UniversalForm/configs.php';
 
     protected $paginationTheme = 'tailwind';
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | دورة حياة المكوّن
-    |--------------------------------------------------------------------------
-    */
 
-    /**
-     * تهيئة المحرك عند فتح الصفحة، وتحديد الكيان المطلوب تحميله.
-     * يتم تحميل إعدادات الكيان وتهيئة الفلاتر وعدد السجلات في الصفحة.
-     */
+    // | دورة حياة المكوّن
     public function mount(string $entityKey = 'owners'): void
     {
+
         $this->entityKey = $entityKey;
 
         $this->loadConfiguration();
-
+        // تهيئة الفلاتر
         $this->initializeFilters();
 
         $this->perPage = $this->normalizePerPage(
@@ -119,17 +98,8 @@ public array $editingData = [];
         $this->loadConfiguration();
     }
 
+    // config تحميل إعدادات الكيان من ملف 
 
-    /*
-    |--------------------------------------------------------------------------
-    | تحميل الإعدادات
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * تحميل إعدادات الكيان من ملف PHP الموثوق.
-     * يتم دمج إعدادات الكيان مع الإعدادات الافتراضية والتحقق من وجود الكيان.
-     */
     protected function loadConfiguration(): void
     {
         $path = app_path($this->configFile);
@@ -159,13 +129,7 @@ public array $editingData = [];
         $merged = $defaults;
 
         foreach ($entity as $key => $value) {
-            if (
-                isset($merged[$key]) &&
-                is_array($merged[$key]) &&
-                is_array($value) &&
-                !array_is_list($merged[$key]) &&
-                !array_is_list($value)
-            ) {
+            if (isset($merged[$key]) && is_array($merged[$key]) && is_array($value) && !array_is_list($merged[$key]) && !array_is_list($value)) {
                 $merged[$key] = array_replace_recursive(
                     $merged[$key],
                     $value
@@ -174,7 +138,7 @@ public array $editingData = [];
                 $merged[$key] = $value;
             }
         }
-
+        //   ارسال الاعدادات الى داله التحقق من صحتها 
         $this->validateEntityConfiguration($merged);
 
         $this->config = $merged;
@@ -204,23 +168,50 @@ public array $editingData = [];
         }
 
         /*
-         * يجب تحديد طريقة عزل كل كيان بشكل صريح.
-         *
-         * tenant_scoped = true:
-         * يجب تحديد organization_column.
-         *
-         * tenant_scoped = false:
-         * يجب تحديد allow_shared = true صراحةً.
+         * يجب تحديد سياسة عزل صريحة لكل كيان.
+         * يدعم المحرك طريقتين عامتين:
+         * 1) عمود المؤسسة موجود مباشرة في جدول الكيان.
+         * 2) العزل عبر علاقة belongs_to مع جدول أب يحتوي organization_id.
          */
         $tenantScoped = $config['tenant_scoped'] ?? null;
         $allowShared = $config['allow_shared'] ?? false;
 
         if ($tenantScoped === true) {
             $organizationColumn = $config['organization_column'] ?? null;
+            $tenantScope = $config['tenant_scope'] ?? null;
 
-            if (!$this->isSafeIdentifier($organizationColumn)) {
-                throw new \RuntimeException(
-                    "يجب تحديد organization_column للكيان {$this->entityKey}."
+            $directScopeIsValid =
+                $this->isSafeIdentifier($organizationColumn) &&
+                $this->tableHasColumn($table, $organizationColumn);
+
+            $relationScopeIsValid = false;
+
+            if (is_array($tenantScope) && ($tenantScope['type'] ?? null) === 'belongs_to') {
+                $parentTable = $tenantScope['table'] ?? null;
+                $localKey = $tenantScope['local_key'] ?? null;
+                $parentKey = $tenantScope['owner_key'] ?? null;
+                $parentOrganizationColumn = $tenantScope['organization_column'] ?? null;
+
+                $relationScopeIsValid =
+                    $this->isSafeIdentifier($parentTable) &&
+                    $this->isSafeIdentifier($localKey) &&
+                    $this->isSafeIdentifier($parentKey) &&
+                    $this->isSafeIdentifier($parentOrganizationColumn) &&
+                    $this->tableHasColumn($table, $localKey) &&
+                    $this->tableHasColumn($parentTable, $parentKey) &&
+                    $this->tableHasColumn($parentTable, $parentOrganizationColumn);
+
+                if ($relationScopeIsValid && ($tenantScope['parent_soft_deletes'] ?? false)) {
+                    $parentDeletedColumn = $tenantScope['parent_deleted_at_column'] ?? 'deleted_at';
+                    $relationScopeIsValid =
+                        $this->isSafeIdentifier($parentDeletedColumn) &&
+                        $this->tableHasColumn($parentTable, $parentDeletedColumn);
+                }
+            }
+
+            if (!$directScopeIsValid && !$relationScopeIsValid) {
+                throw new AuthorizationException(
+                    "تعذر التحقق من إعدادات عزل المؤسسة للكيان {$this->entityKey}."
                 );
             }
         } elseif ($tenantScoped === false && $allowShared === true) {
@@ -269,6 +260,348 @@ public array $editingData = [];
             && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $identifier) === 1;
     }
 
+    /**
+     * فتح نموذج إضافة سجل جديد من خلال UniversalForm.
+     * يتم إرسال الحدث باسم الكيان الحالي دون استقبال اسم كيان من المتصفح.
+     */
+    /**
+     * فتح نموذج إضافة سجل جديد وتهيئة الحقول من إعدادات الكيان.
+     */
+    public function openCreate(): void
+    {
+        try {
+            // التأكد من وجود سياق المؤسسة الحالية.
+            $this->currentOrganizationId();
+
+            // تحميل الإعدادات الموثوقة عند الحاجة.
+            if (empty($this->config)) {
+                $this->loadConfiguration();
+            }
+
+            $this->creatingData = [];
+
+            // تجهيز قيم الحقول من main_fields.
+            foreach (($this->config['main_fields'] ?? []) as $field) {
+                $key = $field['key'] ?? null;
+
+                if (
+                    !$key ||
+                    ($field['virtual'] ?? false) ||
+                    ($field['readonly'] ?? false) ||
+                    ($field['grid_readonly'] ?? false)
+                ) {
+                    continue;
+                }
+
+                $column = $field['column'] ?? $key;
+
+                // منع إدخال المفاتيح والأعمدة المحمية من النموذج.
+                if (in_array($column, [
+                    $this->resolvePrimaryKey(),
+                    'organization_id',
+                    'created_at',
+                    'updated_at',
+                    'deleted_at',
+                ], true)) {
+                    continue;
+                }
+
+                $this->creatingData[$key] = $field['default'] ?? null;
+            }
+
+            // فتح نافذة الإضافة.
+            $this->closeModal();
+            $this->modalType = 'create';
+        } catch (Throwable $e) {
+            Log::error('[GenericGrid] openCreate', [
+                'entity' => $this->entityKey,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->dispatch(
+                'grid-error',
+                message: 'تعذر فتح نموذج الإضافة.'
+            );
+        }
+    }
+
+    /**
+     * إنشاء قواعد التحقق لحقول نموذج الإضافة اعتماداً على إعدادات الكيان.
+     */
+    private function getCreateValidationRules(): array
+    {
+        $rules = [];
+
+        foreach (($this->config['main_fields'] ?? []) as $field) {
+            $key = $field['key'] ?? null;
+
+            if (!$key || !array_key_exists($key, $this->creatingData)) {
+                continue;
+            }
+
+            if (
+                ($field['virtual'] ?? false) ||
+                ($field['readonly'] ?? false) ||
+                ($field['grid_readonly'] ?? false)
+            ) {
+                continue;
+            }
+
+            $column = $field['column'] ?? $key;
+
+            if (in_array($column, [
+                $this->resolvePrimaryKey(),
+                'organization_id',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+            ], true)) {
+                continue;
+            }
+
+            if (isset($field['validation'])) {
+                $rules['creatingData.' . $key] = $field['validation'];
+                continue;
+            }
+
+            $type = $field['type'] ?? 'text';
+            $rule = !empty($field['required']) ? 'required' : 'nullable';
+
+            switch ($type) {
+                case 'email':
+                    $rule .= '|email|max:255';
+                    break;
+
+                case 'number':
+                    $rule .= '|numeric';
+                    break;
+
+                case 'date':
+                    $rule .= '|date';
+                    break;
+
+                case 'checkbox':
+                    $rule .= '|boolean';
+                    break;
+
+                case 'select':
+                    $allowedValues = [];
+
+                    foreach (($field['options'] ?? []) as $option) {
+                        if (is_array($option) && array_key_exists('value', $option)) {
+                            $allowedValues[] = $option['value'];
+                        }
+                    }
+
+                    if ($allowedValues) {
+                        $rule .= '|in:' . implode(',', array_map(
+                            fn($value) => str_replace(',', '\\,', (string) $value),
+                            $allowedValues
+                        ));
+                    }
+
+                    break;
+
+                case 'textarea':
+                case 'text':
+                default:
+                    $rule .= '|string|max:5000';
+                    break;
+            }
+
+            $rules['creatingData.' . $key] = $rule;
+        }
+
+        return $rules;
+    }
+
+
+    /**
+     * حفظ سجل جديد بعد التحقق من الحقول ونطاق المؤسسة الحالية.
+     */
+    public function saveCreate(): void
+    {
+        try {
+            // التأكد من أن النموذج مفتوح.
+            if ($this->modalType !== 'create') {
+                throw new AuthorizationException(
+                    'لا توجد عملية إضافة مفتوحة.'
+                );
+            }
+
+            // إعادة تحميل الإعدادات الموثوقة.
+            $this->loadConfiguration();
+
+            // تحديد المؤسسة من سياق النظام، وليس من بيانات النموذج.
+            $organizationId = $this->currentOrganizationId();
+
+            // التحقق من المدخلات.
+            $validator = Validator::make(
+                ['creatingData' => $this->creatingData],
+                $this->getCreateValidationRules()
+            );
+
+            $validated = $validator->validate();
+
+            $input = $validated['creatingData'] ?? [];
+
+            $table = $this->getTable();
+            $primaryKey = $this->resolvePrimaryKey();
+
+            $insertData = [];
+
+            // السماح فقط بالحقول المعرفة في main_fields.
+            foreach (($this->config['main_fields'] ?? []) as $field) {
+                $key = $field['key'] ?? null;
+
+                if (!$key || !array_key_exists($key, $input)) {
+                    continue;
+                }
+
+                if (
+                    ($field['virtual'] ?? false) ||
+                    ($field['readonly'] ?? false) ||
+                    ($field['grid_readonly'] ?? false)
+                ) {
+                    continue;
+                }
+
+                $column = $field['column'] ?? $key;
+
+                // منع حقن أعمدة النظام أو تغيير ملكية السجل.
+                if (in_array($column, [
+                    $primaryKey,
+                    'organization_id',
+                    'created_at',
+                    'updated_at',
+                    'deleted_at',
+                ], true)) {
+                    continue;
+                }
+
+                if (!$this->tableHasColumn($table, $column)) {
+                    continue;
+                }
+
+                // الحالة الافتراضية تعالج بصورة منفصلة.
+                if ($key === 'status' && !isset($field['column'])) {
+                    continue;
+                }
+
+                $value = $input[$key];
+
+                if (($field['type'] ?? '') === 'checkbox') {
+                    $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                }
+
+                $insertData[$column] = $value;
+            }
+
+            // معالجة حقل الحالة الافتراضي إن كان معرفاً في الإعدادات.
+            $statusConfig = $this->config['status'] ?? [];
+            $statusColumn = $statusConfig['column'] ?? null;
+            $statusValue = $input['status'] ?? null;
+            $booleanMap = $statusConfig['boolean_map'] ?? [];
+
+            if (
+                $statusColumn &&
+                $statusValue !== null &&
+                is_array($booleanMap) &&
+                $this->tableHasColumn($table, $statusColumn)
+            ) {
+                if ((string) $statusValue === (string) ($booleanMap['true'] ?? '')) {
+                    $insertData[$statusColumn] = true;
+                } elseif (
+                    (string) $statusValue === (string) ($booleanMap['false'] ?? '')
+                ) {
+                    $insertData[$statusColumn] = false;
+                }
+            }
+
+            // التمييز بين نشط وغير نشط إذا كان الجدول يحتوي is_active.
+            if ($this->tableHasColumn($table, 'is_active') && $statusValue !== null) {
+                if ($statusValue === 'active') {
+                    $insertData['is_active'] = true;
+                } elseif ($statusValue === 'inactive') {
+                    $insertData['is_active'] = false;
+                }
+            }
+
+            // إسناد المؤسسة الحالية من الخادم عند وجود العمود مباشرة.
+            if (
+                ($this->config['tenant_scoped'] ?? false) === true &&
+                $this->tableHasColumn(
+                    $table,
+                    $this->config['organization_column'] ?? ''
+                )
+            ) {
+                $organizationColumn = $this->config['organization_column'];
+                $insertData[$organizationColumn] = $organizationId;
+            }
+
+            if ($this->tableHasColumn($table, 'created_at')) {
+                $insertData['created_at'] = now();
+            }
+
+            if ($this->tableHasColumn($table, 'updated_at')) {
+                $insertData['updated_at'] = now();
+            }
+
+            if (empty($insertData)) {
+                throw ValidationException::withMessages([
+                    'creatingData' => 'لا توجد حقول صالحة لحفظ السجل.',
+                ]);
+            }
+
+            // تنفيذ الإضافة داخل معاملة قاعدة البيانات.
+            DB::transaction(function () use ($insertData) {
+                DB::table($this->getTable())->insert($insertData);
+            });
+
+            // تنظيف النموذج وإغلاق النافذة.
+            $this->creatingData = [];
+            $this->closeModal();
+            $this->resetPage();
+
+            $this->dispatch(
+                'grid-refreshed',
+                message: 'تمت إضافة السجل بنجاح.'
+            );
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('[GenericGrid] saveCreate', [
+                'entity' => $this->entityKey,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->dispatch(
+                'grid-error',
+                message: 'تعذر إضافة السجل. تحقق من البيانات وحاول مرة أخرى.'
+            );
+        }
+    }
+    /**
+     * جلب الملاك التابعين للمؤسسة الحالية لاستخدامهم في قائمة اختيار الوكيل.
+     */
+    private function getOwnerOptions(): array
+    {
+        $organizationId = $this->currentOrganizationId();
+
+        return DB::table('owners')
+            ->where('organization_id', $organizationId)
+            ->whereNull('deleted_at')
+            ->orderBy('full_name')
+            ->get([
+                'owner_id',
+                'full_name',
+            ])
+            ->map(fn($owner) => [
+                'value' => $owner->owner_id,
+                'label' => $owner->full_name,
+            ])
+            ->toArray();
+    }
 
     /**
      * التحقق من وجود عمود داخل جدول محدد.
@@ -437,22 +770,79 @@ public array $editingData = [];
         $query = DB::table($table);
 
         if (($this->config['tenant_scoped'] ?? false) === true) {
-            $organizationColumn =
-                $this->config['organization_column'] ?? null;
+            $organizationColumn = $this->config['organization_column'] ?? null;
+            $tenantScope = $this->config['tenant_scope'] ?? null;
+            $organizationId = $this->currentOrganizationId();
 
+            // المسار الأول: عمود المؤسسة موجود مباشرة في جدول الكيان.
             if (
-                !$this->isSafeIdentifier($organizationColumn) ||
-                !$this->tableHasColumn($table, $organizationColumn)
+                $this->isSafeIdentifier($organizationColumn) &&
+                $this->tableHasColumn($table, $organizationColumn)
             ) {
+                $query->where("{$table}.{$organizationColumn}", $organizationId);
+            }
+            // المسار الثاني: تحديد المؤسسة من خلال جدول أب مرتبط بالكيان.
+            elseif (is_array($tenantScope) && ($tenantScope['type'] ?? null) === 'belongs_to') {
+                $parentTable = $tenantScope['table'] ?? null;
+                $localKey = $tenantScope['local_key'] ?? null;
+                $parentKey = $tenantScope['owner_key'] ?? null;
+                $parentOrganizationColumn = $tenantScope['organization_column'] ?? null;
+
+                if (
+                    !$this->isSafeIdentifier($parentTable) ||
+                    !$this->isSafeIdentifier($localKey) ||
+                    !$this->isSafeIdentifier($parentKey) ||
+                    !$this->isSafeIdentifier($parentOrganizationColumn) ||
+                    !$this->tableHasColumn($table, $localKey) ||
+                    !$this->tableHasColumn($parentTable, $parentKey) ||
+                    !$this->tableHasColumn($parentTable, $parentOrganizationColumn)
+                ) {
+                    throw new AuthorizationException(
+                        "تعذر تطبيق نطاق المؤسسة المرتبط على جدول {$table}."
+                    );
+                }
+
+                $parentAlias = 'tenant_scope_parent';
+
+                $query->whereExists(function ($subQuery) use (
+                    $parentTable,
+                    $parentAlias,
+                    $parentKey,
+                    $localKey,
+                    $parentOrganizationColumn,
+                    $organizationId,
+                    $tenantScope,
+                    $table
+                ) {
+                    $subQuery->selectRaw('1')
+                        ->from("{$parentTable} as {$parentAlias}")
+                        ->whereColumn(
+                            "{$parentAlias}.{$parentKey}",
+                            "{$table}.{$localKey}"
+                        )
+                        ->where(
+                            "{$parentAlias}.{$parentOrganizationColumn}",
+                            $organizationId
+                        );
+
+                    // استبعاد السجل الأب المحذوف منطقياً إذا طلبت الإعدادات ذلك.
+                    if ($tenantScope['parent_soft_deletes'] ?? false) {
+                        $deletedColumn = $tenantScope['parent_deleted_at_column'] ?? 'deleted_at';
+
+                        if (!$this->tableHasColumn($parentTable, $deletedColumn)) {
+                            throw new AuthorizationException(
+                                'عمود الحذف المنطقي غير موجود في جدول النطاق الأب.'
+                            );
+                        }
+
+                        $subQuery->whereNull("{$parentAlias}.{$deletedColumn}");
+                    }
+                });
+            } else {
                 throw new AuthorizationException(
                     "تعذر تطبيق عزل المؤسسة على جدول {$table}."
                 );
             }
-
-            $query->where(
-                "{$table}.{$organizationColumn}",
-                $this->currentOrganizationId()
-            );
         } elseif (
             !(
                 ($this->config['tenant_scoped'] ?? null) === false &&
@@ -517,8 +907,8 @@ public array $editingData = [];
 
         $fields = array_values(array_filter(
             $fields,
-            fn ($field) =>
-                $this->isSafeIdentifier($field) &&
+            fn($field) =>
+            $this->isSafeIdentifier($field) &&
                 $this->hasColumn($field)
         ));
 
@@ -673,35 +1063,35 @@ public array $editingData = [];
             }
 
             /*
-             * فلتر حالة المالك أو الكيان الذي يستخدم boolean_map.
+             * فلتر حالة عام يعتمد على status.column وboolean_map.
+             * يعمل مع is_blacklisted أو is_active أو أي عمود منطقي آخر.
              */
-            if (
-                $key === 'status' &&
-                !empty($this->config['status']['boolean_map'])
-            ) {
-                if (
-                    $value === 'blocked' &&
-                    $this->hasColumn('is_blacklisted')
-                ) {
-                    $query->where('is_blacklisted', true);
-                } elseif (
-                    $value === 'active' &&
-                    $this->hasColumn('is_blacklisted')
-                ) {
-                    $query->where('is_blacklisted', false);
+            if ($key === 'status') {
+                $statusConfig = $this->config['status'] ?? [];
+                $statusColumn = $statusConfig['column'] ?? 'status';
+                $booleanMap = $statusConfig['boolean_map'] ?? null;
 
-                    if ($this->hasColumn('is_active')) {
-                        $query->where('is_active', true);
-                    }
-                } elseif (
-                    $value === 'inactive' &&
-                    $this->hasColumn('is_blacklisted')
-                ) {
-                    $query->where('is_blacklisted', false);
+                if (is_array($booleanMap) && $this->hasColumn($statusColumn)) {
+                    $trueStatus = $booleanMap['true'] ?? null;
+                    $falseStatus = $booleanMap['false'] ?? null;
 
-                    if ($this->hasColumn('is_active')) {
+                    if ($trueStatus !== null && (string) $value === (string) $trueStatus) {
+                        $query->where($statusColumn, true);
+                    } elseif ($falseStatus !== null && (string) $value === (string) $falseStatus) {
+                        $query->where($statusColumn, false);
+
+                        // في الكيانات التي تميز بين غير نشط ومحظور.
+                        if ($this->hasColumn('is_active') && $statusColumn !== 'is_active') {
+                            $query->where('is_active', true);
+                        }
+                    } elseif ((string) $value === 'inactive' && $this->hasColumn('is_active')) {
+                        if ($statusColumn !== 'is_active') {
+                            $query->where($statusColumn, false);
+                        }
                         $query->where('is_active', false);
                     }
+                } elseif ($this->hasColumn($statusColumn)) {
+                    $query->where($statusColumn, $value);
                 }
 
                 continue;
@@ -974,16 +1364,25 @@ public array $editingData = [];
         ) {
             $raw = $row[$column];
 
-            $row['status'] = $raw
-                ? ($booleanMap['true'] ?? 'active')
-                : ($booleanMap['false'] ?? 'inactive');
+            if ($raw) {
+                $row['status'] = $booleanMap['true'] ?? 'active';
+            } elseif (
+                $column !== 'is_active' &&
+                array_key_exists('is_active', $row) &&
+                empty($row['is_active'])
+            ) {
+                // بعض الكيانات تميز بين الحظر (عمود مستقل) وعدم النشاط.
+                $row['status'] = 'inactive';
+            } else {
+                $row['status'] = $booleanMap['false'] ?? 'inactive';
+            }
         } elseif (array_key_exists('is_blacklisted', $row)) {
             $row['status'] = $row['is_blacklisted']
                 ? 'blocked'
                 : (
                     !empty($row['is_active'])
-                        ? 'active'
-                        : 'inactive'
+                    ? 'active'
+                    : 'inactive'
                 );
         } else {
             $row['status'] = $row['status'] ?? 'active';
@@ -1094,8 +1493,8 @@ public array $editingData = [];
                         ) {
                             $array['status'] =
                                 !empty($array[$statusColumn])
-                                    ? 'active'
-                                    : 'blocked';
+                                ? 'active'
+                                : 'blocked';
                         } elseif (!isset($array['status'])) {
                             $array['status'] = 'active';
                         }
@@ -1103,7 +1502,6 @@ public array $editingData = [];
                         return $array;
                     }
                 )->toArray();
-
             } catch (\Throwable $e) {
                 Log::error('[GenericGrid] hydrateRelations', [
                     'entity' => $this->entityKey,
@@ -1173,7 +1571,6 @@ public array $editingData = [];
                 'id' => (int) $organization->id,
                 'name' => (string) $organization->name,
             ]];
-
         } catch (\Throwable $e) {
             Log::warning('[GenericGrid] getOrganizationsProperty', [
                 'error' => $e->getMessage(),
@@ -1353,223 +1750,81 @@ public array $editingData = [];
 
 
     /**
- * فتح نافذة تعديل سجل وتحميل بياناته.
- * يتحقق أولاً من أن السجل تابع للمؤسسة الحالية.
- */
-public function openEdit(int $id): void
-{
-    $this->authorizeRecord($id);
-
-    $primaryKey = $this->resolvePrimaryKey();
-
-    $record = $this->baseQuery()
-        ->where($primaryKey, $id)
-        ->first();
-
-    if (!$record) {
-        $this->dispatch(
-            'grid-error',
-            message: 'السجل غير موجود أو لا تملك صلاحية الوصول إليه.'
-        );
-
-        return;
-    }
-
-    $record = (array) $record;
-
-    $this->editingData = [];
-
-    foreach (($this->config['main_fields'] ?? []) as $field) {
-
-        $key = $field['key'] ?? null;
-
-        if (!$key) {
-            continue;
-        }
-
-        $column = $field['column'] ?? $key;
-
-        // الحقول الافتراضية التي لا تمثل عموداً مباشراً.
-        if (
-            ($field['virtual'] ?? false) ||
-            ($field['readonly'] ?? false)
-        ) {
-            continue;
-        }
-
-        // معالجة الحالة الافتراضية.
-        if ($key === 'status' && !isset($field['column'])) {
-
-            $statusConfig = $this->config['status'] ?? [];
-
-            $statusColumn = $statusConfig['column'] ?? null;
-            $rawStatus = $statusColumn
-                ? ($record[$statusColumn] ?? null)
-                : null;
-
-            if ($rawStatus !== null && is_array($statusConfig['boolean_map'] ?? null)) {
-
-                $booleanMap = $statusConfig['boolean_map'];
-
-                if ((bool) $rawStatus) {
-                    $status = $booleanMap['true'] ?? 'blocked';
-                } else {
-                    $status = !empty($record['is_active'])
-                        ? ($booleanMap['false'] ?? 'active')
-                        : 'inactive';
-                }
-
-            } else {
-                $status = $record['status'] ?? 'active';
-            }
-
-            $this->editingData[$key] = $status;
-
-            continue;
-        }
-
-        // لا نحمل أعمدة المؤسسة والمفاتيح الأساسية للتعديل.
-        if (in_array($column, [
-            $primaryKey,
-            'organization_id',
-            'created_at',
-            'updated_at',
-            'deleted_at',
-        ], true)) {
-            continue;
-        }
-
-        $this->editingData[$key] = $record[$column] ?? null;
-    }
-
-    $this->editingId = $id;
-    $this->viewingId = null;
-    $this->deletingId = null;
-    $this->togglingId = null;
-
-    $this->modalType = 'edit';
-}
-/**
- * إنشاء قواعد التحقق تلقائياً اعتماداً على main_fields.
- */
-private function getEditValidationRules(): array
-{
-    $rules = [];
-
-    foreach (($this->config['main_fields'] ?? []) as $field) {
-
-        $key = $field['key'] ?? null;
-
-        if (!$key || !array_key_exists($key, $this->editingData)) {
-            continue;
-        }
-
-        if (
-            ($field['virtual'] ?? false) ||
-            ($field['readonly'] ?? false)
-        ) {
-            continue;
-        }
-
-        if (in_array($key, [
-            'id',
-            'organization_id',
-            'created_at',
-            'updated_at',
-            'deleted_at',
-        ], true)) {
-            continue;
-        }
-
-        if (isset($field['validation'])) {
-            $rules['editingData.' . $key] = $field['validation'];
-            continue;
-        }
-
-        $rule = !empty($field['required'])
-            ? 'required'
-            : 'nullable';
-
-        $type = $field['type'] ?? 'text';
-
-        if ($type === 'email') {
-            $rule .= '|email|max:255';
-        } elseif ($type === 'number') {
-            $rule .= '|numeric';
-        } elseif ($type === 'date') {
-            $rule .= '|date';
-        } elseif ($type === 'textarea' || $type === 'text') {
-            $rule .= '|string|max:5000';
-        }
-
-        $rules['editingData.' . $key] = $rule;
-    }
-
-    return $rules;
-}
-
-/**
- * التحقق من بيانات التعديل وحفظ الحقول المسموح بها فقط.
- * جميع عمليات التحديث تمر عبر baseQuery لضمان عزل المؤسسات.
- */
-public function saveEdit(): void
-{
-    try {
-
-        if (!$this->editingId) {
-            throw ValidationException::withMessages([
-                'editingData' => 'لم يتم تحديد السجل المطلوب تعديله.',
-            ]);
-        }
-
-        // إعادة التحقق من صلاحية الوصول للسجل.
-        $this->authorizeRecord($this->editingId);
+     * فتح نافذة تعديل سجل وتحميل بياناته.
+     * يتحقق أولاً من أن السجل تابع للمؤسسة الحالية.
+     */
+    public function openEdit(int $id): void
+    {
+        $this->authorizeRecord($id);
 
         $primaryKey = $this->resolvePrimaryKey();
-        $table = $this->getTable();
 
-        // جلب السجل من نطاق المؤسسة الحالية.
         $record = $this->baseQuery()
-            ->where($primaryKey, $this->editingId)
+            ->where($primaryKey, $id)
             ->first();
 
         if (!$record) {
-            throw ValidationException::withMessages([
-                'editingData' => 'السجل غير موجود أو لا تملك صلاحية تعديله.',
-            ]);
+            $this->dispatch(
+                'grid-error',
+                message: 'السجل غير موجود أو لا تملك صلاحية الوصول إليه.'
+            );
+
+            return;
         }
 
-        // التحقق من المدخلات.
-        $validator = Validator::make(
-            ['editingData' => $this->editingData],
-            $this->getEditValidationRules()
-        );
+        $record = (array) $record;
 
-        $validated = $validator->validate();
+        $this->editingData = [];
 
-        $input = $validated['editingData'] ?? [];
-
-        $updateData = [];
-
-        // استخراج الأعمدة المسموح بتعديلها من الإعدادات.
         foreach (($this->config['main_fields'] ?? []) as $field) {
 
             $key = $field['key'] ?? null;
 
-            if (!$key || !array_key_exists($key, $input)) {
-                continue;
-            }
-
-            if (
-                ($field['virtual'] ?? false) ||
-                ($field['readonly'] ?? false)
-            ) {
+            if (!$key) {
                 continue;
             }
 
             $column = $field['column'] ?? $key;
 
-            // منع تعديل الأعمدة المحمية.
+            // الحقول الافتراضية التي لا تمثل عموداً مباشراً.
+            if (
+                ($field['virtual'] ?? false) ||
+                (($field['readonly'] ?? false) || ($field['grid_readonly'] ?? false))
+            ) {
+                continue;
+            }
+
+            // معالجة الحالة الافتراضية.
+            if ($key === 'status' && !isset($field['column'])) {
+
+                $statusConfig = $this->config['status'] ?? [];
+
+                $statusColumn = $statusConfig['column'] ?? null;
+                $rawStatus = $statusColumn
+                    ? ($record[$statusColumn] ?? null)
+                    : null;
+
+                if ($rawStatus !== null && is_array($statusConfig['boolean_map'] ?? null)) {
+
+                    $booleanMap = $statusConfig['boolean_map'];
+
+                    if ((bool) $rawStatus) {
+                        $status = $booleanMap['true'] ?? 'blocked';
+                    } else {
+                        $status = !empty($record['is_active'])
+                            ? ($booleanMap['false'] ?? 'active')
+                            : 'inactive';
+                    }
+                } else {
+                    $status = $record['status'] ?? 'active';
+                }
+
+                $this->editingData[$key] = $status;
+
+                continue;
+            }
+
+            // لا نحمل أعمدة المؤسسة والمفاتيح الأساسية للتعديل.
             if (in_array($column, [
                 $primaryKey,
                 'organization_id',
@@ -1580,119 +1835,258 @@ public function saveEdit(): void
                 continue;
             }
 
-            // الحالة الافتراضية لها معالجة خاصة.
-            if ($key === 'status' && !isset($field['column'])) {
+            $this->editingData[$key] = $record[$column] ?? null;
+        }
+
+        $this->editingId = $id;
+        $this->viewingId = null;
+        $this->deletingId = null;
+        $this->togglingId = null;
+
+        $this->modalType = 'edit';
+    }
+    /**
+     * إنشاء قواعد التحقق تلقائياً اعتماداً على main_fields.
+     */
+    private function getEditValidationRules(): array
+    {
+        $rules = [];
+
+        foreach (($this->config['main_fields'] ?? []) as $field) {
+
+            $key = $field['key'] ?? null;
+
+            if (!$key || !array_key_exists($key, $this->editingData)) {
                 continue;
             }
 
-            // لا نسمح بتحديث عمود غير موجود.
-            if (!$this->tableHasColumn($table, $column)) {
+            if (
+                ($field['virtual'] ?? false) ||
+                (($field['readonly'] ?? false) || ($field['grid_readonly'] ?? false))
+            ) {
                 continue;
             }
 
-            $value = $input[$key];
+            if (in_array($key, [
+                'id',
+                'organization_id',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+            ], true)) {
+                continue;
+            }
 
-            // تحويل قيم checkbox إلى Boolean.
-            if (($field['type'] ?? '') === 'checkbox') {
-                $value = filter_var(
-                    $value,
-                    FILTER_VALIDATE_BOOLEAN
+            if (isset($field['validation'])) {
+                $rules['editingData.' . $key] = $field['validation'];
+                continue;
+            }
+
+            $rule = !empty($field['required'])
+                ? 'required'
+                : 'nullable';
+
+            $type = $field['type'] ?? 'text';
+
+            if ($type === 'email') {
+                $rule .= '|email|max:255';
+            } elseif ($type === 'number') {
+                $rule .= '|numeric';
+            } elseif ($type === 'date') {
+                $rule .= '|date';
+            } elseif ($type === 'textarea' || $type === 'text') {
+                $rule .= '|string|max:5000';
+            }
+
+            $rules['editingData.' . $key] = $rule;
+        }
+
+        return $rules;
+    }
+
+    /**
+     * التحقق من بيانات التعديل وحفظ الحقول المسموح بها فقط.
+     * جميع عمليات التحديث تمر عبر baseQuery لضمان عزل المؤسسات.
+     */
+    public function saveEdit(): void
+    {
+        try {
+
+            if (!$this->editingId) {
+                throw ValidationException::withMessages([
+                    'editingData' => 'لم يتم تحديد السجل المطلوب تعديله.',
+                ]);
+            }
+
+            // إعادة التحقق من صلاحية الوصول للسجل.
+            $this->authorizeRecord($this->editingId);
+
+            $primaryKey = $this->resolvePrimaryKey();
+            $table = $this->getTable();
+
+            // جلب السجل من نطاق المؤسسة الحالية.
+            $record = $this->baseQuery()
+                ->where($primaryKey, $this->editingId)
+                ->first();
+
+            if (!$record) {
+                throw ValidationException::withMessages([
+                    'editingData' => 'السجل غير موجود أو لا تملك صلاحية تعديله.',
+                ]);
+            }
+
+            // التحقق من المدخلات.
+            $validator = Validator::make(
+                ['editingData' => $this->editingData],
+                $this->getEditValidationRules()
+            );
+
+            $validated = $validator->validate();
+
+            $input = $validated['editingData'] ?? [];
+
+            $updateData = [];
+
+            // استخراج الأعمدة المسموح بتعديلها من الإعدادات.
+            foreach (($this->config['main_fields'] ?? []) as $field) {
+
+                $key = $field['key'] ?? null;
+
+                if (!$key || !array_key_exists($key, $input)) {
+                    continue;
+                }
+
+                if (
+                    ($field['virtual'] ?? false) ||
+                    (($field['readonly'] ?? false) || ($field['grid_readonly'] ?? false))
+                ) {
+                    continue;
+                }
+
+                $column = $field['column'] ?? $key;
+
+                // منع تعديل الأعمدة المحمية.
+                if (in_array($column, [
+                    $primaryKey,
+                    'organization_id',
+                    'created_at',
+                    'updated_at',
+                    'deleted_at',
+                ], true)) {
+                    continue;
+                }
+
+                // الحالة الافتراضية لها معالجة خاصة.
+                if ($key === 'status' && !isset($field['column'])) {
+                    continue;
+                }
+
+                // لا نسمح بتحديث عمود غير موجود.
+                if (!$this->tableHasColumn($table, $column)) {
+                    continue;
+                }
+
+                $value = $input[$key];
+
+                // تحويل قيم checkbox إلى Boolean.
+                if (($field['type'] ?? '') === 'checkbox') {
+                    $value = filter_var(
+                        $value,
+                        FILTER_VALIDATE_BOOLEAN
+                    );
+                }
+
+                $updateData[$column] = $value;
+            }
+
+            // معالجة حالة السجل الافتراضية.
+            $statusConfig = $this->config['status'] ?? [];
+
+            $statusColumn = $statusConfig['column'] ?? null;
+            $statusValue = $input['status'] ?? null;
+
+            if (
+                $statusColumn &&
+                $statusValue !== null &&
+                !isset($this->config['main_fields']['status']['column']) &&
+                $this->tableHasColumn($table, $statusColumn)
+            ) {
+
+                $booleanMap = $statusConfig['boolean_map'] ?? [];
+
+                if (is_array($booleanMap) && count($booleanMap)) {
+
+                    if ($statusValue === ($booleanMap['true'] ?? 'blocked')) {
+                        $updateData[$statusColumn] = true;
+                    } elseif (
+                        $statusValue === ($booleanMap['false'] ?? 'active') ||
+                        $statusValue === 'inactive'
+                    ) {
+                        $updateData[$statusColumn] = false;
+                    }
+                }
+
+                // التمييز بين نشط وغير نشط إذا كان العمود موجوداً.
+                if ($this->tableHasColumn($table, 'is_active')) {
+
+                    if ($statusValue === 'active') {
+                        $updateData['is_active'] = true;
+                    } elseif ($statusValue === 'inactive') {
+                        $updateData['is_active'] = false;
+                    }
+                }
+            }
+
+            if (empty($updateData)) {
+                throw ValidationException::withMessages([
+                    'editingData' => 'لا توجد حقول صالحة للحفظ.',
+                ]);
+            }
+
+            // تحديث وقت التعديل إذا كان العمود موجوداً.
+            if ($this->tableHasColumn($table, 'updated_at')) {
+                $updateData['updated_at'] = now();
+            }
+
+            // تحديث السجل داخل نطاق المؤسسة الحالية فقط.
+            $updated = $this->baseQuery()
+                ->where($primaryKey, $this->editingId)
+                ->update($updateData);
+
+            if (!$updated) {
+                throw new \RuntimeException(
+                    'لم يتم تحديث السجل. ربما لم تتغير البيانات.'
                 );
             }
 
-            $updateData[$column] = $value;
-        }
+            // تنظيف حالة التعديل.
+            $this->editingData = [];
+            $this->editingId = null;
+            // $this->modalType = null;
 
-        // معالجة حالة السجل الافتراضية.
-        $statusConfig = $this->config['status'] ?? [];
+            $this->resetPage();
 
-        $statusColumn = $statusConfig['column'] ?? null;
-        $statusValue = $input['status'] ?? null;
+            $this->dispatch(
+                'grid-refreshed',
+                message: 'تم تعديل البيانات بنجاح.'
+            );
+        } catch (ValidationException $e) {
 
-        if (
-            $statusColumn &&
-            $statusValue !== null &&
-            !isset($this->config['main_fields']['status']['column']) &&
-            $this->tableHasColumn($table, $statusColumn)
-        ) {
+            throw $e;
+        } catch (Throwable $e) {
 
-            $booleanMap = $statusConfig['boolean_map'] ?? [];
-
-            if (is_array($booleanMap) && count($booleanMap)) {
-
-                if ($statusValue === ($booleanMap['true'] ?? 'blocked')) {
-                    $updateData[$statusColumn] = true;
-                } elseif (
-                    $statusValue === ($booleanMap['false'] ?? 'active') ||
-                    $statusValue === 'inactive'
-                ) {
-                    $updateData[$statusColumn] = false;
-                }
-            }
-
-            // التمييز بين نشط وغير نشط إذا كان العمود موجوداً.
-            if ($this->tableHasColumn($table, 'is_active')) {
-
-                if ($statusValue === 'active') {
-                    $updateData['is_active'] = true;
-                } elseif ($statusValue === 'inactive') {
-                    $updateData['is_active'] = false;
-                }
-            }
-        }
-
-        if (empty($updateData)) {
-            throw ValidationException::withMessages([
-                'editingData' => 'لا توجد حقول صالحة للحفظ.',
+            Log::error('[GenericGrid] saveEdit', [
+                'entity' => $this->entityKey,
+                'editing_id' => $this->editingId,
+                'error' => $e->getMessage(),
             ]);
-        }
 
-        // تحديث وقت التعديل إذا كان العمود موجوداً.
-        if ($this->tableHasColumn($table, 'updated_at')) {
-            $updateData['updated_at'] = now();
-        }
-
-        // تحديث السجل داخل نطاق المؤسسة الحالية فقط.
-        $updated = $this->baseQuery()
-            ->where($primaryKey, $this->editingId)
-            ->update($updateData);
-
-        if (!$updated) {
-            throw new \RuntimeException(
-                'لم يتم تحديث السجل. ربما لم تتغير البيانات.'
+            $this->dispatch(
+                'grid-error',
+                message: 'تعذر حفظ التعديلات. تحقق من البيانات وحاول مرة أخرى.'
             );
         }
-
-        // تنظيف حالة التعديل.
-        $this->editingData = [];
-        $this->editingId = null;
-        // $this->modalType = null;
-
-        $this->resetPage();
-
-        $this->dispatch(
-            'grid-refreshed',
-            message: 'تم تعديل البيانات بنجاح.'
-        );
-
-    } catch (ValidationException $e) {
-
-        throw $e;
-
-    } catch (Throwable $e) {
-
-        Log::error('[GenericGrid] saveEdit', [
-            'entity' => $this->entityKey,
-            'editing_id' => $this->editingId,
-            'error' => $e->getMessage(),
-        ]);
-
-        $this->dispatch(
-            'grid-error',
-            message: 'تعذر حفظ التعديلات. تحقق من البيانات وحاول مرة أخرى.'
-        );
     }
-}
 
     /**
      * فتح نافذة تأكيد الحذف بعد التحقق من ملكية السجل.
@@ -1791,19 +2185,16 @@ public function saveEdit(): void
                     $updates['blacklisted_at'] =
                         !$wasBlocked ? now() : null;
                 }
-
             } elseif ($this->hasColumn('status')) {
                 $currentStatus = $array['status'] ?? 'active';
 
                 $updates['status'] =
                     $currentStatus === 'blocked'
-                        ? 'active'
-                        : 'blocked';
-
+                    ? 'active'
+                    : 'blocked';
             } elseif ($this->hasColumn('is_active')) {
                 $updates['is_active'] =
                     !((bool) ($array['is_active'] ?? true));
-
             } else {
                 $this->dispatch(
                     'grid-error',
@@ -1831,7 +2222,6 @@ public function saveEdit(): void
                 'grid-refreshed',
                 message: 'تم تحديث الحالة بنجاح.'
             );
-
         } catch (AuthorizationException $e) {
             Log::warning('[GenericGrid] toggleStatus denied', [
                 'entity' => $this->entityKey,
@@ -1843,7 +2233,6 @@ public function saveEdit(): void
                 'grid-error',
                 message: 'لا تملك صلاحية تغيير حالة هذا السجل.'
             );
-
         } catch (\Throwable $e) {
             Log::error('[GenericGrid] toggleStatus', [
                 'entity' => $this->entityKey,
@@ -1904,7 +2293,6 @@ public function saveEdit(): void
                 'grid-refreshed',
                 message: 'تم الحذف بنجاح.'
             );
-
         } catch (AuthorizationException $e) {
             Log::warning('[GenericGrid] deleteRecord denied', [
                 'entity' => $this->entityKey,
@@ -1916,7 +2304,6 @@ public function saveEdit(): void
                 'grid-error',
                 message: 'لا تملك صلاحية حذف هذا السجل.'
             );
-
         } catch (\Throwable $e) {
             Log::error('[GenericGrid] deleteRecord', [
                 'entity' => $this->entityKey,
@@ -1984,11 +2371,9 @@ public function saveEdit(): void
                 'deletingRecord' => $this->deletingRecord,
 
                 'modalType' => $this->modalType,
-            ]
-        )->layout(
-            'front-organizations.layout.master',
-            [
-                'title' => $this->config['title'] ?? 'Generic Grid',
+                'ownerOptions' => $this->entityKey === 'owner_agents'
+                    ? $this->getOwnerOptions()
+                    : [],
             ]
         );
     }

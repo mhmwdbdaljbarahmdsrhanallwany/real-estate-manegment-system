@@ -1019,9 +1019,9 @@
             </div>
             <div class="gg-toolbar-actions">
                 @if (!empty($config['actions']['create']))
-                <button type="button" class="gg-btn gg-btn-primary"
-                    wire:click="$dispatch('open-universal-form', { entityKey: '{{ $entityKey }}', mode: 'create' })">
-                    <i class="fas fa-plus"></i> إضافة {{ $entitySingle }}
+                <button type="button" class="gg-btn gg-btn-primary" wire:click="openCreate">
+                    <i class="fas fa-plus"></i>
+                    إضافة {{ $entitySingle }}
                 </button>
                 @endif
             </div>
@@ -1492,15 +1492,31 @@
 
                                 @elseif ($type === 'select' || $key === 'status')
 
-                                <select class="gg-select" wire:model="editingData.{{ $key }}">
-                                    <option value="">اختر...</option>
+    <select class="gg-select" wire:model="creatingData.{{ $key }}">
 
-                                    @foreach ($options as $option)
-                                    <option value="{{ $option['value'] }}">
-                                        {{ $option['label'] }}
-                                    </option>
-                                    @endforeach
-                                </select>
+        <option value="">اختر...</option>
+
+        {{-- قائمة الملاك --}}
+        @if (($field['options_source'] ?? null) === 'owner_id')
+
+            @foreach (($ownerOptions ?? []) as $option)
+                <option value="{{ $option['value'] }}">
+                    {{ $option['label'] }}
+                </option>
+            @endforeach
+
+        {{-- الخيارات العادية من الإعدادات --}}
+        @else
+
+            @foreach ($options as $option)
+                <option value="{{ $option['value'] }}">
+                    {{ $option['label'] }}
+                </option>
+            @endforeach
+
+        @endif
+
+    </select>
 
                                 @elseif ($type === 'checkbox')
 
@@ -1559,6 +1575,167 @@
         </div>
 
         @endif
+
+        @if ($modalType === 'create')
+
+        <div class="gg-overlay" wire:click.self="closeModal">
+
+            <div class="gg-modal large">
+
+                {{-- رأس النافذة --}}
+                <div class="gg-modal-header">
+
+                    <div class="gg-modal-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+
+                    <div class="gg-modal-title">
+                        <h2>إضافة {{ $entitySingle }}</h2>
+                        <p>
+                            إدخال بيانات {{ $entitySingle }}
+                        </p>
+                    </div>
+
+                    <button type="button" class="gg-modal-close" wire:click="closeModal">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+                {{-- نموذج الإضافة --}}
+                <form wire:submit.prevent="saveCreate">
+
+                    <div class="gg-modal-body">
+
+                        <div class="gg-details-grid">
+
+                            @foreach (($config['main_fields'] ?? []) as $field)
+
+                            @php
+                            $key = $field['key'] ?? null;
+                            $type = $field['type'] ?? 'text';
+
+                            if (!$key || !array_key_exists($key, $creatingData)) {
+                            continue;
+                            }
+
+                            if (
+                            ($field['virtual'] ?? false) ||
+                            ($field['readonly'] ?? false)
+                            ) {
+                            continue;
+                            }
+
+                            $inputType = in_array($type, [
+                            'text',
+                            'email',
+                            'number',
+                            'date',
+                            'tel',
+                            'url',
+                            ], true) ? $type : 'text';
+
+                            $options = $field['options'] ?? [];
+
+                            if ($key === 'status' && empty($options)) {
+                            $options = [
+                            ['value' => 'active', 'label' => 'نشط'],
+                            ['value' => 'inactive', 'label' => 'غير نشط'],
+                            ['value' => 'blocked', 'label' => 'محظور'],
+                            ];
+                            }
+                            @endphp
+
+                            <div class="gg-detail-item">
+
+                                <label class="gg-detail-item-label">
+                                    <i class="{{ $field['icon'] ?? 'fas fa-pen' }}"></i>
+                                    {{ $field['label'] ?? $key }}
+
+                                    @if (!empty($field['required']))
+                                    <span style="color:#DC2626">*</span>
+                                    @endif
+                                </label>
+
+                                @if ($type === 'textarea')
+
+                                <textarea class="gg-input" style="height:auto; min-height:90px; resize:vertical;"
+                                    wire:model="creatingData.{{ $key }}"
+                                    placeholder="أدخل {{ $field['label'] ?? $key }}">
+                            </textarea>
+
+                                @elseif ($type === 'select' || $key === 'status')
+
+                                <select class="gg-select" wire:model="creatingData.{{ $key }}">
+                                    <option value="">اختر...</option>
+
+                                    @foreach ($options as $option)
+                                    <option value="{{ $option['value'] }}">
+                                        {{ $option['label'] }}
+                                    </option>
+                                    @endforeach
+                                </select>
+
+                                @elseif ($type === 'checkbox')
+
+                                <label style="display:flex; align-items:center; gap:8px;">
+                                    <input type="checkbox" wire:model="creatingData.{{ $key }}">
+                                    {{ $field['label'] ?? $key }}
+                                </label>
+
+                                @else
+
+                                <input type="{{ $inputType }}" class="gg-input" wire:model="creatingData.{{ $key }}"
+                                    placeholder="أدخل {{ $field['label'] ?? $key }}">
+
+                                @endif
+
+                                @error('creatingData.' . $key)
+                                <small style="color:#DC2626; display:block; margin-top:5px;">
+                                    {{ $message }}
+                                </small>
+                                @enderror
+
+                            </div>
+
+                            @endforeach
+
+                        </div>
+
+                    </div>
+
+                    {{-- أزرار الحفظ --}}
+                    <div class="gg-modal-footer">
+
+                        <button type="button" class="gg-btn gg-btn-secondary" wire:click="closeModal">
+                            إلغاء
+                        </button>
+
+                        <button type="submit" class="gg-btn gg-btn-primary" wire:loading.attr="disabled"
+                            wire:target="saveCreate">
+
+                            <span wire:loading.remove wire:target="saveCreate">
+                                <i class="fas fa-save"></i>
+                                حفظ البيانات
+                            </span>
+
+                            <span wire:loading wire:target="saveCreate">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                جارٍ الحفظ...
+                            </span>
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        @endif
+
         {{-- ===== Delete Modal ===== --}}
         @if ($deletingRecord && $modalType === 'delete')
         <div class="gg-overlay" wire:click.self="closeModal">
