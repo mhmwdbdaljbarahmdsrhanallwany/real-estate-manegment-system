@@ -210,9 +210,7 @@ class GenericGrid extends Component
             }
 
             if (!$directScopeIsValid && !$relationScopeIsValid) {
-                throw new AuthorizationException(
-                    "تعذر التحقق من إعدادات عزل المؤسسة للكيان {$this->entityKey}."
-                );
+                throw new AuthorizationException("تعذر التحقق من إعدادات عزل المؤسسة للكيان {$this->entityKey}.");
             }
         } elseif ($tenantScoped === false && $allowShared === true) {
             // كيان مشترك مسموح به صراحةً.

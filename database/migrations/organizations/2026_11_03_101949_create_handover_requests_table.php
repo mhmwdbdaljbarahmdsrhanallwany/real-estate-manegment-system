@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -6,9 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-     /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('handover_requests', function (Blueprint $table) {
@@ -29,9 +27,8 @@ return new class extends Migration
             $table->enum('handover_type', [
                 'delivery',
                 'return',
-            ])
-                ->default('delivery')
-                ->comment('نوع الطلب: تسليم أو استلام');
+            ])->default('delivery')
+              ->comment('نوع الطلب: تسليم أو استلام');
 
             // تاريخ التنفيذ المقرر والفعلي
             $table->date('scheduled_date')
@@ -48,12 +45,12 @@ return new class extends Migration
                 'scheduled',
                 'completed',
                 'cancelled',
-            ])
-                ->default('pending')
-                ->comment('حالة الطلب');
+            ])->default('pending')
+              ->comment('حالة الطلب');
 
             // المستخدم الذي أكمل العملية
-            $table->unsignedInteger('completed_by')
+            // users.id = BIGINT UNSIGNED
+            $table->unsignedBigInteger('completed_by')
                 ->nullable()
                 ->comment('من قام بالإنجاز');
 
@@ -89,8 +86,8 @@ return new class extends Migration
             */
 
             $table->index('contract_id', 'idx_contract');
-
             $table->index('status', 'idx_status');
+            $table->index('completed_by', 'idx_completed_by');
 
             /*
             |--------------------------------------------------------------------------
@@ -99,16 +96,16 @@ return new class extends Migration
             */
 
             // العلاقة مع جدول العقود
-            $table->foreign('contract_id')
+            $table->foreign('contract_id', 'fk_handover_contract')
                 ->references('contract_id')
                 ->on('contracts')
                 ->onDelete('cascade');
 
-            // العلاقة مع المستخدم الذي نفّذ العملية
-            $table->foreign('completed_by')
-                ->references('user_id')
+            // العلاقة مع المستخدم الذي نفذ العملية
+            $table->foreign('completed_by', 'fk_handover_completed_by')
+                ->references('id')
                 ->on('users')
-                ->onDelete('set null');
+                ->nullOnDelete();
 
             // وصف الجدول
             $table->comment(
@@ -117,9 +114,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('handover_requests');

@@ -8,6 +8,7 @@ class OwnersAgents extends Component
 {
     public function render()
     {
-        return view('front-organizations.livewire.owner.Agents.owners-agents');
+        return view('front-organizations.livewire.owner.Agents.owners-agents')->layout('
+        front-organizations.layout.master');
     }
 }

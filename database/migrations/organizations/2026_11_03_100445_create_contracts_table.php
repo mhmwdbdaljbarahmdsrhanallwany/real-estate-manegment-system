@@ -28,7 +28,7 @@ return new class extends Migration
                 ->comment('معرف الوحدة');
 
             // المؤسسة والفرع المسؤولان
-            $table->unsignedInteger('organization_id')
+           $table->unsignedBigInteger('organization_id')
                 ->nullable()
                 ->comment('معرف المؤسسة المسؤولة');
 
@@ -37,7 +37,7 @@ return new class extends Migration
                 ->comment('معرف الفرع المسؤول');
 
             // المستخدمون المسؤولون
-            $table->unsignedInteger('created_by')
+            $table->unsignedBigInteger('created_by')
                 ->nullable()
                 ->comment('من قام بإنشاء العقد');
 
@@ -122,7 +122,7 @@ return new class extends Migration
                 ->nullable()
                 ->comment('تاريخ الإنهاء');
 
-            $table->unsignedInteger('terminated_by')
+            $table->unsignedBigInteger('terminated_by')
                 ->nullable()
                 ->comment('من قام بالإنهاء');
 
@@ -202,28 +202,28 @@ return new class extends Migration
                 ->onDelete('cascade');
 
             // المؤسسة
-            $table->foreign('organization_id')
-                ->references('organization_id')
-                ->on('organizations')
-                ->onDelete('set null');
+           $table->foreign('organization_id')
+    ->references('organization_id')
+    ->on('organizations')
+    ->nullOnDelete();
 
             // الفرع
-            $table->foreign('branch_id')
-                ->references('branch_id')
-                ->on('agency_branches')
-                ->onDelete('set null');
+        $table->foreign('branch_id')
+    ->references('branch_id')
+    ->on('agency_branches')
+    ->nullOnDelete();
 
             // المستخدم الذي أنشأ العقد
             $table->foreign('created_by')
-                ->references('user_id')
-                ->on('users')
-                ->onDelete('set null');
+    ->references('id')
+    ->on('users')
+    ->nullOnDelete();
 
             // المستخدم الذي أنهى العقد
-            $table->foreign('terminated_by')
-                ->references('user_id')
-                ->on('users')
-                ->onDelete('set null');
+          $table->foreign('terminated_by')
+    ->references('id')
+    ->on('users')
+    ->nullOnDelete();
 
             // العقد السابق الذي تم التجديد منه
             $table->foreign('renewed_from')

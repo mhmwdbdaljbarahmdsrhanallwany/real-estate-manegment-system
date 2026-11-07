@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -6,9 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('unit_inspections', function (Blueprint $table) {
@@ -24,7 +22,8 @@ return new class extends Migration
             $table->unsignedInteger('contract_id')
                 ->comment('معرف العقد');
 
-            $table->unsignedInteger('inspector_id')
+            // users.id نوعه BIGINT UNSIGNED
+            $table->unsignedBigInteger('inspector_id')
                 ->nullable()
                 ->comment('معرف المفتش');
 
@@ -38,9 +37,8 @@ return new class extends Migration
                 'final',
                 'periodic',
                 'emergency',
-            ])
-                ->default('initial')
-                ->comment('نوع الفحص: ابتدائي، نهائي، دوري، طارئ');
+            ])->default('initial')
+              ->comment('نوع الفحص: ابتدائي، نهائي، دوري، طارئ');
 
             // الحالة العامة للوحدة
             $table->enum('overall_condition', [
@@ -49,9 +47,8 @@ return new class extends Migration
                 'fair',
                 'poor',
                 'damaged',
-            ])
-                ->nullable()
-                ->comment('الحالة العامة');
+            ])->nullable()
+              ->comment('الحالة العامة');
 
             // تقييم النظافة
             $table->enum('cleanliness_rating', [
@@ -59,9 +56,8 @@ return new class extends Migration
                 'good',
                 'fair',
                 'poor',
-            ])
-                ->nullable()
-                ->comment('تقييم النظافة');
+            ])->nullable()
+              ->comment('تقييم النظافة');
 
             // الملاحظات العامة
             $table->text('notes')
@@ -88,7 +84,6 @@ return new class extends Migration
                 ->useCurrentOnUpdate()
                 ->comment('تاريخ آخر تحديث');
 
-
             /*
             |--------------------------------------------------------------------------
             | Indexes
@@ -96,11 +91,9 @@ return new class extends Migration
             */
 
             $table->index('unit_id', 'idx_unit');
-
             $table->index('contract_id', 'idx_contract');
-
+            $table->index('inspector_id', 'idx_inspector');
             $table->index('inspection_date', 'idx_inspection_date');
-
 
             /*
             |--------------------------------------------------------------------------
@@ -109,23 +102,22 @@ return new class extends Migration
             */
 
             // العلاقة مع الوحدات
-            $table->foreign('unit_id')
+            $table->foreign('unit_id', 'fk_inspection_unit')
                 ->references('unit_id')
                 ->on('units')
-                ->onDelete('cascade');
+                ->cascadeOnDelete();
 
             // العلاقة مع العقود
-            $table->foreign('contract_id')
+            $table->foreign('contract_id', 'fk_inspection_contract')
                 ->references('contract_id')
                 ->on('contracts')
-                ->onDelete('cascade');
+                ->cascadeOnDelete();
 
             // العلاقة مع المستخدم المفتش
-            $table->foreign('inspector_id')
-                ->references('user_id')
+            $table->foreign('inspector_id', 'fk_inspection_inspector')
+                ->references('id')
                 ->on('users')
-                ->onDelete('set null');
-
+                ->nullOnDelete();
 
             // وصف الجدول
             $table->comment(
@@ -134,9 +126,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('unit_inspections');

@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -6,9 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('maintenance_requests', function (Blueprint $table) {
@@ -18,17 +16,20 @@ return new class extends Migration
                 ->comment('معرف الطلب');
 
             // العلاقات الأساسية
-            $table->unsignedInteger('organization_id')
+            // organizations.organization_id = BIGINT UNSIGNED
+            $table->unsignedBigInteger('organization_id')
                 ->comment('معرف المؤسسة');
 
+            // يفترض أن المفاتيح الأساسية في هذه الجداول INT UNSIGNED
             $table->unsignedInteger('unit_id')
                 ->comment('معرف الوحدة');
 
             $table->unsignedInteger('tenant_id')
                 ->comment('معرف المستأجر مقدم الطلب');
 
-            // رقم الطلب الفريد
+            // رقم الطلب
             $table->string('request_number', 50)
+                ->unique()
                 ->comment('رقم الطلب الفريد');
 
             // تاريخ تقديم الطلب
@@ -36,31 +37,30 @@ return new class extends Migration
                 ->useCurrent()
                 ->comment('تاريخ تقديم الطلب');
 
-            // أولوية الطلب
+            // الأولوية
             $table->enum('priority', [
                 'low',
                 'medium',
                 'high',
                 'emergency',
-            ])
-                ->default('medium')
-                ->comment('أولوية الطلب');
+            ])->default('medium')
+              ->comment('أولوية الطلب');
 
             // نوع المشكلة
             $table->string('issue_type', 100)
                 ->nullable()
-                ->comment('نوع المشكلة (كهرباء، سباكة، تكييف، إلخ)');
+                ->comment('نوع المشكلة');
 
             // وصف المشكلة
             $table->text('description')
                 ->comment('وصف المشكلة');
 
-            // صور المشكلة
+            // الصور
             $table->json('images')
                 ->nullable()
                 ->comment('صور المشكلة');
 
-            // حالة الطلب
+            // الحالة
             $table->enum('status', [
                 'pending',
                 'assigned',
@@ -68,14 +68,14 @@ return new class extends Migration
                 'completed',
                 'cancelled',
                 'rejected',
-            ])
-                ->default('pending')
-                ->comment('حالة الطلب');
+            ])->default('pending')
+              ->comment('حالة الطلب');
 
-            // الفني أو الموظف المكلف
-            $table->unsignedInteger('assigned_to')
+            // الموظف أو الفني المكلف
+            // users.id = BIGINT UNSIGNED
+            $table->unsignedBigInteger('assigned_to')
                 ->nullable()
-                ->comment('تم التعيين إلى (فني/موظف صيانة)');
+                ->comment('معرف الموظف أو الفني المكلف');
 
             // التكاليف
             $table->decimal('estimated_cost', 12, 2)
@@ -86,22 +86,22 @@ return new class extends Migration
                 ->nullable()
                 ->comment('التكلفة الفعلية');
 
-            // تاريخ إكمال الصيانة
+            // تاريخ الإكمال
             $table->dateTime('completed_date')
                 ->nullable()
                 ->comment('تاريخ الإكمال');
 
-            // تفاصيل الحل
+            // ملاحظات الحل
             $table->text('resolution_notes')
                 ->nullable()
                 ->comment('ملاحظات الحل');
 
-            // الفاتورة المرتبطة بالصيانة
-            $table->unsignedInteger('invoice_id')
-                ->nullable()
-                ->comment('معرف الفاتورة (إن تمت فوترة الصيانة)');
+            // الفاتورة
+               $table->unsignedBigInteger('invoice_id')
+    ->nullable()
+    ->comment('معرف الفاتورة');
 
-            // تواريخ الإنشاء والتحديث
+            // التواريخ
             $table->dateTime('created_at')
                 ->useCurrent()
                 ->comment('تاريخ الإنشاء');
@@ -111,7 +111,6 @@ return new class extends Migration
                 ->useCurrentOnUpdate()
                 ->comment('تاريخ آخر تحديث');
 
-
             /*
             |--------------------------------------------------------------------------
             | Indexes
@@ -119,16 +118,11 @@ return new class extends Migration
             */
 
             $table->index('organization_id', 'idx_agency');
-
             $table->index('unit_id', 'idx_unit');
-
+            $table->index('tenant_id', 'idx_tenant');
             $table->index('status', 'idx_status');
-
             $table->index('priority', 'idx_priority');
-
-            // رقم الطلب فريد
-            $table->unique('request_number', 'idx_request_number');
-
+            $table->index('assigned_to', 'idx_assigned_to');
 
             /*
             |--------------------------------------------------------------------------
@@ -136,36 +130,31 @@ return new class extends Migration
             |--------------------------------------------------------------------------
             */
 
-            // المؤسسة المسؤولة
+            // المؤسسة
             $table->foreign('organization_id')
                 ->references('organization_id')
                 ->on('organizations')
-                ->onDelete('cascade');
+                ->cascadeOnDelete();
 
-            // الوحدة العقارية
+            // الوحدة
             $table->foreign('unit_id')
                 ->references('unit_id')
                 ->on('units')
-                ->onDelete('cascade');
+                ->cascadeOnDelete();
 
-            // المستأجر مقدم الطلب
+            // المستأجر
             $table->foreign('tenant_id')
                 ->references('tenant_id')
                 ->on('tenants')
-                ->onDelete('cascade');
+                ->cascadeOnDelete();
 
-            // الموظف أو الفني المكلف
+            // الموظف أو الفني
             $table->foreign('assigned_to')
-                ->references('user_id')
+                ->references('id')
                 ->on('users')
-                ->onDelete('set null');
+                ->nullOnDelete();
 
-            // فاتورة الصيانة
-            $table->foreign('invoice_id')
-                ->references('invoice_id')
-                ->on('invoices')
-                ->onDelete('set null');
-
+         
 
             // وصف الجدول
             $table->comment(
@@ -174,9 +163,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('maintenance_requests');

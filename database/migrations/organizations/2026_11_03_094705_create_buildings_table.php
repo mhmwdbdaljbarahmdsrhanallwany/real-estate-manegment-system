@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -6,22 +7,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-   /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('buildings', function (Blueprint $table) {
 
-            // المفتاح الأساسي
+            // =====================================
+            // 1. المفتاح الأساسي
+            // =====================================
+
             $table->increments('building_id')
                 ->comment('معرف المبنى');
 
-            // العلاقات الأساسية
-            $table->unsignedInteger('owner_id')
+            // =====================================
+            // 2. العلاقات الأساسية
+            // =====================================
+
+            $table->unsignedBigInteger('owner_id')
                 ->comment('معرف المالك');
 
-            $table->unsignedInteger('organization_id')
+            $table->unsignedBigInteger('organization_id')
                 ->nullable()
                 ->comment('معرف المؤسسة المسؤولة');
 
@@ -29,167 +33,164 @@ return new class extends Migration
                 ->nullable()
                 ->comment('معرف الفرع المسؤول');
 
-            // البيانات الأساسية للمبنى
+            // =====================================
+            // 3. البيانات الأساسية
+            // =====================================
+
             $table->string('building_name', 255)
-                ->comment('اسم المبنى أو العمارة');
+                ->comment('اسم المبنى');
 
             $table->string('building_number', 50)
                 ->nullable()
                 ->comment('رقم المبنى الوطني');
 
-            // العنوان
-            $table->string('address_line1', 255)
-                ->nullable()
-                ->comment('السطر الأول من العنوان');
+            // =====================================
+            // 4. العنوان
+            // =====================================
 
-            $table->string('address_line2', 255)
-                ->nullable()
-                ->comment('السطر الثاني من العنوان');
+            $table->string('address_line1', 255)->nullable();
+            $table->string('address_line2', 255)->nullable();
 
-            $table->string('city', 100)
-                ->nullable()
+            $table->string('city', 100)->nullable()
                 ->comment('المدينة');
 
-            $table->string('district', 100)
-                ->nullable()
+            $table->string('district', 100)->nullable()
                 ->comment('الحي');
 
-            $table->string('street', 100)
-                ->nullable()
+            $table->string('street', 100)->nullable()
                 ->comment('الشارع');
 
-            $table->string('postal_code', 20)
-                ->nullable()
+            $table->string('postal_code', 20)->nullable()
                 ->comment('الرمز البريدي');
 
             $table->string('country', 50)
                 ->default('السعودية')
                 ->comment('الدولة');
 
-            // الإحداثيات الجغرافية
-            $table->decimal('latitude', 10, 7)
-                ->nullable()
-                ->comment('خط العرض');
+            // =====================================
+            // 5. الموقع الجغرافي
+            // =====================================
 
-            $table->decimal('longitude', 10, 7)
-                ->nullable()
-                ->comment('خط الطول');
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
 
-            // مواصفات المبنى
-            $table->integer('number_of_floors')
-                ->nullable()
-                ->comment('عدد الأدوار');
+            // =====================================
+            // 6. مواصفات المبنى
+            // =====================================
 
-            $table->integer('number_of_units')
-                ->default(0)
-                ->comment('عدد الوحدات (يتم تحديثه تلقائياً)');
+            $table->unsignedInteger('number_of_floors')
+                ->nullable();
 
-            $table->integer('year_built')
-                ->nullable()
-                ->comment('سنة البناء');
+            $table->unsignedInteger('number_of_units')
+                ->default(0);
 
-            $table->decimal('land_area', 10, 2)
-                ->nullable()
-                ->comment('مساحة الأرض (م²)');
+            $table->unsignedSmallInteger('year_built')
+                ->nullable();
 
-            $table->decimal('building_area', 10, 2)
-                ->nullable()
-                ->comment('مساحة المبنى (م²)');
+            $table->decimal('land_area', 10, 2)->nullable();
+            $table->decimal('building_area', 10, 2)->nullable();
 
-            // نوع العقار
+            // =====================================
+            // 7. نوع العقار
+            // =====================================
+
             $table->enum('property_type', [
                 'residential',
                 'commercial',
                 'industrial',
                 'agricultural',
                 'mixed',
-            ])
-                ->default('residential')
-                ->comment('نوع العقار');
+            ])->default('residential');
 
-            // الخدمات والمرافق
-            $table->boolean('has_elevator')
-                ->default(false)
-                ->comment('يوجد مصعد');
+            // =====================================
+            // 8. الخدمات والمرافق
+            // =====================================
 
-            $table->boolean('has_parking')
-                ->default(false)
-                ->comment('يوجد موقف سيارات');
+            $table->boolean('has_elevator')->default(false);
+            $table->boolean('has_parking')->default(false);
+            $table->boolean('has_security')->default(false);
+            $table->boolean('has_maintenance')->default(false);
 
-            $table->boolean('has_security')
-                ->default(false)
-                ->comment('يوجد حراسة');
+            // =====================================
+            // 9. الملاحظات والمرفقات
+            // =====================================
 
-            $table->boolean('has_maintenance')
-                ->default(false)
-                ->comment('يوجد صيانة');
+            $table->text('notes')->nullable();
 
-            // الملاحظات
-            $table->text('notes')
-                ->nullable()
-                ->comment('ملاحظات إضافية');
+            $table->json('images')->nullable();
+            $table->json('documents')->nullable();
 
-            // الصور والمستندات
-            $table->json('images')
-                ->nullable()
-                ->comment('صور المبنى');
+            // =====================================
+            // 10. حالة المبنى
+            // =====================================
 
-            $table->json('documents')
-                ->nullable()
-                ->comment('مستندات المبنى (رخصة بناء، صك ملكية، إلخ)');
-
-            // حالة المبنى
             $table->boolean('is_active')
-                ->default(true)
-                ->comment('هل المبنى نشط؟');
+                ->default(true);
 
-            // تواريخ الإنشاء والتحديث
+            // =====================================
+            // 11. التواريخ
+            // =====================================
+
             $table->dateTime('created_at')
-                ->useCurrent()
-                ->comment('تاريخ الإنشاء');
+                ->useCurrent();
 
             $table->dateTime('updated_at')
                 ->useCurrent()
-                ->useCurrentOnUpdate()
-                ->comment('تاريخ آخر تحديث');
+                ->useCurrentOnUpdate();
 
-            // الحذف المنطقي
             $table->dateTime('deleted_at')
-                ->nullable()
-                ->comment('تاريخ الحذف المنطقي');
+                ->nullable();
 
-            // الفهارس
-            $table->index('owner_id', 'idx_owner');
-            $table->index('organization_id', 'idx_agency');
-            $table->index('city', 'idx_city');
-            $table->index('deleted_at', 'idx_deleted_at');
+            // =====================================
+            // 12. الفهارس
+            // =====================================
 
-            // العلاقات الخارجية
-            $table->foreign('owner_id')
+            $table->index('owner_id', 'idx_building_owner');
+            $table->index('organization_id', 'idx_building_org');
+            $table->index('branch_id', 'idx_building_branch');
+            $table->index('city', 'idx_building_city');
+            $table->index('deleted_at', 'idx_building_deleted');
+
+            // =====================================
+            // 13. المفتاح الأجنبي للمالك
+            // =====================================
+
+            $table->foreign('owner_id', 'fk_building_owner')
                 ->references('owner_id')
                 ->on('owners')
-                ->onDelete('cascade');
+                ->cascadeOnUpdate()
+                ->restrictOnDelete();
 
-            $table->foreign('organization_id')
+            // =====================================
+            // 14. المفتاح الأجنبي للمؤسسة
+            // =====================================
+
+            $table->foreign('organization_id', 'fk_building_organization')
                 ->references('organization_id')
                 ->on('organizations')
-                ->onDelete('set null');
+                ->cascadeOnUpdate()
+                ->nullOnDelete();
 
-            $table->foreign('branch_id')
+            // =====================================
+            // 15. المفتاح الأجنبي للفرع
+            // =====================================
+
+            $table->foreign('branch_id', 'fk_building_branch')
                 ->references('branch_id')
                 ->on('agency_branches')
-                ->onDelete('set null');
+                ->cascadeOnUpdate()
+                ->nullOnDelete();
 
-            // وصف الجدول
+            // =====================================
+            // 16. وصف الجدول
+            // =====================================
+
             $table->comment(
-                'جدول المباني والعمارات - تخزين بيانات المباني بما فيها الموقع والمواصفات والصور'
+                'جدول المباني والعمارات - تخزين بيانات المباني والموقع والمواصفات والصور'
             );
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('buildings');
