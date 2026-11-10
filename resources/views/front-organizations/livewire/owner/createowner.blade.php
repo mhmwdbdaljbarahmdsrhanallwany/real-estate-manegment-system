@@ -1,7 +1,5 @@
-{{--  <livewire:front-organizations.shared.generic-grid entityKey="owners" />  --}}
-@extends('front-organizations.layout.master')
-
-@section('content')
+<div>
     @livewire('front-organizations.shared.generic-grid', ['entityKey' => 'owners'])
+
+</div>
     
-@endsection

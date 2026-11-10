@@ -9,6 +9,7 @@ use Livewire\Livewire;
 use App\Http\Livewire\FrontOrganizations\Shared\GenericGrid;
 class AppServiceProvider extends ServiceProvider
 {
+
     /**
      * Register any application services.
      */
@@ -22,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Livewire::component(
+    'front-organizations.shared.property-map',
+    \App\Http\Livewire\FrontOrganizations\Shared\PropertyMap::class
+);
         Livewire::component(
         'front-organizations.shared.universal-form',
         \App\Http\Livewire\FrontOrganizations\Shared\UniversalForm::class,

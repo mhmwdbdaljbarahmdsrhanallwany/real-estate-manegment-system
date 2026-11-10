@@ -14,7 +14,7 @@
   <!-- Ionicons -->
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
 
-  
+
   <!-- Tempusdominus -->
   <link rel="stylesheet"
     href="{{ asset('assets/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css') }}">
@@ -65,14 +65,15 @@
   <link rel="stylesheet" href="{{ asset('assets/plugins/toastr/toastr.min.css') }}">
   {{--نهايه الكارد العرض --}}
   <link rel="stylesheet" href="{{ asset('assets/front/style.css') }}">
-  {{--  <link rel="stylesheet" href="{{ asset('assets\fonts\UniversalForm\UniversalForm.css') }}">  --}}
+  {{--
+  <link rel="stylesheet" href="{{ asset('assets\fonts\UniversalForm\UniversalForm.css') }}"> --}}
 
   @livewireStyles
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
-  
-<div class="wrapper">
+
+  <div class="wrapper">
 
 
     <!-- Navbar -->
@@ -91,21 +92,25 @@
     <div class="content-wrapper">
 
 
-        <!-- Main Content Header -->
-        @yield('content-header')
+      <!-- Main Content Header -->
+      @yield('content-header')
 
 
 
-       <section class="content">
+      <section class="content">
 
-    <div class="container-fluid">
+        <div class="container-fluid">
 
-        @yield('content')
+          @isset($slot)
+          {{ $slot }}
+          @else
+          @yield('content')
+          @endisset
 
-    </div>
+        </div>
 
-</section>
-        <!-- /.content -->
+      </section>
+      <!-- /.content -->
 
 
     </div>
@@ -124,33 +129,23 @@
     </aside>
 
 
-</div>
-<!-- ./wrapper -->
+  </div>
+  <!-- ./wrapper -->
 
 
 
 
-<!-- ========================= -->
-<!--       JAVASCRIPT          -->
-<!-- ========================= -->
-
+  <!-- ========================= -->
+  <!--       JAVASCRIPT          -->
+  <!-- ========================= -->
 
 <!-- jQuery -->
 <script src="{{ asset('assets/plugins/jquery/jquery.min.js') }}"></script>
-
 
 <!-- jQuery UI -->
 <script src="{{ asset('assets/plugins/jquery-ui/jquery-ui.min.js') }}"></script>
 
-
-<script>
-    $.widget.bridge('uibutton', $.ui.button)
-</script>
-
-<!-- jQuery -->
-<script src="{{ asset('assets/plugins/jquery/jquery.min.js') }}"></script>
-
-<!-- Bootstrap (واحد فقط) -->
+<!-- Bootstrap -->
 <script src="{{ asset('assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 
 <!-- AdminLTE -->
@@ -162,12 +157,19 @@
 <!-- Toastr -->
 <script src="{{ asset('assets/plugins/toastr/toastr.min.js') }}"></script>
 
-<!-- ✅ Livewire قبل scripts الأخرى -->
-{{--  @livewireScripts  --}}
+<script>
+    if (window.jQuery && $.widget && $.ui && $.ui.button) {
+        $.widget.bridge('uibutton', $.ui.button);
+    } else {
+        console.error('jQuery UI لم يتم تحميله بصورة صحيحة');
+    }
+</script>
 
 @yield('script')
 @stack('scripts')
 
+{{-- Livewire --}}
+@livewireScripts
 
 </body>
 
@@ -254,8 +256,8 @@
 
 
 
-  {{--  <script>
-    toastr.options = {
+{{-- <script>
+  toastr.options = {
   
   "closeButton": true,
   "progressBar": true,
@@ -321,4 +323,4 @@
         });
     });
   });
-  </script>  --}}
+</script> --}}

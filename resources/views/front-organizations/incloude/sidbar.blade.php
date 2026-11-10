@@ -1,14 +1,18 @@
 <aside class="main-sidebar" style="background: #ffffff; box-shadow: 2px 0 10px rgba(0,0,0,0.05);">
-  
+
   <!-- ============================================ -->
   <!-- 🏢 Brand / Logo -->
   <!-- ============================================ -->
-  <div class="container_img brand-container" style="padding: 15px 10px; text-align: center; border-bottom: 2px solid #e9ecef;">
-    <div class="logo-circle" style="display: inline-block; width: 65px; height: 65px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 8px; margin-bottom: 8px;">
-      <img src="dist/img/AdminLTELogo.png" alt="Logo" style="width: 100%; height: 100%; border-radius: 50%; background: white; padding: 5px;">
+  <div class="container_img brand-container"
+    style="padding: 15px 10px; text-align: center; border-bottom: 2px solid #e9ecef;">
+    <div class="logo-circle"
+      style="display: inline-block; width: 65px; height: 65px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 8px; margin-bottom: 8px;">
+      <img src="dist/img/AdminLTELogo.png" alt="Logo"
+        style="width: 100%; height: 100%; border-radius: 50%; background: white; padding: 5px;">
     </div>
     <a href="index.html" class="brand-text-link" style="display: block; text-decoration: none;">
-      <span class="brand-text" style="color: #2c3e50; font-size: 18px; font-weight: 700; display: block;">نظام إدارة العقارات</span>
+      <span class="brand-text" style="color: #2c3e50; font-size: 18px; font-weight: 700; display: block;">نظام إدارة
+        العقارات</span>
       <small style="color: #6c757d; font-size: 12px;">لوحة تحكم المؤسسة العقارية</small>
     </a>
   </div>
@@ -18,30 +22,34 @@
   <!-- ============================================ -->
   <div class="sidebar" style="padding: 10px 0;">
     <a wire:navigate href="">
-      <div class="agency-info" style="padding: 0 15px 15px 15px; border-bottom: 2px solid #f1f3f5; margin-bottom: 10px;">
-      <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 12px; border-radius: 10px;">
-        <div class="d-flex align-items-center">
-          <div class="agency-avatar" style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; margin-left: 10px;">
-            م ع
-          </div>
-          <div class="agency-details" style="flex: 1;">
-            <h6 style="margin: 0; font-size: 13px; font-weight: 600; color: #2c3e50;">
-              مؤسسة العقارات المتحدة
-            </h6>
-            <small style="color: #6c757d; font-size: 10px;">
-              <i class="fas fa-building"></i> الرياض - السجل التجاري: 123456789
-            </small>
-            <br>
-            <span class="badge" style="background: #28a745; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px;">
-              🟢 باقة احترافية - نشط
-            </span>
-            <span class="badge" style="background: #17a2b8; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px;">
-              <i class="far fa-calendar-alt"></i> ينتهي الاشتراك بعد 25 يوم
-            </span>
+      <div class="agency-info"
+        style="padding: 0 15px 15px 15px; border-bottom: 2px solid #f1f3f5; margin-bottom: 10px;">
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 12px; border-radius: 10px;">
+          <div class="d-flex align-items-center">
+            <div class="agency-avatar"
+              style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; margin-left: 10px;">
+              م ع
+            </div>
+            <div class="agency-details" style="flex: 1;">
+              <h6 style="margin: 0; font-size: 13px; font-weight: 600; color: #2c3e50;">
+                مؤسسة العقارات المتحدة
+              </h6>
+              <small style="color: #6c757d; font-size: 10px;">
+                <i class="fas fa-building"></i> الرياض - السجل التجاري: 123456789
+              </small>
+              <br>
+              <span class="badge"
+                style="background: #28a745; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px;">
+                🟢 باقة احترافية - نشط
+              </span>
+              <span class="badge"
+                style="background: #17a2b8; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px;">
+                <i class="far fa-calendar-alt"></i> ينتهي الاشتراك بعد 25 يوم
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </a>
 
     <nav class="mt-2">
@@ -50,10 +58,11 @@
         <!-- ================================================================ -->
         <!-- 📊 القسم الأول: لوحة التحكم والرئيسية -->
         <!-- ================================================================ -->
-        <li class="nav-header" style="color: #667eea; font-size: 13px; font-weight: 600; padding: 10px 15px 5px 15px; letter-spacing: 0.5px;">
+        <li class="nav-header"
+          style="color: #667eea; font-size: 13px; font-weight: 600; padding: 10px 15px 5px 15px; letter-spacing: 0.5px;">
           <i class="fas fa-grip-lines"></i> الرئيسية ولوحة التحكم
         </li>
-        
+
         <li class="nav-item">
           <a href="dashboard.html" class="nav-link active">
             <i class="nav-icon fas fa-tachometer-alt"></i>
@@ -61,7 +70,7 @@
             <span class="badge badge-info right">نظرة عامة</span>
           </a>
         </li>
-        
+
         <li class="nav-item">
           <a href="analytics.html" class="nav-link">
             <i class="nav-icon fas fa-chart-line"></i>
@@ -97,105 +106,133 @@
         <!-- ================================================================ -->
         <!-- 🏢 القسم الثاني: إدارة العقارات والملاك -->
         <!-- ================================================================ -->
-        <li class="nav-header" style="color: #28a745; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
+        <li class="nav-header"
+          style="color: #28a745; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
           <i class="fas fa-home"></i> إدارة العقارات والملاك
         </li>
 
         <!-- ===== الملاك ===== -->
+        <!-- ===== الملاك ===== -->
         <li class="nav-item has-treeview">
           <a href="#" class="nav-link">
             <i class="nav-icon fas fa-user-tie"></i>
-            <p>الملاك <i class="right fas fa-angle-left"></i></p>
-            <span class="badge badge-primary right"></span>
+            <p>
+              الملاك
+              <i class="right fas fa-angle-left"></i>
+            </p>
           </a>
+
           <ul class="nav nav-treeview">
-       <a wire:navigate
-   href="{{ route('organizations.owners.create', ['subdomain' => request()->route('subdomain')]) }}"
-   class="nav-link">
-    <i class="fas fa-users nav-icon"></i>
-    <p>جميع الملاك</p>
-</a>
-        <li class="nav-item">
-    <a wire:navigate
-       href="{{ route('organizations.owners.index', ['subdomain' => request()->route('subdomain')]) }}"
-       class="nav-link">
 
-        <i class="far fa-circle nav-icon"></i>
-        <p>إضافة مالك جديد</p>
-
-    </a>
-</li>
+            {{-- جميع الملاك --}}
             <li class="nav-item">
-    <a wire:navigate
-       href="{{ route('organizations.owners.Owner-agents-index', ['subdomain' => request()->route('subdomain')]) }}"
-       class="nav-link">
-        <i class="far fa-circle nav-icon"></i>
-        <p>وكلاء الملاك</p>
-    </a>
-</li>
-            <li class="nav-item">
-              <a wire:navigate href="" class="nav-link">
+              <a wire:navigate href="{{ route('organizations.owners.index', [
+                   'subdomain' => request()->route('subdomain')
+               ]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
-                <p>الحسابات البنكية للملاك</p>
+                <p>جميع الملاك</p>
               </a>
             </li>
-            {{--  <li class="nav-item">
-              <a href="owners-reports.html" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>تقارير الملاك</p>
-              </a>
-            </li>  --}}
+
+            {{-- إضافة مالك جديد --}}
             <li class="nav-item">
-              <a href="owners-blacklist.html" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>الملاك المحظورين</p>
-                <span class="badge badge-danger right">  </span>
+              <a wire:navigate href="{{ route('organizations.owners.create', [
+                   'subdomain' => request()->route('subdomain')
+               ]) }}" class="nav-link">
+                <i class="fas fa-user-plus nav-icon"></i>
+                <p>إضافة مالك جديد</p>
               </a>
             </li>
+
+            {{-- وكلاء الملاك --}}
+            <li class="nav-item">
+              <a wire:navigate href="{{ route('organizations.owners.Owner-agents-index', [
+                   'subdomain' => request()->route('subdomain')
+               ]) }}" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>وكلاء الملاك</p>
+              </a>
+            </li>
+
           </ul>
         </li>
 
-        <!-- ===== المباني ===== -->
-        <li class="nav-item has-treeview">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-city"></i>
-            <p>المباني والعمارات <i class="right fas fa-angle-left"></i></p>
-            <span class="badge badge-success right">8</span>
-          </a>
-          <ul class="nav nav-treeview">
-            <li class="nav-item">
-              <a href="{{ route('organizations.buildings.buildings-index', ['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
+      
+<!-- ===== المباني ===== -->
+<li class="nav-item has-treeview">
+    <a href="#" class="nav-link">
+        <i class="nav-icon fas fa-city"></i>
+        <p>
+            المباني والعمارات
+            <i class="right fas fa-angle-left"></i>
+        </p>
+        <span class="badge badge-success right">8</span>
+    </a>
+
+    <ul class="nav nav-treeview">
+
+        <!-- جميع المباني -->
+        <li class="nav-item">
+            <a 
+               class="nav-link">
+
                 <i class="far fa-circle nav-icon"></i>
                 <p>جميع المباني</p>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="buildings-create.html" class="nav-link">
+            </a>
+        </li>
+
+        <!-- إضافة مبنى جديد -->
+        <li class="nav-item">
+           
+
+                <a wire:navigate
+               href="{{ route('organizations.buildings.CreateBuildings', [
+                   'subdomain' => request()->route('subdomain')
+               ]) }}"
+              
+               class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>إضافة مبنى جديد</p>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="buildings-map.html" class="nav-link">
+            </a>
+        </li>
+
+        <!-- الخريطة العقارية -->
+        <li class="nav-item">
+                <a wire:navigate
+               href="{{ route('organizations.buildings.BuildingsPropertyMap', [
+                   'subdomain' => request()->route('subdomain')
+               ]) }}"
+               class="nav-link">
+
                 <i class="far fa-circle nav-icon"></i>
                 <p>الخريطة العقارية</p>
                 <span class="badge badge-info right">جديد</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="buildings-documents.html" class="nav-link">
+            </a>
+        </li>
+
+        <!-- مستندات المباني -->
+        <li class="nav-item">
+            <a 
+               class="nav-link">
+
                 <i class="far fa-circle nav-icon"></i>
                 <p>مستندات المباني (صكوك - رخص)</p>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="buildings-owners.html" class="nav-link">
+            </a>
+        </li>
+
+        <!-- توزيع الملاك على المباني -->
+        <li class="nav-item">
+            <a 
+               class="nav-link">
+
                 <i class="far fa-circle nav-icon"></i>
                 <p>توزيع الملاك على المباني</p>
-              </a>
-            </li>
-          </ul>
+            </a>
         </li>
+
+    </ul>
+</li>
+
 
         <!-- ===== أنواع الوحدات ===== -->
         <li class="nav-item">
@@ -265,7 +302,8 @@
         <!-- ================================================================ -->
         <!-- 👥 القسم الثالث: المستأجرين والعقود -->
         <!-- ================================================================ -->
-        <li class="nav-header" style="color: #17a2b8; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
+        <li class="nav-header"
+          style="color: #17a2b8; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
           <i class="fas fa-users"></i> المستأجرين والعقود
         </li>
 
@@ -382,7 +420,8 @@
         <!-- ================================================================ -->
         <!-- 💰 القسم الرابع: النظام المالي والمحاسبة -->
         <!-- ================================================================ -->
-        <li class="nav-header" style="color: #ffc107; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
+        <li class="nav-header"
+          style="color: #ffc107; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
           <i class="fas fa-coins"></i> النظام المالي والمحاسبة
         </li>
 
@@ -518,7 +557,8 @@
         <!-- ================================================================ -->
         <!-- 🔧 القسم الخامس: الصيانة والخدمات -->
         <!-- ================================================================ -->
-        <li class="nav-header" style="color: #6c757d; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
+        <li class="nav-header"
+          style="color: #6c757d; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
           <i class="fas fa-tools"></i> الصيانة والخدمات
         </li>
 
@@ -645,7 +685,8 @@
         <!-- ================================================================ -->
         <!-- 📊 القسم السادس: التقارير -->
         <!-- ================================================================ -->
-        <li class="nav-header" style="color: #6610f2; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
+        <li class="nav-header"
+          style="color: #6610f2; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
           <i class="fas fa-chart-pie"></i> التقارير والتحليلات
         </li>
 
@@ -715,7 +756,8 @@
         <!-- ================================================================ -->
         <!-- ⚡ القسم السابع: المرافق -->
         <!-- ================================================================ -->
-        <li class="nav-header" style="color: #dc3545; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
+        <li class="nav-header"
+          style="color: #dc3545; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
           <i class="fas fa-cogs"></i> المرافق (كهرباء - مياه - غاز)
         </li>
 
@@ -773,7 +815,8 @@
         <!-- ================================================================ -->
         <!-- 👤 القسم الثامن: حسابي والإعدادات -->
         <!-- ================================================================ -->
-        <li class="nav-header" style="color: #343a40; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
+        <li class="nav-header"
+          style="color: #343a40; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
           <i class="fas fa-user-cog"></i> حسابي وإعدادات المؤسسة
         </li>
 

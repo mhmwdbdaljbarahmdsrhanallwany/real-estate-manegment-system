@@ -116,7 +116,7 @@ return [
     |
     */
 
-    'view_path' => resource_path('views/livewire'),
+    'view_path' => resource_path('views\front-organizations\livewire'),
 
     /*
     |---------------------------------------------------------------------------
@@ -235,7 +235,7 @@ return [
     |
     */
 
-    'pagination_theme' => 'tailwind',
+    'pagination_theme' => 'bootstrap',
 
     /*
     |---------------------------------------------------------------------------

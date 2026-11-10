@@ -2,2020 +2,2163 @@
 
 namespace App\Http\Livewire\FrontOrganizations\Shared;
 
-use Livewire\Component;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
-use Livewire\Attributes\On;
-use Illuminate\Auth\Access\AuthorizationException;
 use App\Services\Access\OrganizationContextService;
-class UniversalForm extends Component
-{
-    /*
-    |--------------------------------------------------------------------------
-    | الخصائص
-    |--------------------------------------------------------------------------
-    */
-
-    
-    public string $entityKey = 'owners';
-
-    public array $config = [];
-    public array $formData = [];
-    public ?int $editingId = null;
-    public string $formMode = 'create';
-    public bool $showForm = false;
-    public array $filters = [];
-    public string $search = '';
-    public int $perPage = 10;
-    public int $currentPage = 1;
-    public string $sort = 'newest';
-    public array $relatedRecords = [];
-
-    protected string $configFile =
-    'Http/Livewire/FrontOrganizations/Shared/UniversalForm/configs.php';
-
-    /*
-    |--------------------------------------------------------------------------
-    | التهيئة
-    |--------------------------------------------------------------------------
-    */
-/*
-|--------------------------------------------------------------------------
-| استقبال أحداث GenericGrid
-|--------------------------------------------------------------------------
-*/
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\View\View;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+use Throwable;
 
 /**
- * استقبال طلب فتح نموذج الإضافة أو التعديل من GenericGrid.
- *
- * يتحقق من الكيان والوضع المطلوب، ثم يعيد تحميل إعدادات
- * الكيان من الملف الموثوق، ويستدعي create أو edit.
- *
- * عند التعديل، تقوم edit() بتحميل السجل من الاستعلام
- * المقيد بالمؤسسة الحالية، فلا يمكن تعديل سجل مؤسسة أخرى.
+ * UniversalForm - محرك CRUD ديناميكي للمؤسسات.
+ * ينفذ عمليات البيانات والبحث والفلاتر والنماذج والعلاقات والملفات بواسطة Livewire.
  */
-#[On('open-universal-form')]
-public function handleOpenUniversalForm(
-    string $entityKey = 'owners',
-    string $mode = 'create',
-    ?int $id = null
-): void {
-    try {
-        // التحقق من وجود سياق مؤسسة صالح.
-        $this->currentOrganizationId();
+class UniversalForm extends Component
+{
+    use WithFileUploads;
+    use WithPagination;
 
-        // منع استقبال اسم كيان غير صالح.
-        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $entityKey)) {
-            throw new \InvalidArgumentException(
-                'اسم الكيان المطلوب غير صالح.'
-            );
-        }
+    #[Locked]
+    public string $entityKey = 'owners';
 
-        // اعتماد الكيان المطلوب ثم تحميل إعداداته من الملف الموثوق.
-        $this->entityKey = $entityKey;
+    #[Locked]
+    public array $config = [];
 
-        $this->loadConfiguration();
+    #[Locked]
+    public ?int $organizationId = null;
 
-        // طلب فتح نموذج إضافة.
-        if ($mode === 'create') {
-            $this->initializeFilters();
+    public array $form = [];
+    public array $childForm = [];
+    public array $mainUploads = [];
+    public array $childUploads = [];
+    public array $filters = [];
 
-            $this->create();
+    public string $search = '';
+    public string $childSearch = '';
+    public int $perPage = 10;
+    public ?int $selectedId = null;
+    public ?int $editingId = null;
+    public ?int $editingChildId = null;
 
-            return;
-        }
+    public bool $showRecordModal = false;
+    public bool $showChildModal = false;
+    public bool $showChildViewModal = false;
+    public bool $showDeleteModal = false;
+    public bool $showDeleteChildModal = false;
+    public bool $showBlockModal = false;
+    public bool $showBlockChildModal = false;
 
-        // طلب فتح نموذج تعديل.
-        if ($mode === 'edit') {
-            if (!$id || $id <= 0) {
-                throw new \InvalidArgumentException(
-                    'معرف السجل المطلوب تعديله غير صالح.'
-                );
-            }
+    public ?int $pendingDeleteId = null;
+    public ?int $pendingDeleteChildId = null;
+    public ?int $pendingBlockChildId = null;
+    public ?array $viewingChild = null;
+    public ?string $toastMessage = null;
+    public string $toastType = 'success';
 
-            $this->edit($id);
-
-            return;
-        }
-
-        throw new \InvalidArgumentException(
-            'نوع العملية المطلوبة غير مدعوم.'
-        );
-
-    } catch (AuthorizationException $e) {
-        Log::warning('[UniversalForm] Unauthorized form request', [
-            'entity' => $entityKey,
-            'mode' => $mode,
-            'id' => $id,
-            'error' => $e->getMessage(),
-        ]);
-
-        $this->dispatch(
-            'uf-error',
-            message: 'لا تملك صلاحية الوصول إلى هذا السجل.'
-        );
-
-    } catch (\Throwable $e) {
-        Log::error('[UniversalForm] Open form error', [
-            'entity' => $entityKey,
-            'mode' => $mode,
-            'id' => $id,
-            'error' => $e->getMessage(),
-        ]);
-
-        $this->dispatch(
-            'uf-error',
-            message: 'تعذر فتح النموذج: ' . $e->getMessage()
-        );
-    }
-}
+    // تهيئة المكوّن وتحميل إعدادات الكيان وتحديد المؤسسة والسجل الأول.
     public function mount(string $entityKey = 'owners'): void
     {
         $this->entityKey = $entityKey;
+        $this->config = $this->loadEntityConfig($entityKey);
+        $this->organizationId = $this->resolveOrganizationId();
+        $this->assertTenantSchema($this->config['table'], $this->tenantConfig());
 
-        $this->loadConfiguration();
+        $this->perPage = (int) ($this->config['pagination']['per_page'] ?? 10);
 
-        $this->perPage = (int) (
-            $this->config['pagination']['per_page'] ?? 10
-        );
+        foreach (($this->config['filters'] ?? []) as $filter) {
+            $key = $filter['key'] ?? null;
+            if ($key) {
+                $this->filters[$key] = $filter['default'] ?? 'all';
+            }
+        }
 
-        $this->initializeFilters();
-
-        $this->sort = $this->readSortFromFilters() ?? 'newest';
+        $first = $this->entityQuery()->orderByDesc($this->config['primary_key'])->first();
+        $this->selectedId = $first ? (int) $first->{$this->config['primary_key']} : null;
     }
 
-    /**
-     * إعادة تحميل الإعدادات الموثوقة بعد استعادة خصائص Livewire.
-     * لا نعتمد على config المرسلة من المتصفح.
-     */
-    public function hydrate(): void
-    {
-        $this->loadConfiguration();
-    }
+    /* ============================================================
+     | إعدادات الكيان وعزل المؤسسة
+     * ============================================================ */
 
-    protected function loadConfiguration(): void
+    // تحميل إعدادات الكيان والتحقق من اسم الجدول والمفتاح الأساسي ووجودهما في قاعدة البيانات.
+    protected function loadEntityConfig(string $entityKey): array
     {
-        $path = app_path($this->configFile);
+        $path = __DIR__ . '/UniversalForm/configs.php';
 
-        if (!file_exists($path)) {
-            throw new \RuntimeException(
-                "ملف الإعدادات غير موجود: {$path}"
-            );
+        if (!is_file($path)) {
+            throw new \RuntimeException('ملف إعدادات UniversalForm غير موجود: ' . $path);
         }
 
         $all = require $path;
 
-        $defaults = $all['_defaults'] ?? [];
-        $entity = $all[$this->entityKey] ?? [];
-
-        if (empty($entity)) {
-            abort(404, 'إعدادات القسم غير موجودة: ' . $this->entityKey);
+        if (!is_array($all) || !isset($all[$entityKey]) || !is_array($all[$entityKey])) {
+            abort(404, "الكيان [{$entityKey}] غير معرّف في configs.php");
         }
 
-        $this->config = $this->mergeConfiguration(
-            $defaults,
-            $entity
-        );
+        $config = $this->mergeConfig($all['_defaults'] ?? [], $all[$entityKey]);
 
-        $this->validateConfiguration();
+        foreach (['table', 'primary_key'] as $required) {
+            if (empty($config[$required])) {
+                throw new AuthorizationException("الإعداد [{$required}] مطلوب للكيان.");
+            }
+
+            $this->assertSafeIdentifier($config[$required]);
+        }
+
+        if (
+            !Schema::hasTable($config['table']) ||
+            !Schema::hasColumn($config['table'], $config['primary_key'])
+        ) {
+            throw new AuthorizationException('جدول الكيان أو مفتاحه الأساسي غير موجود في قاعدة البيانات.');
+        }
+
+        return $config;
     }
 
-    protected function mergeConfiguration(
-        array $defaults,
-        array $custom
-    ): array {
-        foreach ($custom as $k => $v) {
-            if (
-                isset($defaults[$k]) &&
-                is_array($defaults[$k]) &&
-                is_array($v) &&
-                !array_is_list($defaults[$k]) &&
-                !array_is_list($v)
-            ) {
-                $defaults[$k] = $this->mergeConfiguration(
-                    $defaults[$k],
-                    $v
-                );
+    // دمج الإعدادات الافتراضية مع إعدادات الكيان مع السماح باستبدال القوائم كاملة.
+    protected function mergeConfig(array $defaults, array $custom): array
+    {
+        foreach ($custom as $key => $value) {
+            if (is_array($value) && isset($defaults[$key]) && is_array($defaults[$key])) {
+                $isList = array_is_list($value);
+
+                $defaults[$key] = $isList
+                    ? $value
+                    : $this->mergeConfig($defaults[$key], $value);
             } else {
-                $defaults[$k] = $v;
+                $defaults[$key] = $value;
             }
         }
 
         return $defaults;
     }
 
-    protected function validateConfiguration(): void
+    // استخراج رقم المؤسسة الحالية من خدمة سياق الوصول ومنع العمل دون مؤسسة محددة.
+    protected function resolveOrganizationId(): int
     {
-        $table = $this->config['table'] ?? null;
-        $pk = $this->config['primary_key'] ?? null;
+        $id = app(OrganizationContextService::class)->currentOrganizationId();
 
-        if (!$table || !$pk) {
-            throw new \RuntimeException(
-                'يجب تحديد table و primary_key.'
-            );
+        if (!$id) {
+            throw new AuthorizationException('تعذر تحديد المؤسسة الحالية من سياق الوصول.');
         }
 
-        $this->validateIdentifier($table);
-        $this->validateIdentifier($pk);
-
-        if (!empty($this->config['organization_column'])) {
-            $this->validateIdentifier(
-                $this->config['organization_column']
-            );
-        }
+        return (int) $id;
     }
 
-    protected function validateIdentifier(string $id): void
+    // التحقق من أن اسم الجدول أو العمود يتكون من أحرف وأرقام وشرطة سفلية فقط.
+    protected function assertSafeIdentifier(string $identifier): void
     {
-        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $id)) {
-            throw new \InvalidArgumentException(
-                'اسم جدول/عمود غير صالح: ' . $id
-            );
+        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $identifier)) {
+            throw new AuthorizationException('اسم جدول أو عمود غير صالح في إعدادات الكيان.');
         }
     }
 
-    protected function getTable(): string
+    // تحديد سياسة عزل المؤسسة سواء كانت مباشرة أو عبر علاقة أو غير مطبقة.
+    protected function tenantConfig(?array $cfg = null): array
     {
-        return $this->config['table'];
+        $cfg ??= $this->config;
+
+        if (isset($cfg['tenant']) && is_array($cfg['tenant'])) {
+            $tenant = $cfg['tenant'];
+
+            if (!in_array($tenant['type'] ?? null, ['direct', 'related', 'none'], true)) {
+                throw new AuthorizationException('نوع سياسة عزل المؤسسة غير صحيح.');
+            }
+
+            return $tenant;
+        }
+
+        if (($cfg['tenant_scope']['type'] ?? null) === 'belongs_to') {
+            $scope = $cfg['tenant_scope'];
+
+            return [
+                'type' => 'related',
+                'path' => [[
+                    'table' => $scope['table'] ?? null,
+                    'foreign_key' => $scope['local_key'] ?? null,
+                    'owner_key' => $scope['owner_key'] ?? null,
+                    'deleted_at_column' => $scope['parent_deleted_column'] ?? 'deleted_at',
+                    'has_soft_deletes' => (bool) ($scope['parent_soft_deletes'] ?? false),
+                ]],
+                'organization_column' => $scope['organization_column'] ?? 'organization_id',
+            ];
+        }
+
+        if (!empty($cfg['tenant_scoped'])) {
+            $column = $cfg['organization_column'] ?? $cfg['tenant_column'] ?? null;
+
+            if (!$column) {
+                throw new AuthorizationException('لم يتم تحديد organization_column لعزل الكيان.');
+            }
+
+            return ['type' => 'direct', 'column' => $column];
+        }
+
+        if (array_key_exists('tenant_scoped', $cfg) && $cfg['tenant_scoped'] === false) {
+            return ['type' => 'none'];
+        }
+
+        if (($cfg['tenant_type'] ?? null) === 'none') {
+            return ['type' => 'none'];
+        }
+
+        throw new AuthorizationException('لم يتم تعريف سياسة عزل المؤسسة لهذا الكيان.');
     }
 
-    protected function getPrimaryKey(): string
+    // التحقق من وجود جداول وأعمدة ومسارات العلاقات المطلوبة لتطبيق عزل المؤسسة.
+    protected function assertTenantSchema(string $table, array $tenant): void
     {
-        return $this->config['primary_key'];
+        $this->assertSafeIdentifier($table);
+
+        if (!Schema::hasTable($table)) {
+            throw new AuthorizationException("الجدول [{$table}] غير موجود.");
+        }
+
+        if (($tenant['type'] ?? null) === 'direct') {
+            $column = $tenant['column'] ?? null;
+
+            if (!$column) {
+                throw new AuthorizationException('عمود المؤسسة غير محدد.');
+            }
+
+            $this->assertSafeIdentifier($column);
+
+            if (!Schema::hasColumn($table, $column)) {
+                throw new AuthorizationException("عمود المؤسسة [{$column}] غير موجود في [{$table}].");
+            }
+        }
+
+        if (($tenant['type'] ?? null) === 'related') {
+            $current = $table;
+
+            foreach (($tenant['path'] ?? []) as $step) {
+                $parent = $step['table'] ?? null;
+                $foreign = $step['foreign_key'] ?? null;
+                $owner = $step['owner_key'] ?? null;
+
+                foreach ([$parent, $foreign, $owner] as $identifier) {
+                    if (!$identifier) {
+                        throw new AuthorizationException('مسار علاقة المؤسسة غير مكتمل.');
+                    }
+
+                    $this->assertSafeIdentifier($identifier);
+                }
+
+                if (
+                    !Schema::hasTable($parent) ||
+                    !Schema::hasColumn($current, $foreign) ||
+                    !Schema::hasColumn($parent, $owner)
+                ) {
+                    throw new AuthorizationException('مسار علاقة المؤسسة لا يطابق قاعدة البيانات.');
+                }
+
+                if (!empty($step['has_soft_deletes'])) {
+                    $deleted = $step['deleted_at_column'] ?? 'deleted_at';
+
+                    $this->assertSafeIdentifier($deleted);
+
+                    if (!Schema::hasColumn($parent, $deleted)) {
+                        throw new AuthorizationException("عمود الحذف الناعم [{$deleted}] غير موجود.");
+                    }
+                }
+
+                $current = $parent;
+            }
+
+            $orgColumn = $tenant['organization_column'] ?? null;
+
+            if (!$orgColumn) {
+                throw new AuthorizationException('عمود المؤسسة في نهاية مسار العلاقة غير محدد.');
+            }
+
+            $this->assertSafeIdentifier($orgColumn);
+
+            if (!Schema::hasColumn($current, $orgColumn)) {
+                throw new AuthorizationException("عمود المؤسسة [{$orgColumn}] غير موجود في [{$current}].");
+            }
+        }
     }
 
-    /**
-     * الحصول على المؤسسة الحالية بعد التحقق من صلاحية المستخدم.
-     */
-    protected function currentOrganizationId(): int
+    // تطبيق شرط المؤسسة على الاستعلام وفق سياسة العزل المحددة للكيان.
+    protected function applyTenantScope($query, string $table, ?array $cfg = null)
     {
-        $organizationService = app(
-            OrganizationContextService::class
+        $tenant = $this->tenantConfig($cfg);
+        $this->assertTenantSchema($table, $tenant);
+
+        if ($tenant['type'] === 'none') {
+            return $query;
+        }
+
+        if (!$this->organizationId) {
+            throw new AuthorizationException('تعذر تحديد المؤسسة الحالية.');
+        }
+
+        if ($tenant['type'] === 'direct') {
+            return $query->where($table . '.' . $tenant['column'], $this->organizationId);
+        }
+
+        $this->applyRelatedPath(
+            $query,
+            $table,
+            $table,
+            $tenant['path'],
+            0,
+            $tenant['organization_column']
         );
 
-        $organizationId = $organizationService->currentOrganizationId();
-
-        if ($organizationId <= 0) {
-            throw new AuthorizationException(
-                'لا يوجد سياق مؤسسة صالح للوصول.'
-            );
-        }
-
-        return $organizationId;
+        return $query;
     }
 
-    /**
-     * تحديد عمود المؤسسة للكيان الحالي.
-     */
-    protected function getOrganizationColumn(): ?string
+    // بناء شروط EXISTS المتداخلة للتحقق من انتماء السجل إلى المؤسسة عبر سلسلة علاقات.
+    protected function applyRelatedPath(
+        $query,
+        string $currentTable,
+        string $currentAlias,
+        array $path,
+        int $index,
+        string $organizationColumn
+    ): void {
+        if (!isset($path[$index])) {
+            throw new AuthorizationException('مسار علاقة المؤسسة غير صالح.');
+        }
+
+        $step = $path[$index];
+        $parentTable = $step['table'];
+        $parentAlias = 'uf_scope_' . $index;
+
+        $query->whereExists(function ($sub) use (
+            $step,
+            $parentTable,
+            $parentAlias,
+            $currentAlias,
+            $path,
+            $index,
+            $organizationColumn
+        ) {
+            $sub->selectRaw('1')
+                ->from($parentTable . ' as ' . $parentAlias)
+                ->whereColumn(
+                    $parentAlias . '.' . $step['owner_key'],
+                    $currentAlias . '.' . $step['foreign_key']
+                );
+
+            if (!empty($step['has_soft_deletes'])) {
+                $sub->whereNull($parentAlias . '.' . ($step['deleted_at_column'] ?? 'deleted_at'));
+            }
+
+            if ($index === count($path) - 1) {
+                $sub->where($parentAlias . '.' . $organizationColumn, $this->organizationId);
+            } else {
+                $this->applyRelatedPath(
+                    $sub,
+                    $parentTable,
+                    $parentAlias,
+                    $path,
+                    $index + 1,
+                    $organizationColumn
+                );
+            }
+        });
+    }
+
+    // إنشاء الاستعلام الأساسي للكيان مع تطبيق الحذف الناعم وعزل المؤسسة.
+    protected function entityQuery()
     {
-        if ($this->getTable() === 'owners') {
-            return 'organization_id';
+        $table = $this->config['table'];
+        $query = DB::table($table);
+
+        if (!empty($this->config['has_soft_deletes'])) {
+            $deleted = $this->config['deleted_at_column'] ?? 'deleted_at';
+
+            $this->assertSafeIdentifier($deleted);
+
+            if (!Schema::hasColumn($table, $deleted)) {
+                throw new AuthorizationException("عمود الحذف الناعم [{$deleted}] غير موجود.");
+            }
+
+            $query->whereNull($table . '.' . $deleted);
         }
 
-        $column = $this->config['organization_column'] ?? null;
-
-        return $column ?: null;
+        return $this->applyTenantScope($query, $table);
     }
 
-    /**
-     * حماية بيانات الإدخال من تغيير المؤسسة.
-     */
-    protected function enforceOrganizationOnRecord(
-        array $record
-    ): array {
-        $column = $this->getOrganizationColumn();
+    // جلب سجل واحد بعد التأكد من أنه يتبع المؤسسة الحالية.
+    protected function findScopedRecord(int|string $id): object
+    {
+        $record = $this->entityQuery()
+            ->where($this->config['table'] . '.' . $this->config['primary_key'], $id)
+            ->first();
 
-        if ($column) {
-            unset($record[$column]);
-
-            $record[$column] = $this->currentOrganizationId();
+        if (!$record) {
+            throw new AuthorizationException('السجل غير موجود أو لا يتبع المؤسسة الحالية.');
         }
 
         return $record;
     }
 
-    /**
-     * التحقق من ملكية سجل رئيسي.
-     */
-    protected function ensureParentBelongsToOrganization(
-        int $parentId
-    ): object {
-        $parent = $this->baseQuery()
-            ->where($this->getPrimaryKey(), $parentId)
-            ->first();
+    /* ============================================================
+     | البحث والفلاتر والبيانات المعروضة
+     * ============================================================ */
 
-        if (!$parent) {
-            throw new AuthorizationException('لا يسمح لك بالوصول إلى هذا السجل.');
-        }
-
-        return $parent;
-    }
-
-    protected function initializeFilters(): void
+    // إنشاء استعلام السجلات مع تطبيق البحث والفلاتر والترتيب.
+    protected function filteredQuery()
     {
-        foreach (($this->config['filters'] ?? []) as $f) {
-            $key = $f['key'] ?? null;
-
-            if (!$key) {
-                continue;
-            }
-
-            $this->filters[$key] = $f['default'] ?? 'all';
-        }
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | الاستعلامات الأساسية وعزل المؤسسات
-    |--------------------------------------------------------------------------
-    */
-
-    protected function baseQuery()
-    {
-        $table = $this->getTable();
-
-        $q = DB::table($table);
-
-        // استبعاد السجلات المحذوفة
-        if ($this->config['has_soft_deletes'] ?? false) {
-            $deletedAtColumn =
-                $this->config['deleted_at_column'] ?? 'deleted_at';
-
-            $this->validateIdentifier($deletedAtColumn);
-
-            $q->whereNull($table . '.' . $deletedAtColumn);
-        }
-
-        /*
-         * جدول الملاك:
-         * العزل المباشر باستخدام organization_id.
-         */
-        if ($table === 'owners') {
-            $q->where(
-                $table . '.organization_id',
-                $this->currentOrganizationId()
-            );
-
-            return $q;
-        }
-
-        /*
-         * الكيانات الأخرى التي تحتوي على عمود مؤسسة.
-         */
-        $organizationColumn = $this->getOrganizationColumn();
-
-        if ($organizationColumn) {
-            $this->validateIdentifier($organizationColumn);
-
-            $q->where(
-                $table . '.' . $organizationColumn,
-                $this->currentOrganizationId()
-            );
-
-            return $q;
-        }
-
-        /*
-         * منع تشغيل كيان معلن أنه تابع لمؤسسة
-         * دون تحديد عمود العزل الخاص به.
-         */
-        if ($this->config['tenant_scoped'] ?? false) {
-            throw new AuthorizationException(
-                'إعداد عزل المؤسسة غير مكتمل لهذا الكيان.'
-            );
-        }
-
-        return $q;
-    }
-
-    protected function applySearch($q)
-    {
-        $cfg = $this->config['search'] ?? [];
-
-        if (
-            !($cfg['enabled'] ?? true) ||
-            trim($this->search) === ''
-        ) {
-            return $q;
-        }
-
-        $fields = $cfg['fields'] ?? [];
-
-        if (empty($fields)) {
-            return $q;
-        }
+        $table = $this->config['table'];
+        $query = $this->entityQuery();
 
         $term = trim($this->search);
-        $table = $this->getTable();
 
-        $q->where(function ($sq) use ($fields, $term, $table) {
-            foreach ($fields as $f) {
-                $this->validateIdentifier($f);
+        if ($term !== '' && !empty($this->config['search']['enabled'])) {
+            $fields = $this->config['search']['fields'] ?? [];
 
-                $sq->orWhere(
-                    $table . '.' . $f,
-                    'LIKE',
-                    "%{$term}%"
-                );
-            }
-        });
+            $query->where(function ($sub) use ($fields, $table, $term) {
+                foreach ($fields as $field) {
+                    $this->assertSafeIdentifier($field);
 
-        return $q;
-    }
+                    if (Schema::hasColumn($table, $field)) {
+                        $sub->orWhere($table . '.' . $field, 'LIKE', '%' . $term . '%');
+                    }
+                }
+            });
+        }
 
-    protected function applyFilters($q)
-    {
         foreach (($this->config['filters'] ?? []) as $filter) {
             $key = $filter['key'] ?? null;
 
-            if (!$key) {
+            if (!$key || !array_key_exists($key, $this->filters)) {
                 continue;
             }
 
-            $value = $this->filters[$key] ?? 'all';
+            $value = $this->filters[$key];
             $type = $filter['type'] ?? 'select';
 
-            if ($type === 'sort') {
+            if ($value === null || $value === '' || $value === 'all' || $type === 'sort' || $type === 'search') {
                 continue;
             }
 
-            if (
-                $value === 'all' ||
-                $value === '' ||
-                $value === null
-            ) {
+            if ($type === 'date') {
+                $column = $filter['column'] ?? $key;
+                $this->assertSafeIdentifier($column);
+
+                if (!Schema::hasColumn($table, $column)) {
+                    continue;
+                }
+
+                if ($key === 'dateFrom') {
+                    $query->whereDate($table . '.' . $column, '>=', $value);
+                } elseif ($key === 'dateTo') {
+                    $query->whereDate($table . '.' . $column, '<=', $value);
+                } else {
+                    $query->whereDate($table . '.' . $column, '=', $value);
+                }
+
                 continue;
             }
 
             if ($type === 'relation_exists') {
-                $relName = $filter['relation'] ?? null;
+                $relationKey = $filter['relation'] ?? null;
+                $relation = $relationKey ? ($this->config['relations'][$relationKey] ?? null) : null;
 
-                $rel = $this->config['relations'][$relName] ?? null;
-
-                if (!$rel) {
+                if (!$relation || empty($relation['enabled']) || ($relation['type'] ?? 'hasMany') !== 'hasMany') {
                     continue;
                 }
 
-                $relTable = $rel['table'];
-                $relFk = $rel['foreign_key'];
-                $parentTable = $this->getTable();
-                $parentPk = $this->getPrimaryKey();
+                $childTable = $relation['table'];
+                $foreignKey = $relation['foreign_key'];
+                $parentKey = $this->config['primary_key'];
 
-                $this->validateIdentifier($relTable);
-                $this->validateIdentifier($relFk);
+                foreach ([$childTable, $foreignKey, $parentKey] as $identifier) {
+                    $this->assertSafeIdentifier($identifier);
+                }
 
-                if ($value === 'has' || $value === 'none') {
-                    $callback = function ($sub) use (
-                        $relTable,
-                        $relFk,
-                        $parentTable,
-                        $parentPk,
-                        $rel
-                    ) {
-                        $sub->select(DB::raw(1))
-                            ->from($relTable)
-                            ->whereColumn(
-                                $relTable . '.' . $relFk,
-                                $parentTable . '.' . $parentPk
-                            );
+                $exists = function ($sub) use ($childTable, $foreignKey, $table, $parentKey, $relation) {
+                    $sub->selectRaw('1')
+                        ->from($childTable)
+                        ->whereColumn($childTable . '.' . $foreignKey, $table . '.' . $parentKey);
 
-                        if ($rel['has_soft_deletes'] ?? false) {
-                            $deletedColumn =
-                                $rel['deleted_at_column'] ?? 'deleted_at';
-
-                            $sub->whereNull(
-                                $relTable . '.' . $deletedColumn
-                            );
-                        }
-
-                        if (!empty($rel['organization_column'])) {
-                            $organizationColumn =
-                                $rel['organization_column'];
-
-                            $this->validateIdentifier(
-                                $organizationColumn
-                            );
-
-                            $sub->where(
-                                $relTable . '.' . $organizationColumn,
-                                $this->currentOrganizationId()
-                            );
-                        }
-                    };
-
-                    if ($value === 'has') {
-                        $q->whereExists($callback);
-                    } else {
-                        $q->whereNotExists($callback);
+                    if (!empty($relation['has_soft_deletes'])) {
+                        $deleted = $relation['deleted_at_column'] ?? 'deleted_at';
+                        $sub->whereNull($childTable . '.' . $deleted);
                     }
+                };
+
+                if ($value === 'has') {
+                    $query->whereExists($exists);
+                } elseif ($value === 'none') {
+                    $query->whereNotExists($exists);
                 }
 
                 continue;
             }
 
-            $column = $filter['column'] ?? $key;
+            if ($type === 'text') {
+                $column = $filter['column'] ?? $key;
+                $this->assertSafeIdentifier($column);
 
-            $this->validateIdentifier($column);
+                if (Schema::hasColumn($table, $column)) {
+                    $query->where($table . '.' . $column, 'LIKE', '%' . $value . '%');
+                }
 
-            $column = $this->getTable() . '.' . $column;
+                continue;
+            }
 
-            if ($type === 'date') {
-                if ($key === 'dateFrom') {
-                    $q->whereDate($column, '>=', $value);
-                } elseif ($key === 'dateTo') {
-                    $q->whereDate($column, '<=', $value);
+            if ($type === 'select') {
+                $status = $this->config['status'] ?? [];
+                $column = $filter['column'] ?? ($key === 'status' ? ($status['column'] ?? $key) : $key);
+
+                $this->assertSafeIdentifier($column);
+
+                if (!Schema::hasColumn($table, $column)) {
+                    continue;
+                }
+
+                if ($key === 'status' && ($status['column'] ?? null) === $column && !empty($status['boolean_map'])) {
+                    $dbValue = array_search($value, $status['boolean_map'], true);
+
+                    if ($dbValue !== false) {
+                        $query->where($table . '.' . $column, filter_var($dbValue, FILTER_VALIDATE_BOOLEAN));
+                    } elseif (in_array((string) $value, ['0', '1'], true)) {
+                        $query->where($table . '.' . $column, (int) $value);
+                    } else {
+                        $query->whereRaw('1 = 0');
+                    }
+                } elseif (in_array($value, ['1', '0'], true) && in_array($column, ['is_active', 'is_blacklisted'], true)) {
+                    $query->where($table . '.' . $column, (int) $value);
                 } else {
-                    $q->whereDate($column, $value);
+                    $query->where($table . '.' . $column, $value);
                 }
-
-                continue;
-            }
-
-            if (
-                $type === 'select' &&
-                !($filter['virtual'] ?? false)
-            ) {
-                $operator = $filter['operator'] ?? '=';
-
-                $allowedOperators = [
-                    '=',
-                    '!=',
-                    '<>',
-                    '>',
-                    '<',
-                    '>=',
-                    '<=',
-                ];
-
-                if (!in_array($operator, $allowedOperators, true)) {
-                    throw new \InvalidArgumentException(
-                        'عامل تصفية غير مسموح.'
-                    );
-                }
-
-                $q->where($column, $operator, $value);
             }
         }
 
-        return $q;
+        $sort = $this->filters['sort'] ?? 'newest';
+        $pk = $this->config['primary_key'];
+        $nameField = $this->config['name_field'] ?? $pk;
+
+        if (in_array($sort, ['name_asc', 'name_desc'], true) && Schema::hasColumn($table, $nameField)) {
+            $query->orderBy($table . '.' . $nameField, $sort === 'name_asc' ? 'asc' : 'desc');
+        } else {
+            $dateColumn = Schema::hasColumn($table, 'created_at') ? 'created_at' : $pk;
+            $query->orderBy($table . '.' . $dateColumn, $sort === 'oldest' ? 'asc' : 'desc');
+        }
+
+        return $query;
     }
 
-    protected function readSortFromFilters(): ?string
+    // جلب السجلات مع الترقيم وإضافة اسم الحالة ومفتاحها لكل سجل.
+    public function getRecordsProperty(): LengthAwarePaginator
     {
-        foreach (($this->config['filters'] ?? []) as $filter) {
-            if (($filter['type'] ?? null) === 'sort') {
-                $v = $this->filters[$filter['key']] ?? null;
+        $pagination = $this->config['pagination'] ?? [];
+        $enabled = $pagination['enabled'] ?? true;
+        $perPage = max(1, min(100, $this->perPage));
 
-                if ($v && $v !== 'all') {
-                    return $v;
+        if (!$enabled) {
+            $perPage = 1000;
+        }
+
+        $paginator = $this->filteredQuery()->paginate($perPage);
+        $status = $this->config['status'] ?? [];
+        $column = $status['column'] ?? 'status';
+
+        $paginator->getCollection()->transform(function ($row) use ($status, $column) {
+            $row->status_label = $this->resolveStatusLabel($row->{$column} ?? null, $status);
+            $row->status_key = $this->resolveStatusKey($row->{$column} ?? null, $status);
+
+            return $row;
+        });
+
+        return $paginator;
+    }
+
+    // جلب السجل المحدد وتحميل علاقاته التابعة وعلاقاته المرجعية.
+    public function getSelectedRecordProperty(): ?array
+    {
+        if (!$this->selectedId) {
+            return null;
+        }
+
+        try {
+            $row = (array) $this->findScopedRecord($this->selectedId);
+        } catch (AuthorizationException) {
+            return null;
+        }
+
+        $status = $this->config['status'] ?? [];
+        $statusColumn = $status['column'] ?? 'status';
+
+        $row['status_key'] = $this->resolveStatusKey($row[$statusColumn] ?? null, $status);
+        $row['status_label'] = $this->resolveStatusLabel($row[$statusColumn] ?? null, $status);
+
+        foreach (($this->config['relations'] ?? []) as $key => $relation) {
+            if (empty($relation['enabled'])) {
+                continue;
+            }
+
+            $type = $relation['type'] ?? 'hasMany';
+
+            if ($type === 'belongsTo') {
+                $foreignKey = $relation['foreign_key'] ?? $key;
+                $relatedTable = $relation['table'] ?? null;
+                $relatedKey = $relation['primary_key'] ?? 'id';
+
+                if ($relatedTable && !empty($row[$foreignKey]) && Schema::hasTable($relatedTable)) {
+                    $this->assertSafeIdentifier($relatedTable);
+                    $this->assertSafeIdentifier($relatedKey);
+
+                    $relatedQuery = DB::table($relatedTable)->where($relatedKey, $row[$foreignKey]);
+
+                    if ($relatedTable !== 'organizations' && Schema::hasColumn($relatedTable, 'organization_id')) {
+                        $relatedQuery->where($relatedTable . '.organization_id', $this->organizationId);
+                    } elseif ($relatedTable === 'organizations' && $relatedKey === 'organization_id') {
+                        $relatedQuery->where($relatedKey, $this->organizationId);
+                    }
+
+                    if (Schema::hasColumn($relatedTable, 'deleted_at')) {
+                        $relatedQuery->whereNull($relatedTable . '.deleted_at');
+                    }
+
+                    $row['_relation_' . $key] = (array) ($relatedQuery->first() ?? new \stdClass());
                 }
+            } elseif ($type === 'hasMany') {
+                $row[$key] = $this->loadRelation($relation, $row[$this->config['primary_key']]);
+            }
+        }
+
+        return $row;
+    }
+
+    // إرجاع عناصر العلاقة التابعة للسجل المحدد.
+    public function getSelectedChildrenProperty(): array
+    {
+        $record = $this->selectedRecord;
+
+        if (!$record) {
+            return [];
+        }
+
+        $key = $this->firstCrudRelationKey();
+
+        return $key ? ($record[$key] ?? []) : [];
+    }
+
+    // تحميل القوائم المرجعية مع تطبيق عزل المؤسسة على السجلات المرتبطة.
+    public function getLookupsProperty(): array
+    {
+        $result = [];
+
+        foreach (($this->config['lookups'] ?? []) as $name => $lookup) {
+            $table = $lookup['table'] ?? null;
+            $key = $lookup['key'] ?? null;
+            $display = $lookup['display'] ?? null;
+
+            if (!$table || !$key || !$display) {
+                throw new AuthorizationException("إعداد القائمة [{$name}] غير مكتمل.");
+            }
+
+            foreach ([$table, $key, $display] as $identifier) {
+                $this->assertSafeIdentifier($identifier);
+            }
+
+            if (
+                !Schema::hasTable($table) ||
+                !Schema::hasColumn($table, $key) ||
+                !Schema::hasColumn($table, $display)
+            ) {
+                throw new AuthorizationException("جدول أو أعمدة القائمة [{$name}] غير موجودة.");
+            }
+
+            $query = DB::table($table);
+
+            if (!empty($lookup['organization_column']) && Schema::hasColumn($table, $lookup['organization_column'])) {
+                $query->where($lookup['organization_column'], $this->organizationId);
+            } elseif ($table !== 'organizations' && Schema::hasColumn($table, 'organization_id')) {
+                $query->where($table . '.organization_id', $this->organizationId);
+            }
+
+            if ($table === 'organizations' && $key === 'organization_id') {
+                $query->where($table . '.' . $key, $this->organizationId);
+            }
+
+            $result[$name] = $query
+                ->select($table . '.' . $key . ' as id', $table . '.' . $display . ' as name')
+                ->orderBy($table . '.' . $display)
+                ->get()
+                ->map(fn ($item) => ['id' => $item->id, 'name' => $item->name])
+                ->all();
+        }
+
+        return $result;
+    }
+
+    // حساب الإحصائيات المعرفة في إعدادات الكيان مثل الإجمالي والحالات والقيم الفريدة.
+    public function getStatsProperty(): array
+    {
+        $allRows = $this->entityQuery()->get()->map(fn ($row) => (array) $row)->all();
+        $status = $this->config['status'] ?? [];
+
+        foreach ($allRows as &$row) {
+            $row['_status'] = $this->resolveStatusKey($row[$status['column'] ?? 'status'] ?? null, $status);
+        }
+
+        unset($row);
+
+        $output = [];
+
+        foreach (($this->config['stats'] ?? []) as $key => $stat) {
+            $type = $stat['type'] ?? 'total';
+            $value = 0;
+
+            if (in_array($type, ['total', 'count'], true) && empty($stat['field'])) {
+                $value = count($allRows);
+            } elseif ($type === 'count_status') {
+                $value = count(array_filter(
+                    $allRows,
+                    fn ($row) => ($row['_status'] ?? null) === ($stat['value'] ?? null)
+                ));
+            } elseif ($type === 'count' && !empty($stat['field'])) {
+                $field = $stat['field'];
+
+                $value = count(array_filter(
+                    $allRows,
+                    fn ($row) => (string) ($row[$field] ?? '') === (string) ($stat['value'] ?? '')
+                ));
+            } elseif ($type === 'unique') {
+                $field = $stat['field'] ?? null;
+                $values = array_filter(
+                    array_column($allRows, $field),
+                    fn ($item) => $item !== null && $item !== ''
+                );
+
+                $value = count(array_unique($values));
+            } elseif ($type === 'sum_relation') {
+                $relationKey = $stat['relation'] ?? null;
+                $relation = $relationKey ? ($this->config['relations'][$relationKey] ?? null) : null;
+
+                if ($relation && ($relation['type'] ?? 'hasMany') === 'hasMany') {
+                    $table = $relation['table'];
+                    $foreign = $relation['foreign_key'];
+                    $parentIds = array_column($allRows, $this->config['primary_key']);
+
+                    if ($parentIds) {
+                        $childQuery = DB::table($table)->whereIn($foreign, $parentIds);
+
+                        if (!empty($relation['has_soft_deletes'])) {
+                            $childQuery->whereNull($relation['deleted_at_column'] ?? 'deleted_at');
+                        }
+
+                        $value = $childQuery->count();
+                    }
+                }
+            }
+
+            $output[$key] = [
+                'label' => $stat['label'] ?? '',
+                'icon' => $stat['icon'] ?? 'fas fa-chart-simple',
+                'color' => $stat['color'] ?? 'royal',
+                'value' => $value,
+            ];
+        }
+
+        return $output;
+    }
+
+    // تحويل القيمة المخزنة في قاعدة البيانات إلى مفتاح حالة موحد للاستخدام في الواجهة.
+    protected function resolveStatusKey(mixed $raw, array $status): string
+    {
+        $map = $status['boolean_map'] ?? null;
+
+        if ($map) {
+            $boolean = in_array($raw, [true, 1, '1', 'true', 'TRUE', 'yes', 'on'], true);
+
+            return (string) ($map[$boolean ? 'true' : 'false'] ?? ($boolean ? 'active' : 'inactive'));
+        }
+
+        $allowed = $status['values'] ?? ['active', 'inactive', 'blocked'];
+
+        if (is_string($raw) && in_array($raw, $allowed, true)) {
+            return $raw;
+        }
+
+        return $raw ? 'active' : 'inactive';
+    }
+
+    // إرجاع النص العربي المقابل لمفتاح الحالة وفق إعدادات الكيان.
+    protected function resolveStatusLabel(mixed $raw, array $status): string
+    {
+        $key = $this->resolveStatusKey($raw, $status);
+
+        return $status['labels'][$key] ?? match ($key) {
+            'active' => 'نشط',
+            'inactive' => 'غير نشط',
+            'blocked' => 'محظور',
+            default => $key,
+        };
+    }
+
+    // تحميل السجلات التابعة لعلاقة HasMany وتحويل قيم الحالة إلى مفاتيح موحدة.
+    protected function loadRelation(array $relation, int|string $parentId): array
+    {
+        $table = $relation['table'] ?? null;
+        $foreign = $relation['foreign_key'] ?? null;
+        $pk = $relation['primary_key'] ?? null;
+
+        if (!$table || !$foreign || !$pk) {
+            throw new AuthorizationException('إعداد العلاقة التابعة غير مكتمل.');
+        }
+
+        foreach ([$table, $foreign, $pk] as $identifier) {
+            $this->assertSafeIdentifier($identifier);
+        }
+
+        if (
+            !Schema::hasTable($table) ||
+            !Schema::hasColumn($table, $foreign) ||
+            !Schema::hasColumn($table, $pk)
+        ) {
+            throw new AuthorizationException('جدول العلاقة أو مفاتيحه غير موجودة.');
+        }
+
+        $query = DB::table($table)->where($foreign, $parentId);
+
+        if (!empty($relation['has_soft_deletes'])) {
+            $query->whereNull($relation['deleted_at_column'] ?? 'deleted_at');
+        }
+
+        $rows = $query->orderBy($pk)->get();
+
+        return $rows->map(function ($row) use ($relation) {
+            $item = (array) $row;
+            $statusColumn = $relation['status_column'] ?? null;
+
+            if ($statusColumn && array_key_exists($statusColumn, $item)) {
+                $map = $relation['status_map'] ?? $relation['boolean_map'] ?? [];
+                $raw = $item[$statusColumn];
+
+                $isBoolMap = $map && (
+                    isset($map['true']) ||
+                    isset($map['false']) ||
+                    isset($map[1]) ||
+                    isset($map[0])
+                );
+
+                if ($isBoolMap) {
+                    $bool = in_array($raw, [true, 1, '1', 'true', 'TRUE'], true);
+                    $item['status'] = $map[$bool ? 'true' : 'false'] ?? ($bool ? 'active' : 'inactive');
+                } else {
+                    $item['status'] = in_array($raw, ['active', 'inactive', 'blocked'], true)
+                        ? $raw
+                        : ((bool) $raw ? 'active' : 'inactive');
+                }
+            }
+
+            return $item;
+        })->all();
+    }
+
+    // تحديد أول علاقة HasMany مفعلة لاستخدامها في عمليات إدارة العناصر التابعة.
+    protected function firstCrudRelationKey(): ?string
+    {
+        foreach (($this->config['relations'] ?? []) as $key => $relation) {
+            if (!empty($relation['enabled']) && ($relation['type'] ?? 'hasMany') === 'hasMany') {
+                return (string) $key;
             }
         }
 
         return null;
     }
 
-    protected function applySorting($q)
+    // تحديد السجل النشط في الواجهة والتحقق من صلاحيته ضمن المؤسسة الحالية.
+    public function selectRecord(int $id): void
     {
-        $sort = $this->readSortFromFilters() ?? $this->sort;
-
-        $nameField =
-            $this->config['name_field'] ?? $this->getPrimaryKey();
-
-        $pk = $this->getPrimaryKey();
-        $table = $this->getTable();
-
-        $this->validateIdentifier($nameField);
-
-        switch ($sort) {
-            case 'oldest':
-                $q->orderBy($table . '.' . $pk, 'asc');
-                break;
-
-            case 'name_asc':
-                $q->orderBy($table . '.' . $nameField, 'asc');
-                break;
-
-            case 'name_desc':
-                $q->orderBy($table . '.' . $nameField, 'desc');
-                break;
-
-            default:
-                $q->orderBy($table . '.' . $pk, 'desc');
-                break;
-        }
-
-        return $q;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | الخصائص المحسوبة
-    |--------------------------------------------------------------------------
-    */
-
-    public function getRecordsProperty(): array
-    {
-        $q = $this->baseQuery();
-
-        $this->applySearch($q);
-        $this->applyFilters($q);
-        $this->applySorting($q);
-
-        $pagination = $this->config['pagination'] ?? [];
-
-        $records = ($pagination['enabled'] ?? true)
-            ? $q->forPage(
-                $this->currentPage,
-                $this->perPage
-            )->get()
-            : $q->get();
-
-        $pk = $this->getPrimaryKey();
-        $out = [];
-
-        foreach ($records as $row) {
-            $item = (array) $row;
-
-            $item['id'] = $item[$pk] ?? null;
-
-            $item['_labels'] = $this->hydrateLabels($item);
-
-            $this->hydrateStatus($item);
-
-            $this->hydrateRelations($item);
-
-            $out[] = $item;
-        }
-
-        return $out;
-    }
-
-    protected function hydrateLabels(array $item): array
-    {
-        $labels = [];
-
-        foreach (($this->config['lookups'] ?? []) as $localKey => $lookup) {
-            $fk = $item[$localKey] ?? null;
-
-            if ($fk === null || $fk === '') {
-                continue;
-            }
-
-            $table = $lookup['table'] ?? null;
-            $key = $lookup['key'] ?? 'id';
-            $display = $lookup['display'] ?? 'name';
-
-            if (!$table) {
-                continue;
-            }
-
-            $this->validateIdentifier($table);
-            $this->validateIdentifier($key);
-            $this->validateIdentifier($display);
-
-            $q = DB::table($table)
-                ->where($key, $fk);
-
-            /*
-             * تقييد القوائم التابعة للمؤسسة.
-             */
-            if (!empty($lookup['organization_column'])) {
-                $column = $lookup['organization_column'];
-
-                $this->validateIdentifier($column);
-
-                $q->where(
-                    $column,
-                    $this->currentOrganizationId()
-                );
-            }
-
-            /*
-             * organization_id لا يعرض مؤسسة أخرى.
-             */
-            if ($localKey === 'organization_id') {
-                $q->where($key, $this->currentOrganizationId());
-            }
-
-            $row = $q->first();
-
-            if ($row) {
-                $labels[$localKey] = $row->$display ?? null;
-            }
-        }
-
-        return $labels;
-    }
-
-    protected function hydrateStatus(array &$item): void
-    {
-        if (isset($item['status']) && $item['status'] !== null) {
-            return;
-        }
-
-        $statusCfg = $this->config['status'] ?? [];
-
-        $statusCol = $statusCfg['column'] ?? 'status';
-
-        $booleanMap = $statusCfg['boolean_map'] ?? null;
-
-        if (!array_key_exists($statusCol, $item)) {
-            return;
-        }
-
-        $raw = $item[$statusCol];
-
-        if (is_array($booleanMap)) {
-            $item['status'] = $raw
-                ? ($booleanMap['true'] ?? 'active')
-                : ($booleanMap['false'] ?? 'inactive');
-        } else {
-            $item['status'] = $raw;
-        }
-    }
-
-    protected function hydrateRelations(array &$item): void
-    {
-        $pk = $this->getPrimaryKey();
-
-        foreach (($this->config['relations'] ?? []) as $name => $rel) {
-            if (!($rel['enabled'] ?? true)) {
-                continue;
-            }
-
-            if (($rel['type'] ?? 'hasMany') !== 'hasMany') {
-                continue;
-            }
-
-            $table = $rel['table'] ?? null;
-            $fk = $rel['foreign_key'] ?? null;
-            $rk = $rel['primary_key'] ?? 'id';
-
-            if (!$table || !$fk) {
-                continue;
-            }
-
-            $this->validateIdentifier($table);
-            $this->validateIdentifier($fk);
-            $this->validateIdentifier($rk);
-
-            // التحقق من ملكية السجل الرئيسي
-            $this->ensureParentBelongsToOrganization(
-                (int) $item[$pk]
-            );
-
-            $q = DB::table($table)
-                ->where($fk, $item[$pk]);
-
-            if ($rel['has_soft_deletes'] ?? false) {
-                $del = $rel['deleted_at_column'] ?? 'deleted_at';
-
-                $q->whereNull($table . '.' . $del);
-            }
-
-            if (!empty($rel['organization_column'])) {
-                $column = $rel['organization_column'];
-
-                $this->validateIdentifier($column);
-
-                $q->where(
-                    $table . '.' . $column,
-                    $this->currentOrganizationId()
-                );
-            }
-
-            $rows = $q->orderByDesc($table . '.' . $rk)->get();
-
-            $statusCol = $rel['status_column'] ?? null;
-
-            $item[$name] = $rows->map(
-                function ($r) use ($rk, $statusCol) {
-                    $arr = (array) $r;
-
-                    $arr['id'] = $arr[$rk];
-
-                    if ($statusCol && !isset($arr['status'])) {
-                        $arr['status'] =
-                            !empty($arr[$statusCol])
-                            ? 'active'
-                            : 'blocked';
-                    }
-
-                    return $arr;
-                }
-            )->toArray();
-        }
-    }
-
-    public function getRecordsMetaProperty(): array
-    {
-        $q = $this->baseQuery();
-
-        $this->applySearch($q);
-        $this->applyFilters($q);
-
-        $total = $q->count();
-
-        $enabled =
-            $this->config['pagination']['enabled'] ?? true;
-
-        return [
-            'total' => $total,
-            'per_page' => $enabled ? $this->perPage : $total,
-            'current_page' => $this->currentPage,
-            'last_page' => $enabled
-                ? max(
-                    1,
-                    (int) ceil(
-                        $total / max(1, $this->perPage)
-                    )
-                )
-                : 1,
-        ];
-    }
-
-    /**
-     * الإحصائيات تحسب على جميع سجلات المؤسسة المطابقة للفلاتر.
-     * لا تعتمد على سجلات الصفحة الحالية فقط.
-     */
-    public function getStatsProperty(): array
-    {
-        $q = $this->baseQuery();
-
-        $this->applySearch($q);
-        $this->applyFilters($q);
-
-        $rows = $q->get();
-
-        $records = [];
-
-        foreach ($rows as $row) {
-            $item = (array) $row;
-
-            $this->hydrateStatus($item);
-
-            $records[] = $item;
-        }
-
-        $result = [
-            'total' => count($records),
-        ];
-
-        foreach (($this->config['stats'] ?? []) as $key => $def) {
-            $type = $def['type'] ?? 'count_status';
-
-            switch ($type) {
-                case 'count_status':
-                    $value = $def['value'] ?? null;
-
-                    $result[$key] = $value !== null
-                        ? count(array_filter(
-                            $records,
-                            fn($r) => ($r['status'] ?? null) === $value
-                        ))
-                        : 0;
-                    break;
-
-                case 'unique':
-                    $field = $def['field'] ?? null;
-
-                    $result[$key] = $field
-                        ? count(array_unique(array_filter(
-                            array_column($records, $field)
-                        )))
-                        : 0;
-                    break;
-
-                case 'sum_relation':
-                    $rel = $def['relation'] ?? null;
-                    $sum = 0;
-
-                    if ($rel) {
-                        foreach ($records as &$record) {
-                            $this->hydrateRelations($record);
-                            $sum += count($record[$rel] ?? []);
-                        }
-
-                        unset($record);
-                    }
-
-                    $result[$key] = $sum;
-                    break;
-
-                case 'count':
-                    $result[$key] = count($records);
-                    break;
-
-                default:
-                    $result[$key] = 0;
-                    break;
-            }
-        }
-
-        return $result;
-    }
-
-    public function getLabelsProperty(): array
-    {
-        $labels = [];
-
-        $collect = function (array $fields) use (&$labels) {
-            foreach ($fields as $f) {
-                $k = $f['key'] ?? '';
-
-                if (!$k || empty($f['options'])) {
-                    continue;
-                }
-
-                $labels[$k] = [];
-
-                foreach ($f['options'] as $o) {
-                    $labels[$k][$o['value']] = $o['label'];
-                }
-            }
-        };
-
-        $collect($this->config['main_fields'] ?? []);
-
-        $collect($this->config['sub_fields'] ?? []);
-
-        foreach (($this->config['relations'] ?? []) as $rel) {
-            $collect($rel['fields'] ?? []);
-        }
-
-        return $labels;
-    }
-
-    public function getLookupDataProperty(): array
-    {
-        $out = [];
-
-        foreach (($this->config['lookups'] ?? []) as $key => $lookup) {
-            $table = $lookup['table'] ?? null;
-            $fkKey = $lookup['key'] ?? 'id';
-            $display = $lookup['display'] ?? 'name';
-
-            if (!$table) {
-                continue;
-            }
-
-            $this->validateIdentifier($table);
-            $this->validateIdentifier($fkKey);
-            $this->validateIdentifier($display);
-
-            $q = DB::table($table)
-                ->select($fkKey, $display);
-
-            /*
-             * إذا كانت القائمة تابعة لمؤسسة،
-             * يجب تحديد organization_column في إعداداتها.
-             */
-            if (!empty($lookup['organization_column'])) {
-                $column = $lookup['organization_column'];
-
-                $this->validateIdentifier($column);
-
-                $q->where(
-                    $column,
-                    $this->currentOrganizationId()
-                );
-            }
-
-            /*
-             * منع عرض المؤسسات الأخرى في قائمة المؤسسة.
-             */
-            if ($key === 'organization_id') {
-                $q->where(
-                    $fkKey,
-                    $this->currentOrganizationId()
-                );
-            }
-
-            $rows = $q->get();
-
-            $out[$key] = $rows->map(
-                fn($r) => [
-                    'id' => $r->$fkKey,
-                    'label' => $r->$display,
-                ]
-            )->toArray();
-        }
-
-        return $out;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | التوافق مع تصميم المالكين
-    |--------------------------------------------------------------------------
-    */
-
-    protected function transformLabelsForLegacy(
-        array $labels
-    ): array {
-        return [
-            'idType' => $labels['id_type'] ?? [],
-
-            'payment' =>
-            $labels['preferred_payment_method']
-                ?? $labels['payment']
-                ?? [],
-
-            'agent' =>
-            $labels['role']
-                ?? $labels['type']
-                ?? [],
-        ];
-    }
-
-    protected function getOrganizationsArrayProperty(): array
-    {
-        return collect(
-            $this->lookupData['organization_id'] ?? []
-        )->map(
-            fn($o) => [
-                'id' => $o['id'],
-                'name' => $o['label'],
-            ]
-        )->toArray();
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | الترقيم
-    |--------------------------------------------------------------------------
-    */
-
-    public function goToPage(int $page): void
-    {
-        $meta = $this->recordsMeta;
-
-        $this->currentPage = max(
-            1,
-            min($page, $meta['last_page'])
-        );
-    }
-
-    public function nextPage(): void
-    {
-        $this->goToPage($this->currentPage + 1);
-    }
-
-    public function previousPage(): void
-    {
-        $this->goToPage($this->currentPage - 1);
-    }
-
-    public function updatedPerPage($value): void
-    {
-        $opts =
-            $this->config['pagination']['options']
-            ?? [10, 25, 50, 100];
-
-        $value = (int) $value;
-
-        $this->perPage = in_array($value, $opts, true)
-            ? $value
-            : (int) (
-                $this->config['pagination']['per_page'] ?? 10
-            );
-
-        $this->currentPage = 1;
-    }
-
-    public function updatedSearch(): void
-    {
-        $this->currentPage = 1;
-    }
-
-    public function updatedFilters(): void
-    {
-        $this->currentPage = 1;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | CRUD عام
-    |--------------------------------------------------------------------------
-    */
-
-    protected function getValidationRules(array $fields): array
-    {
-        $rules = [];
-
-        foreach ($fields as $f) {
-            $k = $f['key'] ?? null;
-
-            if (!$k) {
-                continue;
-            }
-
-            if (!empty($f['validation'])) {
-                $rules[$k] = $f['validation'];
-            } elseif ($f['required'] ?? false) {
-                $rules[$k] =
-                    'required' .
-                    (($f['type'] ?? '') === 'email' ? '|email' : '');
-            } else {
-                $rules[$k] =
-                    'nullable' .
-                    (($f['type'] ?? '') === 'email' ? '|email' : '');
-            }
-        }
-
-        return $rules;
-    }
-
-    protected function prepareRecordData(
-        array $data,
-        array $fields
-    ): array {
-        $record = [];
-
-        foreach ($fields as $f) {
-            $k = $f['key'] ?? null;
-
-            if (!$k) {
-                continue;
-            }
-
-            $col = $f['column'] ?? $k;
-
-            $this->validateIdentifier($col);
-
-            if ($f['virtual'] ?? false) {
-                continue;
-            }
-
-            if (
-                ($f['is_status'] ?? false) === true &&
-                !isset($f['column'])
-            ) {
-                continue;
-            }
-
-            if (array_key_exists($k, $data)) {
-                $record[$col] =
-                    $data[$k] === '' ? null : $data[$k];
-            }
-        }
-
-        return $record;
-    }
-
-    public function saveRecord(
-        array $data = [],
-        ?int $id = null
-    ): void {
-        try {
-            // التحقق من المؤسسة قبل أي عملية كتابة
-            $organizationId = $this->currentOrganizationId();
-
-            $fields = $this->config['main_fields'] ?? [];
-
-            $v = Validator::make(
-                $data,
-                $this->getValidationRules($fields)
-            );
-
-            if ($v->fails()) {
-                $this->dispatch(
-                    'uf-error',
-                    message: $v->errors()->first()
-                );
-
-                return;
-            }
-
-            $record = $this->prepareRecordData(
-                $data,
-                $fields
-            );
-
-            // معالجة الحالات المنطقية
-            $statusCfg = $this->config['status'] ?? [];
-
-            if (
-                isset($statusCfg['boolean_map']) &&
-                is_array($statusCfg['boolean_map'])
-            ) {
-                $status = $data['status'] ?? null;
-
-                if ($status !== null) {
-                    if ($status === 'blocked') {
-                        $record['is_blacklisted'] = true;
-                        $record['is_active'] = false;
-                        $record['blacklisted_at'] = now();
-                    } elseif ($status === 'inactive') {
-                        $record['is_blacklisted'] = false;
-                        $record['is_active'] = false;
-                        $record['blacklisted_at'] = null;
-                    } else {
-                        $record['is_blacklisted'] = false;
-                        $record['is_active'] = true;
-                        $record['blacklisted_at'] = null;
-                    }
-                }
-            }
-
-            if (empty($record)) {
-                $this->dispatch(
-                    'uf-error',
-                    message: 'لا توجد بيانات صالحة.'
-                );
-
-                return;
-            }
-
-            $table = $this->getTable();
-            $pk = $this->getPrimaryKey();
-
-            // منع التلاعب بعمود المؤسسة
-            $record = $this->enforceOrganizationOnRecord($record);
-
-            if ($id) {
-                /*
-                 * التعديل يتم من خلال الاستعلام المحمي نفسه.
-                 */
-                $record['updated_at'] = now();
-
-                $updated = $this->baseQuery()
-                    ->where($pk, $id)
-                    ->update($record);
-
-                if (!$updated) {
-                    throw new AuthorizationException(
-                        'السجل غير موجود أو لا يتبع مؤسستك.'
-                    );
-                }
-
-                $newId = $id;
-                $msg = 'تم تحديث البيانات بنجاح ✓';
-            } else {
-                $record['created_at'] = now();
-                $record['updated_at'] = now();
-
-                $newId = DB::table($table)->insertGetId($record);
-
-                $msg = 'تمت الإضافة بنجاح ✓';
-            }
-
-            $this->closeForm();
-
-            $this->dispatchGenericUpdated($newId, $msg);
-        } catch (ValidationException $e) {
-            throw $e;
-        } catch (AuthorizationException $e) {
-            Log::warning('UF save authorization denied', [
-                'entity' => $this->entityKey,
-                'id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->dispatch(
-                'uf-error',
-                message: 'لا تملك صلاحية الوصول إلى هذا السجل.'
-            );
-        } catch (\Throwable $e) {
-            Log::error('UF save error', [
-                'entity' => $this->entityKey,
-                'id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->dispatch(
-                'uf-error',
-                message: 'تعذر حفظ البيانات: ' . $e->getMessage()
-            );
-        }
-    }
-
-    public function deleteRecord(int $id): void
-    {
-        try {
-            $table = $this->getTable();
-            $pk = $this->getPrimaryKey();
-
-            $q = $this->baseQuery()->where($pk, $id);
-
-            if ($this->config['has_soft_deletes'] ?? false) {
-                $col =
-                    $this->config['deleted_at_column']
-                    ?? 'deleted_at';
-
-                $affected = $q->update([
-                    $col => now(),
-                    'updated_at' => now(),
-                ]);
-            } else {
-                $affected = $q->delete();
-            }
-
-            if (!$affected) {
-                throw new AuthorizationException(
-                    'السجل غير موجود أو لا يتبع مؤسستك.'
-                );
-            }
-
-            $this->dispatchGenericUpdated(
-                null,
-                'تم الحذف بنجاح ✓'
-            );
-        } catch (\Throwable $e) {
-            Log::error('UF delete error', [
-                'id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->dispatch(
-                'uf-error',
-                message: 'تعذر الحذف أو لا تملك صلاحية الوصول.'
-            );
-        }
-    }
-
-    public function changeRecordStatus(
-        int $id,
-        string $status
-    ): void {
-        try {
-            $cfg = $this->config['status'] ?? [];
-
-            $column = $cfg['column'] ?? 'status';
-
-            $this->validateIdentifier($column);
-
-            $allowed = $cfg['values'] ?? [];
-
-            if (
-                !empty($allowed) &&
-                !in_array($status, $allowed, true)
-            ) {
-                throw new \InvalidArgumentException(
-                    'حالة غير مسموحة.'
-                );
-            }
-
-            $update = [
-                $column => $status,
-                'updated_at' => now(),
-            ];
-
-            if (
-                isset($cfg['boolean_map']) &&
-                is_array($cfg['boolean_map'])
-            ) {
-                if ($status === 'blocked') {
-                    $update['is_blacklisted'] = true;
-                    $update['is_active'] = false;
-                    $update['blacklisted_at'] = now();
-                } elseif ($status === 'inactive') {
-                    $update['is_blacklisted'] = false;
-                    $update['is_active'] = false;
-                    $update['blacklisted_at'] = null;
-                } else {
-                    $update['is_blacklisted'] = false;
-                    $update['is_active'] = true;
-                    $update['blacklisted_at'] = null;
-                }
-
-                unset($update[$column]);
-            }
-
-            $affected = $this->baseQuery()
-                ->where($this->getPrimaryKey(), $id)
-                ->update($update);
-
-            if (!$affected) {
-                throw new AuthorizationException(
-                    'السجل غير موجود أو لا يتبع مؤسستك.'
-                );
-            }
-
-            $this->dispatchGenericUpdated(
-                $id,
-                'تم تحديث الحالة بنجاح ✓'
-            );
-        } catch (\Throwable $e) {
-            Log::error('UF status error', [
-                'id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->dispatch(
-                'uf-error',
-                message: 'تعذر تحديث الحالة أو لا تملك الصلاحية.'
-            );
-        }
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | CRUD العلاقات
-    |--------------------------------------------------------------------------
-    */
-
-    public function loadRelations(int $parentId): array
-    {
-        $result = [];
-
-        // لا يتم تحميل أي علاقة قبل التحقق من ملكية السجل الرئيسي
-        $this->ensureParentBelongsToOrganization($parentId);
-
-        foreach (($this->config['relations'] ?? []) as $name => $rel) {
-            if (!($rel['enabled'] ?? true)) {
-                continue;
-            }
-
-            if (($rel['type'] ?? 'hasMany') !== 'hasMany') {
-                continue;
-            }
-
-            $table = $rel['table'] ?? null;
-            $fk = $rel['foreign_key'] ?? null;
-            $pk = $rel['primary_key'] ?? 'id';
-
-            if (!$table || !$fk) {
-                continue;
-            }
-
-            $this->validateIdentifier($table);
-            $this->validateIdentifier($fk);
-            $this->validateIdentifier($pk);
-
-            $q = DB::table($table)
-                ->where($fk, $parentId);
-
-            if ($rel['has_soft_deletes'] ?? false) {
-                $q->whereNull(
-                    $table . '.' .
-                        ($rel['deleted_at_column'] ?? 'deleted_at')
-                );
-            }
-
-            if (!empty($rel['organization_column'])) {
-                $column = $rel['organization_column'];
-
-                $this->validateIdentifier($column);
-
-                $q->where(
-                    $table . '.' . $column,
-                    $this->currentOrganizationId()
-                );
-            }
-
-            $rows = $q->orderByDesc($table . '.' . $pk)->get();
-
-            $statusCol = $rel['status_column'] ?? null;
-
-            $result[$name] = $rows->map(
-                function ($r) use ($pk, $statusCol) {
-                    $arr = (array) $r;
-
-                    $arr['id'] = $arr[$pk];
-
-                    if ($statusCol && !isset($arr['status'])) {
-                        $arr['status'] =
-                            !empty($arr[$statusCol])
-                            ? 'active'
-                            : 'blocked';
-                    }
-
-                    return $arr;
-                }
-            )->toArray();
-        }
-
-        $this->relatedRecords = $result;
-
-        return $result;
-    }
-
-    public function saveRelatedRecord(
-        string $relationName,
-        int $parentId,
-        array $data,
-        ?int $relatedId = null
-    ): void {
-        try {
-            // التحقق من ملكية المالك قبل التعامل مع الوكلاء
-            $this->ensureParentBelongsToOrganization($parentId);
-
-            $rel = $this->config['relations'][$relationName] ?? null;
-
-            if (!$rel || !($rel['enabled'] ?? true)) {
-                throw new \RuntimeException(
-                    'العلاقة غير معرفة.'
-                );
-            }
-
-            $table = $rel['table'];
-            $pk = $rel['primary_key'];
-            $fk = $rel['foreign_key'];
-
-            $this->validateIdentifier($table);
-            $this->validateIdentifier($pk);
-            $this->validateIdentifier($fk);
-
-            $fields = $rel['fields'] ?? [];
-
-            $v = Validator::make(
-                $data,
-                $this->getValidationRules($fields)
-            );
-
-            if ($v->fails()) {
-                $this->dispatch(
-                    'uf-error',
-                    message: $v->errors()->first()
-                );
-
-                return;
-            }
-
-            $record = $this->prepareRecordData(
-                $data,
-                $fields
-            );
-
-            // لا نثق في parent_id المرسل من المتصفح
-            $record[$fk] = $parentId;
-
-            // إذا كان الجدول التابع يحتوي على عمود مؤسسة
-            if (!empty($rel['organization_column'])) {
-                $column = $rel['organization_column'];
-
-                $this->validateIdentifier($column);
-
-                unset($record[$column]);
-
-                $record[$column] = $this->currentOrganizationId();
-            }
-
-            if ($relatedId) {
-                $q = DB::table($table)
-                    ->where($pk, $relatedId)
-                    ->where($fk, $parentId);
-
-                if (!empty($rel['organization_column'])) {
-                    $q->where(
-                        $rel['organization_column'],
-                        $this->currentOrganizationId()
-                    );
-                }
-
-                $updated = $q->update(
-                    array_merge(
-                        $record,
-                        ['updated_at' => now()]
-                    )
-                );
-
-                if (!$updated) {
-                    throw new AuthorizationException(
-                        'الوكيل غير موجود أو لا يتبع هذا المالك.'
-                    );
-                }
-
-                $msg = 'تم التحديث ✓';
-            } else {
-                $record['created_at'] = now();
-                $record['updated_at'] = now();
-
-                $statusCol = $rel['status_column'] ?? null;
-
-                if (
-                    $statusCol &&
-                    !array_key_exists($statusCol, $record)
-                ) {
-                    $record[$statusCol] = true;
-                }
-
-                DB::table($table)->insert($record);
-
-                $msg = 'تمت الإضافة ✓';
-            }
-
-            $this->loadRelations($parentId);
-
-            $this->dispatchGenericUpdated($parentId, $msg);
-        } catch (\Throwable $e) {
-            Log::error('UF save relation error', [
-                'relation' => $relationName,
-                'parent_id' => $parentId,
-                'related_id' => $relatedId,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->dispatch(
-                'uf-error',
-                message: 'تعذر حفظ السجل المرتبط أو لا تملك الصلاحية.'
-            );
-        }
-    }
-
-    public function deleteRelatedRecord(
-        string $relationName,
-        int $parentId,
-        int $relatedId
-    ): void {
-        try {
-            $this->ensureParentBelongsToOrganization($parentId);
-
-            $rel = $this->config['relations'][$relationName] ?? null;
-
-            if (!$rel || !($rel['enabled'] ?? true)) {
-                return;
-            }
-
-            $table = $rel['table'];
-            $pk = $rel['primary_key'];
-            $fk = $rel['foreign_key'];
-
-            $this->validateIdentifier($table);
-            $this->validateIdentifier($pk);
-            $this->validateIdentifier($fk);
-
-            $q = DB::table($table)
-                ->where($pk, $relatedId)
-                ->where($fk, $parentId);
-
-            if (!empty($rel['organization_column'])) {
-                $q->where(
-                    $rel['organization_column'],
-                    $this->currentOrganizationId()
-                );
-            }
-
-            if ($rel['has_soft_deletes'] ?? false) {
-                $affected = $q->update([
-                    ($rel['deleted_at_column'] ?? 'deleted_at') => now(),
-                    'updated_at' => now(),
-                ]);
-            } else {
-                $affected = $q->delete();
-            }
-
-            if (!$affected) {
-                throw new AuthorizationException(
-                    'السجل المرتبط غير موجود أو غير تابع لهذا المالك.'
-                );
-            }
-
-            $this->loadRelations($parentId);
-
-            $this->dispatchGenericUpdated(
-                $parentId,
-                'تم الحذف ✓'
-            );
-        } catch (\Throwable $e) {
-            Log::error('UF delete relation error', [
-                'relation' => $relationName,
-                'parent_id' => $parentId,
-                'related_id' => $relatedId,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->dispatch(
-                'uf-error',
-                message: 'تعذر الحذف أو لا تملك الصلاحية.'
-            );
-        }
-    }
-
-    public function changeRelatedStatus(
-        string $relationName,
-        int $parentId,
-        int $relatedId
-    ): void {
-        try {
-            $this->ensureParentBelongsToOrganization($parentId);
-
-            $rel = $this->config['relations'][$relationName] ?? null;
-
-            if (!$rel || !($rel['enabled'] ?? true)) {
-                return;
-            }
-
-            $table = $rel['table'];
-            $pk = $rel['primary_key'];
-            $fk = $rel['foreign_key'];
-
-            $statusCol = $rel['status_column'] ?? 'is_active';
-
-            $this->validateIdentifier($table);
-            $this->validateIdentifier($pk);
-            $this->validateIdentifier($fk);
-            $this->validateIdentifier($statusCol);
-
-            $q = DB::table($table)
-                ->where($pk, $relatedId)
-                ->where($fk, $parentId);
-
-            if (!empty($rel['organization_column'])) {
-                $q->where(
-                    $rel['organization_column'],
-                    $this->currentOrganizationId()
-                );
-            }
-
-            $row = $q->first();
-
-            if (!$row) {
-                throw new AuthorizationException(
-                    'السجل المرتبط غير موجود أو غير تابع لهذا المالك.'
-                );
-            }
-
-            $q->update([
-                $statusCol => !$row->$statusCol,
-                'updated_at' => now(),
-            ]);
-
-            $this->loadRelations($parentId);
-
-            $this->dispatchGenericUpdated(
-                $parentId,
-                'تم تحديث الحالة ✓'
-            );
-        } catch (\Throwable $e) {
-            Log::error('UF relation status error', [
-                'relation' => $relationName,
-                'parent_id' => $parentId,
-                'related_id' => $relatedId,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->dispatch(
-                'uf-error',
-                message: 'تعذر تحديث الحالة أو لا تملك الصلاحية.'
-            );
-        }
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | دوال التوافق مع التصميم الحالي
-    |--------------------------------------------------------------------------
-    */
-
-    public function saveOwner(
-        array $data,
-        ?int $id = null
-    ): void {
-        $this->saveRecord($data, $id);
-    }
-
-    public function deleteOwner(int $id): void
-    {
-        $this->deleteRecord($id);
-    }
-
-    public function blockOwner(int $id): void
-    {
-        $rec = $this->baseQuery()
-            ->where($this->getPrimaryKey(), $id)
-            ->first();
-
-        if (!$rec) {
-            return;
-        }
-
-        $arr = (array) $rec;
-
-        $this->hydrateStatus($arr);
-
-        $currentStatus = $arr['status'] ?? 'active';
-
-        $nextStatus = $currentStatus === 'blocked'
-            ? 'active'
-            : 'blocked';
-
-        $this->changeRecordStatus($id, $nextStatus);
-    }
-
-    public function saveAgent(
-        int $ownerId,
-        array $data,
-        ?int $agentId = null
-    ): void {
-        $this->saveRelatedRecord(
-            'agents',
-            $ownerId,
-            $data,
-            $agentId
-        );
-    }
-
-    public function deleteAgent(
-        int $agentId,
-        int $ownerId
-    ): void {
-        $this->deleteRelatedRecord(
-            'agents',
-            $ownerId,
-            $agentId
-        );
-    }
-
-    public function blockAgent(
-        int $agentId,
-        int $ownerId
-    ): void {
-        $this->changeRelatedStatus(
-            'agents',
-            $ownerId,
-            $agentId
-        );
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | النموذج
-    |--------------------------------------------------------------------------
-    */
-
-    public function create(): void
-    {
-        // التحقق من سياق المؤسسة قبل فتح النموذج
-        $this->currentOrganizationId();
-
-        $this->formData = [];
-
-        foreach (($this->config['main_fields'] ?? []) as $f) {
-            if (!empty($f['key'])) {
-                $this->formData[$f['key']] =
-                    $f['default'] ?? null;
-            }
-        }
-
-        // لا نسمح بتحديد المؤسسة من النموذج
-        if ($this->getOrganizationColumn()) {
-            unset($this->formData[$this->getOrganizationColumn()]);
-        }
-
-        $this->editingId = null;
-        $this->formMode = 'create';
-        $this->showForm = true;
-    }
-
-    public function edit(int $id): bool
-    {
-        try {
-            $rec = $this->baseQuery()
-                ->where($this->getPrimaryKey(), $id)
-                ->first();
-
-            if (!$rec) {
-                $this->dispatch(
-                    'uf-error',
-                    message: 'السجل غير موجود أو لا يتبع مؤسستك.'
-                );
-
-                return false;
-            }
-
-            $this->formData = (array) $rec;
-
-            // منع تغيير المؤسسة من بيانات النموذج
-            if ($this->getOrganizationColumn()) {
-                unset(
-                    $this->formData[$this->getOrganizationColumn()]
-                );
-            }
-
-            $this->editingId = $id;
-            $this->formMode = 'edit';
-            $this->showForm = true;
-
-            return true;
-        } catch (\Throwable $e) {
-            Log::error('UF edit error', [
-                'id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->dispatch(
-                'uf-error',
-                message: 'تعذر تحميل السجل.'
-            );
-
-            return false;
-        }
-    }
-
-    public function closeForm(): void
-    {
-        $this->showForm = false;
-        $this->formData = [];
-        $this->editingId = null;
-        $this->formMode = 'create';
-
+        $this->findScopedRecord($id);
+        $this->selectedId = $id;
         $this->resetValidation();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | الأحداث — إطلاق الحدثين للتوافق الكامل
-    |--------------------------------------------------------------------------
-    */
+    // إعادة قيم جميع الفلاتر والبحث إلى إعداداتها الافتراضية.
+    public function clearFilters(): void
+    {
+        $this->search = '';
 
-    protected function dispatchGenericUpdated(
-        ?int $keepRecord = null,
-        string $message = ''
-    ): void {
-        // الحدث العام
-        $this->dispatch(
-            'uf-records-updated',
-            records: $this->records,
-            stats: $this->stats,
-            labels: $this->labels,
-            lookupData: $this->lookupData,
-            relatedRecords: $this->relatedRecords,
-            keepRecord: $keepRecord,
-            message: $message
-        );
+        foreach (($this->config['filters'] ?? []) as $filter) {
+            if (!empty($filter['key'])) {
+                $this->filters[$filter['key']] = $filter['default'] ?? 'all';
+            }
+        }
 
-        // حدث التوافق مع تصميم المالكين
-        $legacyLabels = $this->transformLabelsForLegacy(
-            $this->labels
-        );
-
-        $organizations = $this->getOrganizationsArrayProperty();
-
-        $this->dispatch(
-            'uf-data-updated',
-            owners: $this->records,
-            stats: $this->stats,
-            organizations: $organizations,
-            idTypeLabels: $legacyLabels['idType'],
-            paymentLabels: $legacyLabels['payment'],
-            agentTypeLabels: $legacyLabels['agent'],
-            keepOwner: $keepRecord,
-            message: $message
-        );
+        $this->resetPage();
     }
 
-    public function refreshData(): void
+    // إعادة صفحة النتائج الأولى عند تغيير نص البحث.
+    public function updatedSearch(): void
     {
-        $this->currentOrganizationId();
-
-        $this->currentPage = 1;
-
-        unset(
-            $this->records,
-            $this->recordsMeta,
-            $this->stats,
-            $this->labels,
-            $this->lookupData
-        );
-
-        $this->dispatch(
-            'uf-refreshed',
-            message: 'تم التحديث.'
-        );
+        $this->resetPage();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | العرض — تمرير كل ما يحتاجه التصميم
-    |--------------------------------------------------------------------------
-    */
-
-    public function render()
+    // إعادة صفحة النتائج الأولى عند تغيير أي فلتر.
+    public function updatedFilters(): void
     {
-        // التحقق من المؤسسة في كل عملية عرض
-        $this->currentOrganizationId();
+        $this->resetPage();
+    }
 
-        $owners = $this->records;
+    // إعادة صفحة النتائج الأولى عند تغيير عدد السجلات المعروضة.
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
 
-        $organizations = $this->getOrganizationsArrayProperty();
+    /* ============================================================
+     | النماذج الرئيسية
+     * ============================================================ */
 
-        $legacyLabels = $this->transformLabelsForLegacy(
-            $this->labels
+    // فتح نموذج إضافة أو تعديل سجل وتجهيز الحقول والملفات وإحداثيات الخريطة.
+    public function openRecordModal(?int $id = null): void
+    {
+        $this->resetValidation();
+        $this->editingId = $id;
+        $this->mainUploads = [];
+        $fields = $this->config['main_fields'] ?? [];
+        $record = $id ? (array) $this->findScopedRecord($id) : [];
+        $this->form = [];
+
+        foreach ($fields as $field) {
+            $key = $field['key'] ?? null;
+
+            if (!$key) {
+                continue;
+            }
+
+            if (($field['type'] ?? '') === 'file') {
+                continue;
+            }
+
+            $value = $record[$key] ?? $field['default'] ?? '';
+
+            if (!empty($field['is_status'])) {
+                $status = $this->config['status'] ?? [];
+                $statusColumn = $status['column'] ?? $key;
+
+                if ($id && isset($record[$statusColumn])) {
+                    if ($key === $statusColumn && !empty($status['boolean_map'])) {
+                        $value = in_array($record[$statusColumn], [true, 1, '1', 'true'], true) ? 1 : 0;
+                    } else {
+                        $value = $this->resolveStatusKey($record[$statusColumn], $status);
+                    }
+                }
+            }
+
+            $this->form[$key] = $value;
+        }
+
+        $tenant = $this->tenantConfig();
+
+        if ($tenant['type'] === 'direct') {
+            $this->form[$tenant['column']] = $this->organizationId;
+        }
+
+        $this->showRecordModal = true;
+        $location = $this->config['location_picker'] ?? [];
+
+        if (!empty($location['enabled'])) {
+            $currentLat = $this->form[$location['latitude_field']] ?? null;
+            $currentLng = $this->form[$location['longitude_field']] ?? null;
+
+            $this->dispatch(
+                'uf-map-refresh',
+                lat: is_numeric($currentLat) ? (float) $currentLat : (float) ($location['default_latitude'] ?? 24.7136),
+                lng: is_numeric($currentLng) ? (float) $currentLng : (float) ($location['default_longitude'] ?? 46.6753)
+            );
+        }
+    }
+
+    // إغلاق نموذج السجل الرئيسي ومسح الملفات المؤقتة وأخطاء التحقق.
+    public function closeRecordModal(): void
+    {
+        $this->showRecordModal = false;
+        $this->mainUploads = [];
+        $this->resetValidation();
+    }
+
+    // التحقق من بيانات السجل ورفع ملفاته ثم إنشاء السجل أو تحديثه داخل المؤسسة الحالية.
+    public function saveRecord(): void
+    {
+        $stored = [];
+        $this->normalizeCoordinates();
+
+        try {
+            $table = $this->config['table'];
+            $pk = $this->config['primary_key'];
+            $fields = $this->config['main_fields'] ?? [];
+            $existing = $this->editingId ? (array) $this->findScopedRecord($this->editingId) : [];
+
+            $payload = $this->validateConfiguredFields($this->form, $fields, $table, true);
+
+            $filePayload = $this->storeConfiguredUploads(
+                $fields,
+                'mainUploads',
+                $this->editingId === null,
+                $existing,
+                'main',
+                $stored
+            );
+
+            $payload = array_merge($payload, $filePayload);
+            $this->applyStatusToPayload($payload, $this->form, $fields, $table);
+
+            $tenant = $this->tenantConfig();
+
+            if ($tenant['type'] === 'direct') {
+                $payload[$tenant['column']] = $this->organizationId;
+            } elseif ($tenant['type'] === 'related') {
+                $foreign = $tenant['path'][0]['foreign_key'] ?? null;
+
+                if (!$foreign || empty($payload[$foreign])) {
+                    if (!$this->editingId) {
+                        throw new AuthorizationException('يجب تحديد السجل المرتبط بالمؤسسة.');
+                    }
+                } else {
+                    $this->validateRelatedForeignKey($tenant, $payload[$foreign]);
+                }
+            }
+
+            $this->validateLookupFields($fields, $payload);
+
+            if (Schema::hasColumn($table, 'updated_at')) {
+                $payload['updated_at'] = now();
+            }
+
+            $savedId = DB::transaction(function () use ($table, $pk, $payload, $existing) {
+                if ($this->editingId) {
+                    $this->entityQuery()
+                        ->where($pk, $this->editingId)
+                        ->update($payload);
+
+                    return $this->editingId;
+                }
+
+                if (Schema::hasColumn($table, 'created_at')) {
+                    $payload['created_at'] = now();
+                }
+
+                return (int) DB::table($table)->insertGetId($payload, $pk);
+            });
+
+            $this->deleteReplacedUploads($fields, $existing, $filePayload, 'main');
+            $this->selectedId = (int) $savedId;
+            $this->showRecordModal = false;
+            $this->mainUploads = [];
+            $this->editingId = null;
+            $this->form = [];
+
+            $this->setToast($existing ? 'تم تحديث البيانات بنجاح.' : 'تمت إضافة البيانات بنجاح.');
+            $this->resetPage();
+        } catch (ValidationException $e) {
+            $this->rollbackStoredUploads($stored);
+            throw $e;
+        } catch (Throwable $e) {
+            $this->rollbackStoredUploads($stored);
+            report($e);
+
+            $this->setToast(
+                $e instanceof AuthorizationException
+                    ? $e->getMessage()
+                    : 'تعذر حفظ البيانات. راجع سجل الأخطاء.',
+                'error'
+            );
+        }
+    }
+
+    // فتح نافذة تأكيد حذف السجل بعد التحقق من انتمائه للمؤسسة الحالية.
+    public function openDeleteModal(int $id): void
+    {
+        $this->findScopedRecord($id);
+        $this->pendingDeleteId = $id;
+        $this->showDeleteModal = true;
+    }
+
+    // حذف السجل المحدد حذفاً ناعماً أو نهائياً حسب إعدادات الكيان.
+    public function deleteRecord(): void
+    {
+        try {
+            $id = $this->pendingDeleteId;
+
+            if (!$id) {
+                return;
+            }
+
+            $this->findScopedRecord($id);
+            $table = $this->config['table'];
+            $pk = $this->config['primary_key'];
+
+            if (!empty($this->config['has_soft_deletes'])) {
+                $deleted = $this->config['deleted_at_column'] ?? 'deleted_at';
+
+                $this->entityQuery()
+                    ->where($pk, $id)
+                    ->update([$deleted => now()]);
+            } else {
+                $this->entityQuery()
+                    ->where($pk, $id)
+                    ->delete();
+            }
+
+            if ($this->selectedId === $id) {
+                $next = $this->entityQuery()->orderByDesc($pk)->value($pk);
+                $this->selectedId = $next ? (int) $next : null;
+            }
+
+            $this->showDeleteModal = false;
+            $this->pendingDeleteId = null;
+            $this->setToast('تم حذف السجل بنجاح.');
+        } catch (Throwable $e) {
+            report($e);
+
+            $this->setToast(
+                $e instanceof AuthorizationException ? $e->getMessage() : 'تعذر حذف السجل.',
+                'error'
+            );
+        }
+    }
+
+    // تغيير حالة السجل بين نشط ومحظور وفق إعدادات الحالة الحالية للكيان.
+    public function toggleRecordStatus(int $id): void
+    {
+        try {
+            $row = $this->findScopedRecord($id);
+            $status = $this->config['status'] ?? [];
+            $column = $status['column'] ?? null;
+
+            if (!$column || !Schema::hasColumn($this->config['table'], $column)) {
+                throw new \RuntimeException('لم يتم إعداد عمود حالة صحيح لهذا الكيان.');
+            }
+
+            $this->assertSafeIdentifier($column);
+            $current = $row->{$column};
+            $booleanMap = $status['boolean_map'] ?? null;
+
+            if ($booleanMap) {
+                $newValue = !in_array($current, [true, 1, '1', 'true', 'TRUE'], true);
+            } else {
+                $newValue = $current === 'blocked' ? 'active' : 'blocked';
+            }
+
+            $payload = [$column => $newValue];
+
+            if (Schema::hasColumn($this->config['table'], 'updated_at')) {
+                $payload['updated_at'] = now();
+            }
+
+            $this->entityQuery()
+                ->where($this->config['primary_key'], $id)
+                ->update($payload);
+
+            $this->setToast(
+                $this->resolveStatusLabel($newValue, $status) === 'محظور'
+                    ? 'تم حظر السجل.'
+                    : 'تم تحديث حالة السجل.'
+            );
+        } catch (Throwable $e) {
+            report($e);
+
+            $this->setToast(
+                $e instanceof AuthorizationException ? $e->getMessage() : 'تعذر تغيير حالة السجل.',
+                'error'
+            );
+        }
+    }
+
+    /* ============================================================
+     | العلاقات التابعة (HasMany فقط)
+     * ============================================================ */
+
+    // فتح نموذج إضافة أو تعديل عنصر تابع وتجهيز حقوله وملفاته.
+    public function openChildModal(?int $childId = null): void
+    {
+        $relationKey = $this->firstCrudRelationKey();
+
+        if (!$relationKey || !$this->selectedId) {
+            $this->setToast('اختر السجل الرئيسي أولاً.', 'error');
+            return;
+        }
+
+        $this->resetValidation();
+        $this->editingChildId = $childId;
+        $this->childUploads = [];
+        $relation = $this->config['relations'][$relationKey];
+        $record = [];
+
+        if ($childId) {
+            $record = $this->findChildRecord($this->selectedId, $childId, $relation);
+        }
+
+        $this->childForm = [];
+
+        foreach (($relation['fields'] ?? []) as $field) {
+            $key = $field['key'] ?? null;
+
+            if (!$key || ($field['type'] ?? '') === 'file') {
+                continue;
+            }
+
+            $this->childForm[$key] = $record[$key] ?? $field['default'] ?? '';
+        }
+
+        $this->showChildModal = true;
+    }
+
+    // إغلاق نموذج العنصر التابع ومسح الملفات المؤقتة وأخطاء التحقق.
+    public function closeChildModal(): void
+    {
+        $this->showChildModal = false;
+        $this->childUploads = [];
+        $this->resetValidation();
+    }
+
+    // التحقق من بيانات العنصر التابع ورفع ملفاته ثم إضافته أو تحديثه للسجل الرئيسي.
+    public function saveChild(): void
+    {
+        $stored = [];
+
+        try {
+            if (!$this->selectedId) {
+                throw new AuthorizationException('اختر السجل الرئيسي أولاً.');
+            }
+
+            $this->findScopedRecord($this->selectedId);
+            $relationKey = $this->firstCrudRelationKey();
+
+            if (!$relationKey) {
+                throw new \RuntimeException('لا توجد علاقة فرعية قابلة للإدارة.');
+            }
+
+            $relation = $this->config['relations'][$relationKey];
+            $table = $relation['table'];
+            $pk = $relation['primary_key'];
+            $foreign = $relation['foreign_key'];
+
+            $existing = $this->editingChildId
+                ? $this->findChildRecord($this->selectedId, $this->editingChildId, $relation)
+                : [];
+
+            $payload = $this->validateConfiguredFields(
+                $this->childForm,
+                $relation['fields'] ?? [],
+                $table,
+                false
+            );
+
+            $filePayload = $this->storeConfiguredUploads(
+                $relation['fields'] ?? [],
+                'childUploads',
+                $this->editingChildId === null,
+                $existing,
+                $relationKey,
+                $stored
+            );
+
+            $payload = array_merge($payload, $filePayload);
+            $payload[$foreign] = $this->selectedId;
+
+            if (Schema::hasColumn($table, 'updated_at')) {
+                $payload['updated_at'] = now();
+            }
+
+            DB::transaction(function () use ($table, $pk, $foreign, $payload) {
+                if ($this->editingChildId) {
+                    DB::table($table)
+                        ->where($pk, $this->editingChildId)
+                        ->where($foreign, $this->selectedId)
+                        ->update($payload);
+                } else {
+                    if (Schema::hasColumn($table, 'created_at')) {
+                        $payload['created_at'] = now();
+                    }
+
+                    DB::table($table)->insert($payload);
+                }
+            });
+
+            $this->deleteReplacedUploads($relation['fields'] ?? [], $existing, $filePayload, $relationKey);
+
+            $this->showChildModal = false;
+            $this->childUploads = [];
+            $this->childForm = [];
+            $this->editingChildId = null;
+
+            $this->setToast($existing ? 'تم تحديث بيانات العنصر التابع.' : 'تمت إضافة العنصر التابع.');
+        } catch (ValidationException $e) {
+            $this->rollbackStoredUploads($stored);
+            throw $e;
+        } catch (Throwable $e) {
+            $this->rollbackStoredUploads($stored);
+            report($e);
+
+            $this->setToast(
+                $e instanceof AuthorizationException ? $e->getMessage() : 'تعذر حفظ العنصر التابع.',
+                'error'
+            );
+        }
+    }
+
+    // جلب عنصر تابع والتحقق من ارتباطه بالسجل الرئيسي المحدد.
+    protected function findChildRecord(int $parentId, int $childId, array $relation): array
+    {
+        $query = DB::table($relation['table'])
+            ->where($relation['primary_key'], $childId)
+            ->where($relation['foreign_key'], $parentId);
+
+        if (!empty($relation['has_soft_deletes'])) {
+            $query->whereNull($relation['deleted_at_column'] ?? 'deleted_at');
+        }
+
+        $row = $query->first();
+
+        if (!$row) {
+            throw new AuthorizationException('العنصر التابع غير موجود أو لا يتبع السجل المحدد.');
+        }
+
+        return (array) $row;
+    }
+
+    // فتح نافذة عرض تفاصيل العنصر التابع بعد التحقق من ارتباطه بالسجل المحدد.
+    public function viewChild(int $childId): void
+    {
+        if (!$this->selectedId) {
+            return;
+        }
+
+        $relationKey = $this->firstCrudRelationKey();
+
+        if (!$relationKey) {
+            return;
+        }
+
+        $relation = $this->config['relations'][$relationKey];
+        $this->viewingChild = $this->findChildRecord($this->selectedId, $childId, $relation);
+        $this->showChildViewModal = true;
+    }
+
+    // فتح نافذة تأكيد حذف العنصر التابع بعد التحقق من ارتباطه بالسجل الرئيسي.
+    public function openDeleteChildModal(int $childId): void
+    {
+        if (!$this->selectedId) {
+            return;
+        }
+
+        $relationKey = $this->firstCrudRelationKey();
+
+        if (!$relationKey) {
+            return;
+        }
+
+        $this->findChildRecord(
+            $this->selectedId,
+            $childId,
+            $this->config['relations'][$relationKey]
         );
 
-        return view(
-            'front-organizations.livewire.shared.universal-form',
-            [
-                // البيانات العامة
-                'entityKey' => $this->entityKey,
-                'config' => $this->config,
-                'records' => $this->records,
-                'recordsMeta' => $this->recordsMeta,
-                'stats' => $this->stats,
-                'labels' => $this->labels,
-                'lookupData' => $this->lookupData,
+        $this->pendingDeleteChildId = $childId;
+        $this->showDeleteChildModal = true;
+    }
 
-                // التوافق مع تصميم المالكين
-                'owners' => $owners,
-                'organizations' => $organizations,
-                'legacyLabels' => $legacyLabels,
-            ]
-        )->layout('front-organizations.layout.master');
+    // حذف العنصر التابع المحدد حذفاً ناعماً أو نهائياً حسب إعداد العلاقة.
+    public function deleteChild(): void
+    {
+        try {
+            if (!$this->selectedId || !$this->pendingDeleteChildId) {
+                return;
+            }
+
+            $relationKey = $this->firstCrudRelationKey();
+
+            if (!$relationKey) {
+                return;
+            }
+
+            $relation = $this->config['relations'][$relationKey];
+
+            $this->findScopedRecord($this->selectedId);
+            $this->findChildRecord($this->selectedId, $this->pendingDeleteChildId, $relation);
+
+            $query = DB::table($relation['table'])
+                ->where($relation['primary_key'], $this->pendingDeleteChildId)
+                ->where($relation['foreign_key'], $this->selectedId);
+
+            if (!empty($relation['has_soft_deletes'])) {
+                $deleted = $relation['deleted_at_column'] ?? 'deleted_at';
+                $query->whereNull($deleted)->update([$deleted => now()]);
+            } else {
+                $query->delete();
+            }
+
+            $this->showDeleteChildModal = false;
+            $this->pendingDeleteChildId = null;
+            $this->setToast('تم حذف العنصر التابع.');
+        } catch (Throwable $e) {
+            report($e);
+            $this->setToast('تعذر حذف العنصر التابع.', 'error');
+        }
+    }
+
+    // تبديل حالة العنصر التابع بين التفعيل والإيقاف.
+    public function toggleChildStatus(int $childId): void
+    {
+        try {
+            if (!$this->selectedId) {
+                return;
+            }
+
+            $this->findScopedRecord($this->selectedId);
+            $relationKey = $this->firstCrudRelationKey();
+
+            if (!$relationKey) {
+                return;
+            }
+
+            $relation = $this->config['relations'][$relationKey];
+            $column = $relation['status_column'] ?? null;
+
+            if (!$column || !Schema::hasColumn($relation['table'], $column)) {
+                throw new \RuntimeException('عمود حالة العنصر التابع غير محدد.');
+            }
+
+            $row = $this->findChildRecord($this->selectedId, $childId, $relation);
+            $current = $row[$column] ?? null;
+            $new = !in_array($current, [true, 1, '1', 'true', 'TRUE'], true);
+
+            DB::table($relation['table'])
+                ->where($relation['primary_key'], $childId)
+                ->where($relation['foreign_key'], $this->selectedId)
+                ->update([$column => $new]);
+
+            $this->setToast($new ? 'تم تفعيل العنصر التابع.' : 'تم إيقاف العنصر التابع.');
+        } catch (Throwable $e) {
+            report($e);
+            $this->setToast('تعذر تغيير حالة العنصر التابع.', 'error');
+        }
+    }
+
+    /* ============================================================
+     | التحقق من الحقول والقوائم والملفات
+     * ============================================================ */
+
+    // بناء قواعد التحقق من الحقول وفق أنواعها وإرجاع البيانات الصالحة للتخزين.
+   
+protected function validateConfiguredFields(array $data, array $fields, string $table, bool $main): array
+{
+    $rules = [];
+    $attributes = [];
+    $messages = [];
+    $allowed = [];
+
+    foreach ($fields as $field) {
+        $key = $field['key'] ?? null;
+
+        if (!$key) {
+            continue;
+        }
+
+        $this->assertSafeIdentifier($key);
+
+        if (($field['type'] ?? 'text') === 'file') {
+            continue;
+        }
+
+        if (!empty($field['is_status'])) {
+            $statusColumn = $this->config['status']['column'] ?? $key;
+
+            if ($key !== $statusColumn && !Schema::hasColumn($table, $key)) {
+                $allowed[] = $key;
+                $attributes[$key] = $field['label'] ?? $key;
+                $rules[$key] = ['required', 'string'];
+                continue;
+            }
+        }
+
+        if (!Schema::hasColumn($table, $key)) {
+            throw new AuthorizationException("الحقل [{$key}] غير موجود في جدول [{$table}].");
+        }
+
+        $allowed[] = $key;
+        $attributes[$key] = $field['label'] ?? $key;
+        $custom = $field['rules'] ?? $field['validation'] ?? [];
+
+        if (is_string($custom)) {
+            $custom = array_filter(explode('|', $custom));
+        }
+
+        if (!is_array($custom)) {
+            $custom = [$custom];
+        }
+
+        $fieldRules = array_values(array_filter(
+            $custom,
+            fn ($rule) => is_string($rule) && $rule !== ''
+        ));
+
+        if (!in_array('required', $fieldRules, true) && !in_array('nullable', $fieldRules, true)) {
+            $fieldRules[] = !empty($field['required']) ? 'required' : 'nullable';
+        }
+
+        switch ($field['type'] ?? 'text') {
+            case 'email':
+                $fieldRules[] = 'email';
+                break;
+
+            case 'date':
+                $fieldRules[] = 'date';
+                break;
+
+            case 'number':
+                $fieldRules[] = 'numeric';
+
+                if ($key === ($this->config['location_picker']['latitude_field'] ?? null)) {
+                    $fieldRules[] = 'between:-90,90';
+                }
+
+                if ($key === ($this->config['location_picker']['longitude_field'] ?? null)) {
+                    $fieldRules[] = 'between:-180,180';
+                }
+
+                break;
+
+            case 'checkbox':
+                $fieldRules[] = 'boolean';
+                break;
+
+            case 'text':
+            case 'textarea':
+            case 'tel':
+                $fieldRules[] = 'string';
+                break;
+
+            case 'select':
+                if (!empty($field['options'])) {
+                    $values = array_map(
+                        fn ($option) => (string) ($option['value'] ?? ''),
+                        $field['options']
+                    );
+
+                    $fieldRules[] = Rule::in($values);
+                }
+
+                break;
+        }
+
+        if (isset($field['max'])) {
+            $fieldRules[] = 'max:' . (int) $field['max'];
+        }
+
+        if (isset($field['min'])) {
+            $fieldRules[] = 'min:' . (int) $field['min'];
+        }
+
+        $rules[$key] = array_values(array_unique($fieldRules, SORT_REGULAR));
+
+        $messages[$key . '.required'] = 'حقل :attribute مطلوب.';
+        $messages[$key . '.email'] = 'يرجى إدخال بريد إلكتروني صحيح في :attribute.';
+        $messages[$key . '.date'] = 'يرجى إدخال تاريخ صحيح في :attribute.';
+        $messages[$key . '.numeric'] = 'يجب أن تكون قيمة :attribute رقمية.';
+        $messages[$key . '.between'] = 'قيمة :attribute خارج النطاق المسموح.';
+    }
+
+    $payload = Arr::only($data, $allowed);
+
+    // تحويل الأرقام العربية والفواصل العشرية إلى صيغة رقمية موحدة.
+    $latitudeKey = $this->config['location_picker']['latitude_field'] ?? 'latitude';
+    $longitudeKey = $this->config['location_picker']['longitude_field'] ?? 'longitude';
+
+    foreach ([$latitudeKey, $longitudeKey] as $coordinateKey) {
+        if (!array_key_exists($coordinateKey, $payload) || !is_string($payload[$coordinateKey])) {
+            continue;
+        }
+
+        $value = trim($payload[$coordinateKey]);
+
+        $value = strtr($value, [
+            '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3',
+            '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7',
+            '٨' => '8', '٩' => '9',
+            '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3',
+            '۴' => '4', '۵' => '5', '۶' => '6', '۷' => '7',
+            '۸' => '8', '۹' => '9',
+            '٫' => '.',
+            '،' => '.',
+        ]);
+
+        $payload[$coordinateKey] = $value;
+    }
+
+    foreach ($payload as $key => $value) {
+        if ($value === '' && empty($this->fieldRequired($fields, $key))) {
+            $payload[$key] = null;
+        }
+    }
+
+    $validator = Validator::make($payload, $rules, $messages);
+    $validator->setAttributeNames($attributes);
+    $validated = $validator->validate();
+
+    foreach ($fields as $field) {
+        if (!empty($field['is_status'])) {
+            $key = $field['key'];
+            $column = $this->config['status']['column'] ?? $key;
+
+            if ($key !== $column) {
+                unset($validated[$key]);
+            }
+        }
+    }
+
+    return $validated;
+}
+
+    // تحديد ما إذا كان الحقل مطلوباً وفق إعدادات الحقول.
+    protected function fieldRequired(array $fields, string $key): bool
+    {
+        foreach ($fields as $field) {
+            if (($field['key'] ?? null) === $key) {
+                return !empty($field['required']);
+            }
+        }
+
+        return false;
+    }
+
+    // تحويل قيمة حقل الحالة الافتراضي إلى القيمة المناسبة لعمود الحالة في قاعدة البيانات.
+    protected function applyStatusToPayload(array &$payload, array $form, array $fields, string $table): void
+    {
+        foreach ($fields as $field) {
+            if (empty($field['is_status'])) {
+                continue;
+            }
+
+            $key = $field['key'];
+
+            if (!array_key_exists($key, $form)) {
+                continue;
+            }
+
+            $status = $this->config['status'] ?? [];
+            $column = $status['column'] ?? $key;
+
+            $this->assertSafeIdentifier($column);
+
+            if (!Schema::hasColumn($table, $column)) {
+                throw new AuthorizationException("عمود الحالة [{$column}] غير موجود.");
+            }
+
+            $value = $form[$key];
+            $booleanMap = $status['boolean_map'] ?? null;
+
+            if ($booleanMap) {
+                $reverse = array_search((string) $value, array_map('strval', $booleanMap), true);
+
+                if ($reverse !== false) {
+                    $value = filter_var($reverse, FILTER_VALIDATE_BOOLEAN);
+                } elseif (in_array((string) $value, ['0', '1'], true) || is_bool($value)) {
+                    $value = (bool) $value;
+                } else {
+                    throw ValidationException::withMessages([
+                        $key => 'الحالة المختارة غير قابلة للتخزين في عمود الحالة.',
+                    ]);
+                }
+            }
+
+            $payload[$column] = $value;
+
+            if ($key !== $column) {
+                unset($payload[$key]);
+            }
+        }
+    }
+
+    // التحقق من أن القيم المختارة من القوائم المرجعية تتبع المؤسسة الحالية.
+    protected function validateLookupFields(array $fields, array $payload): void
+    {
+        foreach ($fields as $field) {
+            $key = $field['key'] ?? null;
+            $lookupName = $field['options_source'] ?? $field['lookup'] ?? null;
+
+            if (!$key || !$lookupName || empty($payload[$key])) {
+                continue;
+            }
+
+            $lookup = $this->config['lookups'][$lookupName] ?? null;
+
+            if (!$lookup) {
+                throw new AuthorizationException("القائمة المرجعية [{$lookupName}] غير معرفة.");
+            }
+
+            $table = $lookup['table'];
+            $pk = $lookup['key'];
+
+            $query = DB::table($table)->where($pk, $payload[$key]);
+
+            if (!empty($lookup['organization_column']) && Schema::hasColumn($table, $lookup['organization_column'])) {
+                $query->where($lookup['organization_column'], $this->organizationId);
+            } elseif ($table !== 'organizations' && Schema::hasColumn($table, 'organization_id')) {
+                $query->where('organization_id', $this->organizationId);
+            }
+
+            if ($table === 'organizations' && $pk === 'organization_id') {
+                $query->where($pk, $this->organizationId);
+            }
+
+            if (!$query->exists()) {
+                throw ValidationException::withMessages([
+                    $key => 'السجل المرتبط غير متاح ضمن المؤسسة الحالية.',
+                ]);
+            }
+        }
+    }
+
+    // التحقق من أن المفتاح الأجنبي يشير إلى سجل مرتبط بالمؤسسة الحالية.
+    protected function validateRelatedForeignKey(array $tenant, mixed $foreignValue): void
+    {
+        if ($foreignValue === null || $foreignValue === '') {
+            throw new AuthorizationException('يجب تحديد السجل المرتبط بالمؤسسة.');
+        }
+
+        $step = $tenant['path'][0];
+        $parentTable = $step['table'];
+
+        $query = DB::table($parentTable)->where($step['owner_key'], $foreignValue);
+
+        if (!empty($step['has_soft_deletes'])) {
+            $query->whereNull($step['deleted_at_column'] ?? 'deleted_at');
+        }
+
+        $query->where($tenant['organization_column'], $this->organizationId);
+
+        if (!$query->exists()) {
+            throw new AuthorizationException('السجل المرتبط لا يتبع المؤسسة الحالية.');
+        }
+    }
+
+   
+// تحديد إعدادات رفع الملفات ومسار التخزين داخل مجلد المؤسسة.
+protected function uploadOptions(array $field, string $scope): array
+{
+    $upload = $field['upload'] ?? [];
+
+    if (!is_array($upload)) {
+        throw new AuthorizationException('إعدادات رفع الملف غير صحيحة.');
+    }
+
+    // المسار الافتراضي لجميع ملفات المؤسسة.
+    $directory = $upload['directory'] ?? (
+        'organization/' . $this->entityKey .
+        ($scope === 'main' ? '' : '/' . $scope)
+    );
+
+    $directory = trim(str_replace('\\', '/', $directory), '/');
+
+    foreach (explode('/', $directory) as $part) {
+        if (
+            $part === '' ||
+            in_array($part, ['.', '..'], true) ||
+            !preg_match('/^[A-Za-z0-9_-]+$/', $part)
+        ) {
+            throw new AuthorizationException('مسار حفظ الملف غير آمن.');
+        }
+    }
+
+    $disk = $upload['disk'] ?? 'public';
+
+    if (!config("filesystems.disks.{$disk}")) {
+        throw new AuthorizationException("قرص التخزين [{$disk}] غير معرف.");
+    }
+
+    $mimes = $upload['mimes'] ?? [
+        'pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'
+    ];
+
+    if (is_string($mimes)) {
+        $mimes = array_filter(array_map('trim', explode(',', $mimes)));
+    }
+
+    foreach ($mimes as $mime) {
+        if (!preg_match('/^[A-Za-z0-9]+$/', (string) $mime)) {
+            throw new AuthorizationException('امتداد ملف غير صالح في الإعدادات.');
+        }
+    }
+
+    return [
+        'disk' => $disk,
+        'directory' => $directory,
+        'mimes' => $mimes,
+        'max_kb' => (int) ($upload['max_kb'] ?? 10240),
+        'multiple' => (bool) ($upload['multiple'] ?? false),
+        'delete_old' => (bool) ($upload['delete_old'] ?? false),
+    ];
+}
+
+    // التحقق من الملفات المرفوعة وتخزينها وإرجاع مساراتها لإضافتها إلى بيانات السجل.
+    protected function storeConfiguredUploads(
+        array $fields,
+        string $property,
+        bool $creating,
+        array $existing,
+        string $scope,
+        array &$stored
+    ): array {
+        $bag = $this->{$property};
+        $payload = [];
+
+        foreach ($fields as $field) {
+            if (($field['type'] ?? '') !== 'file') {
+                continue;
+            }
+
+            $key = $field['key'] ?? null;
+
+            if (!$key) {
+                continue;
+            }
+
+            $table = $scope === 'main'
+                ? $this->config['table']
+                : ($this->config['relations'][$scope]['table'] ?? null);
+
+            if (!$table || !Schema::hasColumn($table, $key)) {
+                throw new AuthorizationException("عمود الملف [{$key}] غير موجود في الجدول.");
+            }
+
+            $options = $this->uploadOptions($field, $scope);
+            $files = $bag[$key] ?? null;
+            $required = !empty($field['required']) && ($creating || empty($existing[$key]));
+
+            if ($files === null || $files === '' || $files === []) {
+                if ($required) {
+                    throw ValidationException::withMessages([
+                        $key => 'يرجى اختيار ملف للحقل ' . ($field['label'] ?? $key) . '.',
+                    ]);
+                }
+
+                if ($creating) {
+                    $payload[$key] = $options['multiple']
+                        ? json_encode([], JSON_UNESCAPED_UNICODE)
+                        : null;
+                }
+
+                continue;
+            }
+
+            $validationData = [$key => $files];
+            $rules = [$key => [$options['multiple'] ? 'array' : 'file']];
+
+            if (!$options['multiple']) {
+                $rules[$key][] = 'file';
+            }
+
+            if ($options['multiple']) {
+                $rules[$key . '.*'] = ['file'];
+            }
+
+            $fileRule = ['file'];
+
+            if ($options['mimes']) {
+                $fileRule[] = 'mimes:' . implode(',', $options['mimes']);
+            }
+
+            if ($options['max_kb'] > 0) {
+                $fileRule[] = 'max:' . $options['max_kb'];
+            }
+
+            if ($options['multiple']) {
+                $rules[$key . '.*'] = $fileRule;
+            } else {
+                $rules[$key] = array_merge($rules[$key], array_slice($fileRule, 1));
+            }
+
+            Validator::make($validationData, $rules, [
+                $key . '.*.mimes' => 'نوع أحد الملفات في ' . ($field['label'] ?? $key) . ' غير مسموح.',
+                $key . '.*.max' => 'حجم أحد الملفات في ' . ($field['label'] ?? $key) . ' أكبر من الحد المسموح.',
+                $key . '.mimes' => 'نوع الملف في ' . ($field['label'] ?? $key) . ' غير مسموح.',
+                $key . '.max' => 'حجم الملف في ' . ($field['label'] ?? $key) . ' أكبر من الحد المسموح.',
+            ])->validate();
+
+            $items = $options['multiple'] ? (array) $files : [$files];
+            $paths = [];
+
+            foreach ($items as $file) {
+                $path = $file->store($options['directory'], $options['disk']);
+
+                if (!$path) {
+                    throw new \RuntimeException('تعذر تخزين الملف ' . $key . '.');
+                }
+
+                $paths[] = $path;
+                $stored[] = ['disk' => $options['disk'], 'path' => $path];
+            }
+
+            $payload[$key] = $options['multiple']
+                ? json_encode($paths, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)
+                : $paths[0];
+        }
+
+        return $payload;
+    }
+
+    // حذف الملفات القديمة المستبدلة بعد نجاح حفظ الملفات الجديدة إذا كان ذلك مفعلاً.
+    protected function deleteReplacedUploads(array $fields, array $existing, array $newPayload, string $scope): void
+    {
+        foreach ($fields as $field) {
+            if (($field['type'] ?? '') !== 'file' || empty($field['key'])) {
+                continue;
+            }
+
+            $key = $field['key'];
+
+            if (!array_key_exists($key, $newPayload) || empty($existing[$key])) {
+                continue;
+            }
+
+            $options = $this->uploadOptions($field, $scope);
+
+            if (!$options['delete_old']) {
+                continue;
+            }
+
+            $old = $this->decodeStoredPaths($existing[$key]);
+            $new = $this->decodeStoredPaths($newPayload[$key]);
+
+            foreach (array_diff($old, $new) as $path) {
+                if (str_starts_with($path, $options['directory'] . '/')) {
+                    Storage::disk($options['disk'])->delete($path);
+                }
+            }
+        }
+    }
+
+    // تحويل قيمة مسار الملف المخزن إلى مصفوفة مسارات سواء كانت JSON أو نصاً مفرداً.
+    protected function decodeStoredPaths(mixed $value): array
+    {
+        if (!$value) {
+            return [];
+        }
+
+        if (is_array($value)) {
+            return array_values(array_filter($value, 'is_string'));
+        }
+
+        $decoded = json_decode((string) $value, true);
+
+        if (is_array($decoded)) {
+            return array_values(array_filter($decoded, 'is_string'));
+        }
+
+        return [(string) $value];
+    }
+
+    // حذف الملفات التي رُفعت أثناء عملية فاشلة لمنع بقاء ملفات يتيمة في التخزين.
+    protected function rollbackStoredUploads(array $stored): void
+    {
+        foreach ($stored as $file) {
+            try {
+                Storage::disk($file['disk'])->delete($file['path']);
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+    }
+
+    /* ============================================================
+     | عرض مساعد وترجمة القيم
+     * ============================================================ */
+
+    // تحويل قيمة الحقل إلى نص مناسب للعرض مع دعم العلاقات والقوائم والتواريخ.
+    public function displayValue(array $record, string $field): string
+    {
+        $value = $record[$field] ?? null;
+
+        if ($value === null || $value === '') {
+            return '—';
+        }
+
+        foreach (($this->config['relations'] ?? []) as $relationKey => $relation) {
+            if (
+                ($relation['type'] ?? '') === 'belongsTo' &&
+                ($relation['foreign_key'] ?? null) === $field
+            ) {
+                $related = $record['_relation_' . $relationKey] ?? [];
+                $nameField = $relation['name_field'] ?? 'name';
+
+                if (!empty($related[$nameField])) {
+                    return (string) $related[$nameField];
+                }
+            }
+        }
+
+        foreach (($this->config['main_fields'] ?? []) as $definition) {
+            if (($definition['key'] ?? null) === $field && !empty($definition['options'])) {
+                foreach ($definition['options'] as $option) {
+                    if ((string) ($option['value'] ?? '') === (string) $value) {
+                        return (string) ($option['label'] ?? $value);
+                    }
+                }
+            }
+        }
+
+        foreach (($this->config['lookups'] ?? []) as $lookupKey => $lookup) {
+            if ($lookupKey === $field || ($lookup['key'] ?? null) === $field) {
+                foreach (($this->lookups[$lookupKey] ?? []) as $option) {
+                    if ((string) $option['id'] === (string) $value) {
+                        return (string) $option['name'];
+                    }
+                }
+            }
+        }
+
+        if (in_array($field, ['created_at', 'updated_at', 'authority_start_date', 'authority_end_date'], true)) {
+            try {
+                return \Illuminate\Support\Carbon::parse($value)->format('Y-m-d');
+            } catch (Throwable) {
+            }
+        }
+
+        return is_scalar($value) ? (string) $value : '—';
+    }
+
+    // إرجاع خيارات الحقل من القوائم المرجعية أو الخيارات الثابتة في الإعدادات.
+    public function fieldOptions(array $field): array
+    {
+        if (!empty($field['options_source'])) {
+            return $this->lookups[$field['options_source']] ?? [];
+        }
+
+        if (!empty($field['lookup'])) {
+            return $this->lookups[$field['lookup']] ?? [];
+        }
+
+        return $field['options'] ?? [];
+    }
+
+    // تحديد ما إذا كان الحقل مداراً تلقائياً بواسطة سياسة عزل المؤسسة المباشر.
+    public function isTenantManagedField(string $key): bool
+    {
+        $tenant = $this->tenantConfig();
+
+        return $tenant['type'] === 'direct' && ($tenant['column'] ?? null) === $key;
+    }
+
+    // تعيين رسالة التنبيه ونوعها لعرض نتيجة العملية في الواجهة.
+    protected function setToast(string $message, string $type = 'success'): void
+    {
+        $this->toastMessage = $message;
+        $this->toastType = $type;
+    }
+
+    // إخفاء رسالة التنبيه الحالية من الواجهة.
+    public function dismissToast(): void
+    {
+        $this->toastMessage = null;
+    }
+
+    // تحويل الأرقام العربية والفواصل العشرية إلى صيغة رقمية إنجليزية قبل التحقق والحفظ.
+    private function normalizeCoordinates(): void
+    {
+        $location = $this->config['location_picker'] ?? [];
+
+        $fields = array_filter([
+            $location['latitude_field'] ?? 'latitude',
+            $location['longitude_field'] ?? 'longitude',
+        ]);
+
+        foreach ($fields as $field) {
+            if (!isset($this->form[$field])) {
+                continue;
+            }
+
+            $value = (string) $this->form[$field];
+
+            $value = strtr($value, [
+                '٠' => '0',
+                '١' => '1',
+                '٢' => '2',
+                '٣' => '3',
+                '٤' => '4',
+                '٥' => '5',
+                '٦' => '6',
+                '٧' => '7',
+                '٨' => '8',
+                '٩' => '9',
+                '٫' => '.',
+                '،' => '.',
+            ]);
+
+            $this->form[$field] = $value;
+        }
+    }
+    
+public function updatedForm($value, $key): void
+{
+    $this->resetValidation($key);
+}
+
+public function updatedChildForm($value, $key): void
+{
+    $this->resetValidation($key);
+}
+
+public function updatedMainUploads($value, $key): void
+{
+    $this->resetValidation('mainUploads.' . $key);
+}
+
+public function updatedChildUploads($value, $key): void
+{
+    $this->resetValidation('childUploads.' . $key);
+}
+
+
+    // تجهيز بيانات الصفحة وإرسال السجلات والإحصائيات والعلاقات إلى واجهة Blade.
+    public function render(): View
+    {
+        $records = $this->records;
+        $selectedRecord = $this->selectedRecord;
+        $selectedChildren = $this->selectedChildren;
+        $stats = $this->stats;
+        $lookups = $this->lookups;
+        $tenant = $this->tenantConfig();
+        $displayValues = [];
+
+        if ($selectedRecord) {
+            $fieldsToDisplay = array_merge(
+                $this->config['ui']['details']['header_fields'] ?? [],
+                $this->config['ui']['details']['info_fields'] ?? []
+            );
+
+            foreach ($fieldsToDisplay as $definition) {
+                $field = $definition['field'] ?? null;
+
+                if ($field) {
+                    $displayValues[$field] = $this->displayValue($selectedRecord, $field);
+                }
+            }
+        }
+        
+
+        return view('front-organizations.livewire.shared.universal-form', [
+            'records' => $records,
+            'selectedRecord' => $selectedRecord,
+            'selectedChildren' => $selectedChildren,
+            'stats' => $stats,
+            'lookups' => $lookups,
+            'displayValues' => $displayValues,
+            'tenantManagedColumn' => $tenant['type'] === 'direct' ? ($tenant['column'] ?? null) : null,
+            'componentId' => $this->getId(),
+            'childSearch' => $this->childSearch,
+        ]);
     }
 }
