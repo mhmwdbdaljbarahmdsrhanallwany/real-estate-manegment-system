@@ -1105,7 +1105,7 @@
             </div>
         </div>
 
-        {{-- ===== Table ===== --}}
+        {{-- ===== جزاء عرض بيانات ===== --}}
         <div class="gg-content">
             <div class="gg-card">
 
@@ -1121,7 +1121,7 @@
                         <thead>
                             <tr>
                                 <th style="width:220px;">{{ $entitySingle }}</th>
-                                @foreach (($config['main_fields'] ?? []) as $field)
+                                @foreach(($config['main_fields'] ?? []) as $field)
                                 @php
                                 $key = $field['key'] ?? '';
                                 $isList = $field['show_in_list'] ?? false;
@@ -1182,34 +1182,110 @@
                                 <td>{{ $val ?: '—' }}</td>
                                 @endif
                                 @endforeach
-
+                                {{-- جزاء محظور غير محظور نشط غير نشط --}}
                                 <td>
+                                    @if ($entityKey === 'tenants')
+
+                                    <div style="display:flex; flex-direction:column; gap:5px;">
+
+                                        <span class="gg-pill {{ $status }}">
+                                            <i class="fas fa-circle" style="font-size:.4rem;"></i>
+                                            {{ $status === 'active' ? 'نشط' : 'غير نشط' }}
+                                        </span>
+
+                                        @if ((int) ($row['is_blacklisted'] ?? 0) === 1)
+                                        <span class="gg-pill blocked">
+                                            <i class="fas fa-ban"></i>
+                                            محظور
+                                        </span>
+                                        @else
+                                        <span class="gg-pill active">
+                                            <i class="fas fa-check-circle"></i>
+                                            غير محظور
+                                        </span>
+                                        @endif
+
+                                    </div>
+
+                                    @else
+
                                     <span class="gg-pill {{ $status }}">
                                         <i class="fas fa-circle" style="font-size:.4rem;"></i>
                                         {{ $statusLabels[$status] ?? $status }}
                                     </span>
+
+                                    @endif
                                 </td>
+
+
+                                {{-- بببببببببببب --}}
 
                                 <td>
                                     <div class="gg-actions">
+
                                         {{-- عرض --}}
+                                        @if (!empty($config['actions']['view']))
                                         <button type="button" class="gg-action-btn view"
-                                            wire:click="openView({{ $rid }})" title="عرض">
+                                            wire:click="openView({{ $rid }})" title="عرض التفاصيل">
                                             <i class="fas fa-eye"></i>
                                         </button>
+                                        @endif
 
-                                        {{-- تعديل السجل --}}
-                                        {{-- تعديل السجل من خلال دالة GenericGrid --}}
+                                        {{-- تعديل --}}
                                         @if (!empty($config['actions']['edit']) && $rid !== null)
                                         <button type="button" class="gg-action-btn edit"
                                             wire:click="openEdit({{ (int) $rid }})" wire:loading.attr="disabled"
-                                            wire:target="openEdit" title="تعديل">
+                                            title="تعديل">
                                             <i class="fas fa-pen"></i>
                                         </button>
                                         @endif
 
-                                        {{-- حظر / تنشيط --}}
+                                        {{-- إجراءات المستأجرين --}}
+                                        @if ($entityKey === 'tenants')
+
+                                        {{-- حظر أو إلغاء الحظر --}}
+                                        @if (!empty($config['actions']['blacklist']))
+
+                                        @if ((int) ($row['is_blacklisted'] ?? 0) === 1)
+                                        <button type="button" class="gg-action-btn unblock"
+                                            wire:click="toggleTenantBlacklist({{ $rid }})" wire:loading.attr="disabled"
+                                            title="إلغاء الحظر">
+                                            <i class="fas fa-unlock"></i>
+                                        </button>
+                                        @else
+                                        <button type="button" class="gg-action-btn block"
+                                            wire:click="toggleTenantBlacklist({{ $rid }})" wire:loading.attr="disabled"
+                                            title="حظر المستأجر">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                        @endif
+
+                                        @endif
+
+                                        {{-- تنشيط أو إلغاء التنشيط --}}
+                                        @if (!empty($config['actions']['activate']))
+
+                                        @if ((int) ($row['is_active'] ?? 1) === 1)
+                                        <button type="button" class="gg-action-btn block"
+                                            wire:click="toggleTenantActive({{ $rid }})" wire:loading.attr="disabled"
+                                            title="إلغاء التنشيط">
+                                            <i class="fas fa-power-off"></i>
+                                        </button>
+                                        @else
+                                        <button type="button" class="gg-action-btn unblock"
+                                            wire:click="toggleTenantActive({{ $rid }})" wire:loading.attr="disabled"
+                                            title="تنشيط المستأجر">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                        @endif
+
+                                        @endif
+
+                                        @else
+
+                                        {{-- إجراء الحالة العام لبقية الكيانات --}}
                                         @if (!empty($config['actions']['status']))
+
                                         @if ($status === 'blocked')
                                         <button type="button" class="gg-action-btn unblock"
                                             wire:click="toggleStatus({{ $rid }})" title="تفعيل">
@@ -1221,6 +1297,9 @@
                                             <i class="fas fa-ban"></i>
                                         </button>
                                         @endif
+
+                                        @endif
+
                                         @endif
 
                                         {{-- حذف --}}
@@ -1230,6 +1309,7 @@
                                             <i class="fas fa-trash"></i>
                                         </button>
                                         @endif
+
                                     </div>
                                 </td>
                             </tr>
@@ -1492,31 +1572,31 @@
 
                                 @elseif ($type === 'select' || $key === 'status')
 
-    <select class="gg-select" wire:model="creatingData.{{ $key }}">
+                                <select class="gg-select" wire:model="creatingData.{{ $key }}">
 
-        <option value="">اختر...</option>
+                                    <option value="">اختر...</option>
 
-        {{-- قائمة الملاك --}}
-        @if (($field['options_source'] ?? null) === 'owner_id')
+                                    {{-- قائمة الملاك --}}
+                                    @if (($field['options_source'] ?? null) === 'owner_id')
 
-            @foreach (($ownerOptions ?? []) as $option)
-                <option value="{{ $option['value'] }}">
-                    {{ $option['label'] }}
-                </option>
-            @endforeach
+                                    @foreach (($ownerOptions ?? []) as $option)
+                                    <option value="{{ $option['value'] }}">
+                                        {{ $option['label'] }}
+                                    </option>
+                                    @endforeach
 
-        {{-- الخيارات العادية من الإعدادات --}}
-        @else
+                                    {{-- الخيارات العادية من الإعدادات --}}
+                                    @else
 
-            @foreach ($options as $option)
-                <option value="{{ $option['value'] }}">
-                    {{ $option['label'] }}
-                </option>
-            @endforeach
+                                    @foreach ($options as $option)
+                                    <option value="{{ $option['value'] }}">
+                                        {{ $option['label'] }}
+                                    </option>
+                                    @endforeach
 
-        @endif
+                                    @endif
 
-    </select>
+                                </select>
 
                                 @elseif ($type === 'checkbox')
 

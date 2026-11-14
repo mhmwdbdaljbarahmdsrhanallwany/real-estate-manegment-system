@@ -1187,27 +1187,27 @@ return [
         'deleted_at_column'   => 'deleted_at',
 
         'location_picker' => [
-    'enabled'           => true,
-    'latitude_field'    => 'latitude',
-    'longitude_field'   => 'longitude',
+            'enabled'           => true,
+            'latitude_field'    => 'latitude',
+            'longitude_field'   => 'longitude',
 
-    'default_latitude'  => 24.7136,
-    'default_longitude' => 46.6753,
+            'default_latitude'  => 24.7136,
+            'default_longitude' => 46.6753,
 
-    'zoom'              => 13,
-    'height'            => '320px',
+            'zoom'              => 13,
+            'height'            => '320px',
 
-    'tile_url'          => 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    'tile_attribution'  => '&copy; OpenStreetMap contributors',
+            'tile_url'          => 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            'tile_attribution'  => '&copy; OpenStreetMap contributors',
 
-    'marker_fields' => [
-        'city'          => 'city',
-        'district'      => 'district',
-        'property_type' => 'property_type',
-        'area'          => 'building_area',
-        'image'         => 'images',
-    ],
-],
+            'marker_fields' => [
+                'city'          => 'city',
+                'district'      => 'district',
+                'property_type' => 'property_type',
+                'area'          => 'building_area',
+                'image'         => 'images',
+            ],
+        ],
 
         'tenant_scoped' => true,
         'allow_shared'  => false,
@@ -1278,11 +1278,11 @@ return [
                 'display' => 'full_name',
             ],
 
-'unit_types' => [
-    'table'   => 'unit_types',
-    'key'     => 'type_id',
-    'display' => 'name',
-],
+            'unit_types' => [
+                'table'   => 'unit_types',
+                'key'     => 'type_id',
+                'display' => 'name',
+            ],
 
 
             'organization_id' => [
@@ -1389,196 +1389,196 @@ return [
             ],
         ],
 
-       
-'relations' => [
 
-    // علاقات المبنى المرجعية
-    'owner' => [
-        'type'        => 'belongsTo',
-        'table'       => 'owners',
-        'primary_key' => 'owner_id',
-        'foreign_key' => 'owner_id',
-        'name_field'  => 'full_name',
-        'enabled'     => true,
-        'fields'      => ['owner_id', 'full_name', 'phone'],
-        'label'       => 'المالك',
-    ],
+        'relations' => [
 
-    'organization' => [
-        'type'        => 'belongsTo',
-        'table'       => 'organizations',
-        'primary_key' => 'organization_id',
-        'foreign_key' => 'organization_id',
-        'name_field'  => 'name',
-        'enabled'     => true,
-        'fields'      => ['organization_id', 'name'],
-        'label'       => 'المؤسسة',
-    ],
-
-    'branch' => [
-        'type'        => 'belongsTo',
-        'table'       => 'agency_branches',
-        'primary_key' => 'branch_id',
-        'foreign_key' => 'branch_id',
-        'name_field'  => 'branch_name',
-        'enabled'     => true,
-        'fields'      => ['branch_id', 'branch_name'],
-        'label'       => 'الفرع',
-    ],
-
-    // وحدات وشقق المبنى
-    'units' => [
-        'type'        => 'hasMany',
-        'table'       => 'units',
-        'primary_key' => 'unit_id',
-        'foreign_key' => 'building_id',
-        'enabled'     => true,
-
-        'has_soft_deletes'  => true,
-        'deleted_at_column' => 'deleted_at',
-
-        'status_column' => 'status',
-
-        'label' => 'وحدات المبنى',
-
-        'fields' => [
-
-            [
-                'key'      => 'unit_number',
-                'label'    => 'رقم الوحدة أو الشقة',
-                'type'     => 'text',
-                'required' => true,
-                'full'     => false,
+            // علاقات المبنى المرجعية
+            'owner' => [
+                'type'        => 'belongsTo',
+                'table'       => 'owners',
+                'primary_key' => 'owner_id',
+                'foreign_key' => 'owner_id',
+                'name_field'  => 'full_name',
+                'enabled'     => true,
+                'fields'      => ['owner_id', 'full_name', 'phone'],
+                'label'       => 'المالك',
             ],
 
-            [
-                'key'      => 'type_id',
-                'label'    => 'نوع الوحدة',
-                'type'     => 'select',
-                'lookup'   => 'unit_types',
-                'required' => false,
+            'organization' => [
+                'type'        => 'belongsTo',
+                'table'       => 'organizations',
+                'primary_key' => 'organization_id',
+                'foreign_key' => 'organization_id',
+                'name_field'  => 'name',
+                'enabled'     => true,
+                'fields'      => ['organization_id', 'name'],
+                'label'       => 'المؤسسة',
             ],
 
-            [
-                'key'   => 'floor',
-                'label' => 'رقم الطابق',
-                'type'  => 'number',
-                'step'  => 1,
-                'min'   => 0,
+            'branch' => [
+                'type'        => 'belongsTo',
+                'table'       => 'agency_branches',
+                'primary_key' => 'branch_id',
+                'foreign_key' => 'branch_id',
+                'name_field'  => 'branch_name',
+                'enabled'     => true,
+                'fields'      => ['branch_id', 'branch_name'],
+                'label'       => 'الفرع',
             ],
 
-            [
-                'key'   => 'size',
-                'label' => 'المساحة بالمتر المربع',
-                'type'  => 'number',
-                'step'  => '0.01',
-                'min'   => 0,
-            ],
+            // وحدات وشقق المبنى
+            'units' => [
+                'type'        => 'hasMany',
+                'table'       => 'units',
+                'primary_key' => 'unit_id',
+                'foreign_key' => 'building_id',
+                'enabled'     => true,
 
-            [
-                'key'   => 'bedrooms',
-                'label' => 'عدد غرف النوم',
-                'type'  => 'number',
-                'default' => 0,
-                'step'  => 1,
-                'min'   => 0,
-            ],
+                'has_soft_deletes'  => true,
+                'deleted_at_column' => 'deleted_at',
 
-            [
-                'key'   => 'bathrooms',
-                'label' => 'عدد دورات المياه',
-                'type'  => 'number',
-                'default' => 0,
-                'step'  => 1,
-                'min'   => 0,
-            ],
+                'status_column' => 'status',
 
-            [
-                'key'   => 'halls',
-                'label' => 'عدد الصالات',
-                'type'  => 'number',
-                'default' => 0,
-                'step'  => 1,
-                'min'   => 0,
-            ],
+                'label' => 'وحدات المبنى',
 
-            [
-                'key'   => 'kitchen',
-                'label' => 'يوجد مطبخ',
-                'type'  => 'checkbox',
-                'default' => true,
-            ],
+                'fields' => [
 
-            [
-                'key'   => 'balcony',
-                'label' => 'يوجد شرفة',
-                'type'  => 'checkbox',
-                'default' => false,
-            ],
+                    [
+                        'key'      => 'unit_number',
+                        'label'    => 'رقم الوحدة أو الشقة',
+                        'type'     => 'text',
+                        'required' => true,
+                        'full'     => false,
+                    ],
 
-            [
-                'key'   => 'furnished',
-                'label' => 'مؤثثة',
-                'type'  => 'checkbox',
-                'default' => false,
-            ],
+                    [
+                        'key'      => 'type_id',
+                        'label'    => 'نوع الوحدة',
+                        'type'     => 'select',
+                        'lookup'   => 'unit_types',
+                        'required' => false,
+                    ],
 
-            [
-                'key'   => 'rent_price',
-                'label' => 'قيمة الإيجار',
-                'type'  => 'number',
-                'step'  => '0.01',
-                'min'   => 0,
-            ],
+                    [
+                        'key'   => 'floor',
+                        'label' => 'رقم الطابق',
+                        'type'  => 'number',
+                        'step'  => 1,
+                        'min'   => 0,
+                    ],
 
-            [
-                'key'      => 'status',
-                'label'    => 'حالة الوحدة',
-                'type'     => 'select',
-                'required' => true,
-                'default'  => 'available',
-                'options'  => [
-                    ['value' => 'available',   'label' => 'متاحة'],
-                    ['value' => 'occupied',    'label' => 'مؤجرة'],
-                    ['value' => 'maintenance', 'label' => 'تحت الصيانة'],
-                    ['value' => 'reserved',    'label' => 'محجوزة'],
-                    ['value' => 'closed',      'label' => 'مغلقة'],
+                    [
+                        'key'   => 'size',
+                        'label' => 'المساحة بالمتر المربع',
+                        'type'  => 'number',
+                        'step'  => '0.01',
+                        'min'   => 0,
+                    ],
+
+                    [
+                        'key'   => 'bedrooms',
+                        'label' => 'عدد غرف النوم',
+                        'type'  => 'number',
+                        'default' => 0,
+                        'step'  => 1,
+                        'min'   => 0,
+                    ],
+
+                    [
+                        'key'   => 'bathrooms',
+                        'label' => 'عدد دورات المياه',
+                        'type'  => 'number',
+                        'default' => 0,
+                        'step'  => 1,
+                        'min'   => 0,
+                    ],
+
+                    [
+                        'key'   => 'halls',
+                        'label' => 'عدد الصالات',
+                        'type'  => 'number',
+                        'default' => 0,
+                        'step'  => 1,
+                        'min'   => 0,
+                    ],
+
+                    [
+                        'key'   => 'kitchen',
+                        'label' => 'يوجد مطبخ',
+                        'type'  => 'checkbox',
+                        'default' => true,
+                    ],
+
+                    [
+                        'key'   => 'balcony',
+                        'label' => 'يوجد شرفة',
+                        'type'  => 'checkbox',
+                        'default' => false,
+                    ],
+
+                    [
+                        'key'   => 'furnished',
+                        'label' => 'مؤثثة',
+                        'type'  => 'checkbox',
+                        'default' => false,
+                    ],
+
+                    [
+                        'key'   => 'rent_price',
+                        'label' => 'قيمة الإيجار',
+                        'type'  => 'number',
+                        'step'  => '0.01',
+                        'min'   => 0,
+                    ],
+
+                    [
+                        'key'      => 'status',
+                        'label'    => 'حالة الوحدة',
+                        'type'     => 'select',
+                        'required' => true,
+                        'default'  => 'available',
+                        'options'  => [
+                            ['value' => 'available',   'label' => 'متاحة'],
+                            ['value' => 'occupied',    'label' => 'مؤجرة'],
+                            ['value' => 'maintenance', 'label' => 'تحت الصيانة'],
+                            ['value' => 'reserved',    'label' => 'محجوزة'],
+                            ['value' => 'closed',      'label' => 'مغلقة'],
+                        ],
+                    ],
+
+                    [
+                        'key'   => 'last_maintenance_date',
+                        'label' => 'تاريخ آخر صيانة',
+                        'type'  => 'date',
+                    ],
+
+                    [
+                        'key'   => 'next_maintenance_date',
+                        'label' => 'موعد الصيانة القادمة',
+                        'type'  => 'date',
+                    ],
+
+                    [
+                        'key'   => 'notes',
+                        'label' => 'ملاحظات',
+                        'type'  => 'textarea',
+                        'full'  => true,
+                    ],
+                ],
+
+                'ui' => [
+                    'title_field'    => 'unit_number',
+                    'subtitle_field' => 'rent_price',
+                    'type_field'     => 'status',
+                    'status_icon'    => 'fas fa-house',
                 ],
             ],
-
-            [
-                'key'   => 'last_maintenance_date',
-                'label' => 'تاريخ آخر صيانة',
-                'type'  => 'date',
-            ],
-
-            [
-                'key'   => 'next_maintenance_date',
-                'label' => 'موعد الصيانة القادمة',
-                'type'  => 'date',
-            ],
-
-            [
-                'key'   => 'notes',
-                'label' => 'ملاحظات',
-                'type'  => 'textarea',
-                'full'  => true,
-            ],
         ],
 
-        'ui' => [
-            'title_field'    => 'unit_number',
-            'subtitle_field' => 'rent_price',
-            'type_field'     => 'status',
-            'status_icon'    => 'fas fa-house',
-        ],
-    ],
-],
-
-'sub_section_title' => 'شقق ووحدات المبنى',
-'sub_section_icon'  => 'fas fa-house',
-'entity_sub'        => 'وحدة',
-'btn_add_sub'       => 'إضافة شقة',
+        'sub_section_title' => 'شقق ووحدات المبنى',
+        'sub_section_icon'  => 'fas fa-house',
+        'entity_sub'        => 'وحدة',
+        'btn_add_sub'       => 'إضافة شقة',
 
 
         'main_fields' => [
@@ -2226,8 +2226,19 @@ return [
 
         // لا يوجد organization_id في جدول الوحدات.
         // عزل الوحدات يجب أن يتم من خلال building_id.
+
         'tenant_scoped' => false,
-        'allow_shared'  => false,
+        'allow_shared'  => true,
+
+        'tenant_scope' => [
+            'type'                  => 'belongs_to',
+            'table'                 => 'buildings',
+            'local_key'             => 'building_id',
+            'building_key'             => 'building_id',
+            'organization_column'   => 'organization_id',
+            'parent_soft_deletes'   => true,
+            'parent_deleted_column' => 'deleted_at',
+        ],
 
         'title'    => 'إدارة الوحدات العقارية',
         'subtitle' => 'إدارة الشقق والفلل والمكاتب والمحلات والوحدات التابعة للمباني',
@@ -2422,6 +2433,7 @@ return [
                 'icon'  => 'fas fa-sticky-note',
             ],
 
+
             [
                 'key'       => 'images',
                 'label'     => 'صور الوحدة',
@@ -2433,6 +2445,15 @@ return [
                 'max'       => 10240,
                 'delete_old' => false,
                 'icon'      => 'fas fa-images',
+
+                'upload' => [
+                    'multiple'   => true,
+                    'disk'       => 'public',
+                    'directory'  => 'organization/units/images',
+                    'mimes'      => ['jpg', 'jpeg', 'png', 'webp'],
+                    'max_kb'     => 10240,
+                    'delete_old' => false,
+                ],
             ],
 
             [
@@ -2446,7 +2467,17 @@ return [
                 'max'       => 20480,
                 'delete_old' => false,
                 'icon'      => 'fas fa-file-alt',
+
+                'upload' => [
+                    'multiple'   => true,
+                    'disk'       => 'public',
+                    'directory'  => 'organization/units/documents',
+                    'mimes'      => ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xls', 'xlsx'],
+                    'max_kb'     => 20480,
+                    'delete_old' => false,
+                ],
             ],
+
 
             [
                 'key'   => 'last_maintenance_date',
@@ -2581,6 +2612,560 @@ return [
                         'field' => 'next_maintenance_date',
                         'label' => 'الصيانة القادمة',
                         'icon'  => 'fas fa-calendar-alt',
+                    ],
+                ],
+
+                'notes_field' => 'notes',
+            ],
+        ],
+    ],
+
+
+
+
+
+
+
+    'tenants' => [
+
+        // =====================================================
+        // معلومات الكيان الأساسية
+        // =====================================================
+        'table'              => 'tenants',
+        'primary_key'        => 'tenant_id',
+        'organization_column' => 'organization_id',
+        'name_field'         => 'full_name',
+        'has_soft_deletes'   => true,
+
+
+        'tenant_scoped'      => true,
+        'allow_shared'       => false,
+
+
+
+        'title'    => 'إدارة المستأجرين',
+        'subtitle' => 'إضافة وإدارة بيانات المستأجرين وتوثيق هوياتهم ومعلومات التواصل والتقييم والحظر',
+
+        'icon' => 'fas fa-users',
+
+        'entity_label'        => 'المستأجر',
+        'entity_label_plural' => 'المستأجرين',
+
+        // =====================================================
+        // إعدادات العرض
+        // =====================================================
+        'display' => [
+            'title'       => 'full_name',
+            'subtitle'    => 'phone',
+            'avatar'      => 'id_image',
+            'status'      => 'is_blacklisted',
+            'description' => 'id_number',
+        ],
+
+        // =====================================================
+        // الإجراءات
+        // =====================================================
+       'actions' => [
+    'create'   => true,
+    'view'     => true,
+    'edit'     => true,
+    'delete'   => true,
+    'restore'  => true,
+    'search'   => true,
+    'export'   => true,
+    'print'    => true,
+
+    // إجراءات خاصة بالمستأجرين
+    'blacklist' => true,
+    'activate'  => true,
+],
+
+        // =====================================================
+        // البحث
+        // =====================================================
+        'search' => [
+            'enabled' => true,
+            'fields' => [
+                'full_name',
+                'phone',
+                'phone2',
+                'email',
+                'id_number',
+                'address',
+                'work_place',
+                'job_title',
+                'bank_name',
+                'bank_account_number',
+                'emergency_contact_name',
+                'emergency_contact_phone',
+            ],
+            'placeholder' => 'ابحث بالاسم أو رقم الجوال أو الهوية أو البريد الإلكتروني...',
+        ],
+
+        // =====================================================
+        // الصفحات
+        // =====================================================
+        'pagination' => [
+            'enabled' => true,
+            'per_page' => 15,
+            'options' => [10, 15, 25, 50, 100],
+        ],
+
+        // =====================================================
+        // الإحصائيات
+        // =====================================================
+        'stats' => [
+            'total' => [
+                'label' => 'إجمالي المستأجرين',
+                'icon'  => 'fas fa-users',
+                'color' => 'primary',
+                'query' => [],
+            ],
+
+            'blacklisted' => [
+                'label' => 'المستأجرون المحظورون',
+                'icon'  => 'fas fa-user-slash',
+                'color' => 'danger',
+                'query' => [
+                    'is_blacklisted' => true,
+                ],
+            ],
+
+            'active' => [
+                'label' => 'غير المحظورين',
+                'icon'  => 'fas fa-user-check',
+                'color' => 'success',
+                'query' => [
+                    'is_blacklisted' => false,
+                ],
+            ],
+
+            'rated' => [
+                'label' => 'المستأجرون الذين لديهم تقييم',
+                'icon'  => 'fas fa-star',
+                'color' => 'warning',
+                'query' => [
+                    'rating_min' => 1,
+                ],
+            ],
+        ],
+
+        // =====================================================
+        // الحقول الرئيسية
+        // =====================================================
+        'main_fields' => [
+
+            // -------------------------------------------------
+            // البيانات الشخصية
+            // -------------------------------------------------
+            [
+                'key'   => 'full_name',
+                'label' => 'الاسم الكامل',
+                'type'  => 'text',
+                'required' => true,
+                'rules' => 'required|string|max:255',
+                'placeholder' => 'أدخل الاسم الكامل للمستأجر',
+                'icon' => 'fas fa-user',
+            ],
+
+            // -------------------------------------------------
+            // معلومات الاتصال
+            // -------------------------------------------------
+            [
+                'key'   => 'phone',
+                'label' => 'رقم الجوال الأساسي',
+                'type'  => 'text',
+                'required' => true,
+                'rules' => 'required|string|max:50',
+                'placeholder' => 'أدخل رقم الجوال',
+                'icon' => 'fas fa-phone',
+            ],
+
+            [
+                'key'   => 'phone2',
+                'label' => 'رقم الجوال الثانوي',
+                'type'  => 'text',
+                'required' => false,
+                'rules' => 'nullable|string|max:50',
+                'placeholder' => 'رقم إضافي للتواصل',
+                'icon' => 'fas fa-mobile-alt',
+            ],
+
+            [
+                'key'   => 'email',
+                'label' => 'البريد الإلكتروني',
+                'type'  => 'email',
+                'required' => false,
+                'rules' => 'nullable|email|max:100',
+                'placeholder' => 'example@email.com',
+                'icon' => 'fas fa-envelope',
+            ],
+
+            // -------------------------------------------------
+            // معلومات الهوية
+            // -------------------------------------------------
+            [
+                'key'   => 'id_number',
+                'label' => 'رقم الهوية / الإقامة',
+                'type'  => 'text',
+                'required' => true,
+                'rules' => 'required|string|max:50',
+                'placeholder' => 'أدخل رقم الهوية أو الإقامة',
+                'icon' => 'fas fa-id-card',
+            ],
+
+            [
+                'key'   => 'id_type',
+                'label' => 'نوع الهوية',
+                'type'  => 'select',
+                'required' => true,
+                'default' => 'national_id',
+                'options' => [
+                    ['value' => 'national_id', 'label' => 'هوية وطنية'],
+                    ['value' => 'iqama', 'label' => 'إقامة'],
+                    ['value' => 'passport', 'label' => 'جواز سفر'],
+                ],
+                'icon' => 'fas fa-address-card',
+            ],
+
+
+
+            [
+                'key'   => 'id_image',
+                'label' => 'صورة الهوية',
+                'type'  => 'file',
+                'required' => false,
+
+                'accept' => 'image/jpeg,image/png,image/webp',
+
+                'upload' => [
+                    'multiple'   => false,
+                    'disk'       => 'public',
+                    'directory'  => 'organization/tenants/identities',
+                    'mimes'      => ['jpg', 'jpeg', 'png', 'webp'],
+                    'max_kb'     => 10240,
+                    'delete_old' => false,
+                ],
+
+                'icon' => 'fas fa-image',
+            ],
+
+
+            // -------------------------------------------------
+            // معلومات السكن والعمل
+            // -------------------------------------------------
+            [
+                'key'   => 'address',
+                'label' => 'عنوان السكن الحالي',
+                'type'  => 'text',
+                'required' => false,
+                'rules' => 'nullable|string|max:255',
+                'placeholder' => 'أدخل عنوان السكن الحالي',
+                'icon' => 'fas fa-map-marker-alt',
+            ],
+
+            [
+                'key'   => 'work_place',
+                'label' => 'جهة العمل',
+                'type'  => 'text',
+                'required' => false,
+                'rules' => 'nullable|string|max:255',
+                'placeholder' => 'أدخل جهة العمل',
+                'icon' => 'fas fa-building',
+            ],
+
+            [
+                'key'   => 'job_title',
+                'label' => 'المسمى الوظيفي',
+                'type'  => 'text',
+                'required' => false,
+                'rules' => 'nullable|string|max:100',
+                'placeholder' => 'أدخل المسمى الوظيفي',
+                'icon' => 'fas fa-briefcase',
+            ],
+
+            [
+                'key'   => 'monthly_income',
+                'label' => 'الدخل الشهري',
+                'type'  => 'number',
+                'required' => false,
+                'rules' => 'nullable|numeric|min:0|max:9999999999.99',
+                'min' => 0,
+                'step' => '0.01',
+                'placeholder' => 'أدخل الدخل الشهري',
+                'icon' => 'fas fa-money-bill-wave',
+            ],
+
+            // -------------------------------------------------
+            // بيانات الاتصال في الطوارئ
+            // -------------------------------------------------
+            [
+                'key'   => 'emergency_contact_name',
+                'label' => 'اسم جهة الاتصال في الطوارئ',
+                'type'  => 'text',
+                'required' => false,
+                'rules' => 'nullable|string|max:255',
+                'placeholder' => 'اسم الشخص الذي يمكن التواصل معه',
+                'icon' => 'fas fa-user-shield',
+            ],
+
+            [
+                'key'   => 'emergency_contact_phone',
+                'label' => 'رقم جهة الاتصال في الطوارئ',
+                'type'  => 'text',
+                'required' => false,
+                'rules' => 'nullable|string|max:50',
+                'placeholder' => 'رقم هاتف جهة الاتصال',
+                'icon' => 'fas fa-phone-volume',
+            ],
+
+            // -------------------------------------------------
+            // البيانات البنكية
+            // -------------------------------------------------
+            [
+                'key'   => 'bank_name',
+                'label' => 'اسم البنك',
+                'type'  => 'text',
+                'required' => false,
+                'rules' => 'nullable|string|max:100',
+                'placeholder' => 'أدخل اسم البنك',
+                'icon' => 'fas fa-university',
+            ],
+
+            [
+                'key'   => 'bank_account_number',
+                'label' => 'رقم الحساب البنكي',
+                'type'  => 'text',
+                'required' => false,
+                'rules' => 'nullable|string|max:50',
+                'placeholder' => 'أدخل رقم الحساب البنكي',
+                'icon' => 'fas fa-credit-card',
+            ],
+
+            // -------------------------------------------------
+            // الملاحظات
+            // -------------------------------------------------
+            [
+                'key'   => 'notes',
+                'label' => 'ملاحظات إضافية',
+                'type'  => 'textarea',
+                'required' => false,
+                'rules' => 'nullable|string',
+                'placeholder' => 'أدخل أي ملاحظات متعلقة بالمستأجر',
+                'icon' => 'fas fa-sticky-note',
+            ],
+
+            // -------------------------------------------------
+            // تقييم المستأجر
+            // -------------------------------------------------
+            [
+                'key'   => 'rating',
+                'label' => 'تقييم المستأجر',
+                'type'  => 'number',
+                'required' => false,
+                'default' => 0,
+                'rules' => 'nullable|numeric|min:0|max:5',
+                'min' => 0,
+                'max' => 5,
+                'step' => '0.1',
+                'placeholder' => 'التقييم من 0 إلى 5',
+                'icon' => 'fas fa-star',
+            ],
+
+            // -------------------------------------------------
+            // قائمة الحظر
+            // -------------------------------------------------
+
+
+            [
+                'key' => 'is_active',
+                'label' => 'الحالة',
+                'type' => 'select',
+                'default' => 0,
+                'show_in_list' => true,
+                'show_in_list' => true,
+                'options' => [
+                    ['value' => 1, 'label' => 'نشط'],
+                    ['value' => 0, 'label' => 'غير نشط'],
+                ],
+            ],
+            [
+                'key' => 'is_blacklisted',
+                'label' => 'حالة الحظر',
+                'type' => 'select',
+                'required' => true,
+                'default' => 0,
+                'show_in_list' => true,
+                'options' => [
+                    ['value' => 1, 'label' => 'محضور'],
+                    ['value' => 0, 'label' => 'غير محضور'],
+                ],
+            ],
+
+            [
+                'key'   => 'blacklist_reason',
+                'label' => 'سبب الحظر',
+                'type'  => 'textarea',
+                'required' => false,
+                'rules' => 'nullable|string',
+                'placeholder' => 'اكتب سبب حظر المستأجر إن وجد',
+                'icon' => 'fas fa-exclamation-triangle',
+            ],
+        ],
+
+        // =====================================================
+        // الفلاتر
+        // =====================================================
+        'filters' => [
+
+            [
+                'key'   => 'is_blacklisted',
+                'label' => 'حالة المستأجر',
+                'type'  => 'select',
+                'column' => 'is_blacklisted',
+                'options' => [
+                    ['value' => '', 'label' => 'جميع المستأجرين'],
+                    ['value' => 0, 'label' => 'غير محظور'],
+                    ['value' => 1, 'label' => 'محظور'],
+                ],
+            ],
+
+            [
+                'key'   => 'id_type',
+                'label' => 'نوع الهوية',
+                'type'  => 'select',
+                'column' => 'id_type',
+                'options' => [
+                    ['value' => '', 'label' => 'جميع أنواع الهوية'],
+                    ['value' => 'national_id', 'label' => 'هوية وطنية'],
+                    ['value' => 'iqama', 'label' => 'إقامة'],
+                    ['value' => 'passport', 'label' => 'جواز سفر'],
+                ],
+            ],
+
+            [
+                'key'   => 'rating',
+                'label' => 'التقييم',
+                'type'  => 'select',
+                'column' => 'rating',
+                'options' => [
+                    ['value' => '', 'label' => 'جميع التقييمات'],
+                    ['value' => '5', 'label' => '5 نجوم'],
+                    ['value' => '4', 'label' => '4 نجوم فأكثر'],
+                    ['value' => '3', 'label' => '3 نجوم فأكثر'],
+                    ['value' => '0', 'label' => 'بدون تقييم'],
+                ],
+            ],
+
+            [
+                'key'   => 'sort',
+                'label' => 'ترتيب المستأجرين',
+                'type'  => 'select',
+                'options' => [
+                    ['value' => 'newest', 'label' => 'الأحدث أولاً'],
+                    ['value' => 'oldest', 'label' => 'الأقدم أولاً'],
+                    ['value' => 'name_asc', 'label' => 'الاسم تصاعدياً'],
+                    ['value' => 'name_desc', 'label' => 'الاسم تنازلياً'],
+                    ['value' => 'rating_desc', 'label' => 'الأعلى تقييماً'],
+                ],
+            ],
+        ],
+
+        // =====================================================
+        // معلومات العرض في القائمة والتفاصيل
+        // =====================================================
+        'ui' => [
+
+            'list' => [
+                'avatar'   => 'id_image',
+                'title'    => 'full_name',
+                'subtitle' => 'phone',
+                'status'   => 'is_blacklisted',
+
+                'fields' => [
+                    'id_number',
+                    'id_type',
+                    'email',
+                    'rating',
+                    'address',
+                ],
+            ],
+
+            'details' => [
+                'header' => [
+                    'title'    => 'full_name',
+                    'subtitle' => 'phone',
+                    'avatar'   => 'id_image',
+                    'status'   => 'is_blacklisted',
+                ],
+
+                'sections' => [
+                    [
+                        'title' => 'البيانات الشخصية',
+                        'icon'  => 'fas fa-user',
+                        'fields' => [
+                            'full_name',
+                            'id_number',
+                            'id_type',
+                            'id_image',
+                        ],
+                    ],
+
+                    [
+                        'title' => 'معلومات الاتصال',
+                        'icon'  => 'fas fa-address-book',
+                        'fields' => [
+                            'phone',
+                            'phone2',
+                            'email',
+                            'address',
+                        ],
+                    ],
+
+                    [
+                        'title' => 'معلومات العمل والدخل',
+                        'icon'  => 'fas fa-briefcase',
+                        'fields' => [
+                            'work_place',
+                            'job_title',
+                            'monthly_income',
+                        ],
+                    ],
+
+                    [
+                        'title' => 'جهات الاتصال في الطوارئ',
+                        'icon'  => 'fas fa-user-shield',
+                        'fields' => [
+                            'emergency_contact_name',
+                            'emergency_contact_phone',
+                        ],
+                    ],
+
+                    [
+                        'title' => 'البيانات البنكية',
+                        'icon'  => 'fas fa-university',
+                        'fields' => [
+                            'bank_name',
+                            'bank_account_number',
+                        ],
+                    ],
+
+                    [
+                        'title' => 'التقييم والحظر',
+                        'icon'  => 'fas fa-star',
+                        'fields' => [
+                            'rating',
+                            'is_blacklisted',
+                            'blacklist_reason',
+                        ],
+                    ],
+
+                    [
+                        'title' => 'ملاحظات إضافية',
+                        'icon'  => 'fas fa-sticky-note',
+                        'fields' => [
+                            'notes',
+                        ],
                     ],
                 ],
 

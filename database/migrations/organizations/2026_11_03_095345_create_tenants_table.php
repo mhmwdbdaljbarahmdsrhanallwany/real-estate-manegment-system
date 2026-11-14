@@ -16,6 +16,8 @@ return new class extends Migration
             // المفتاح الأساسي
             $table->increments('tenant_id')
                 ->comment('معرف المستأجر');
+            $table->unsignedBigInteger('organization_id')->index()
+              ->comment('معرف المؤسسة المالكة لسجل المستأجر');
 
             // البيانات الشخصية
             $table->string('full_name', 255)

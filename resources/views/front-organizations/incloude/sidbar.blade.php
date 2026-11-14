@@ -236,7 +236,7 @@
 
         <!-- ===== أنواع الوحدات ===== -->
         <li class="nav-item">
-          <a href="unit-types.html" class="nav-link">
+          <a href="{{ route('organizations.buildings.units.CreateTypsUnits',['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
             <i class="nav-icon fas fa-tag"></i>
             <p>أنواع الوحدات العقارية</p>
             <span class="badge badge-secondary right">11</span>
@@ -245,32 +245,32 @@
 
         <!-- ===== الوحدات ===== -->
         <li class="nav-item has-treeview">
-          <a href="#" class="nav-link">
+          <a  href="#" class="nav-link">
             <i class="nav-icon fas fa-door-open"></i>
             <p>الوحدات السكنية والتجارية <i class="right fas fa-angle-left"></i></p>
             <span class="badge badge-primary right">45</span>
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="units.html" class="nav-link">
+              <a wire:navigate href="{{ route('organizations.buildings.units.units-index',['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>جميع الوحدات</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="units-create.html" class="nav-link">
+              <a wire:navigate href="{{ route('organizations.buildings.units.units-create',['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>إضافة وحدة جديدة</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="units-available.html" class="nav-link">
+              <a wire:navigate href="{{ route('organizations.buildings.units.units-available',['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>الوحدات المتاحة للإيجار</p>
                 <span class="badge badge-success right">12</span>
               </a>
             </li>
-            <li class="nav-item">
+            {{--  <li class="nav-item">
               <a href="units-occupied.html" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>الوحدات المؤجرة</p>
@@ -295,12 +295,12 @@
                 <i class="far fa-circle nav-icon"></i>
                 <p>معرض صور الوحدات</p>
               </a>
-            </li>
+            </li>  --}}
           </ul>
         </li>
 
         <!-- ================================================================ -->
-        <!-- 👥 القسم الثالث: المستأجرين والعقود -->
+        <!--  القسم الثالث: المستأجرين والعقود -->
         <!-- ================================================================ -->
         <li class="nav-header"
           style="color: #17a2b8; font-size: 13px; font-weight: 600; padding: 15px 15px 5px 15px; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 10px;">
@@ -316,13 +316,13 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="tenants.html" class="nav-link">
+              <a wire:navigate href="{{ route('organizations.tenants.tenants-index',['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>جميع المستأجرين</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="tenants-create.html" class="nav-link">
+              <a wire:navigate href="{{ route('organizations.tenants.tenants-create',['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>إضافة مستأجر جديد</p>
               </a>

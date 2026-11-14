@@ -1012,6 +1012,14 @@ class UniversalForm extends Component
             );
 
             $payload = array_merge($payload, $filePayload);
+            \Log::debug('UNITS DOCUMENTS DEBUG', [
+    'documents_value' => $payload['documents'] ?? 'MISSING',
+    'documents_type' => gettype($payload['documents'] ?? null),
+    'documents_json_valid' => isset($payload['documents'])
+        ? json_validate((string) $payload['documents'])
+        : null,
+    'file_payload' => $filePayload,
+]);
             $this->applyStatusToPayload($payload, $this->form, $fields, $table);
 
             $tenant = $this->tenantConfig();
