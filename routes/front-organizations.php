@@ -7,12 +7,16 @@ use App\Http\Livewire\FrontOrganizations\Building\PropertyMapIndex;
 use App\Http\Livewire\FrontOrganizations\Building\Unets\TypesUnite\TypsUnitsIndex;
 use App\Http\Livewire\FrontOrganizations\Building\Unets\UnitsCreate;
 use App\Http\Livewire\FrontOrganizations\Building\Unets\UnitsIndex;
+use App\Http\Livewire\FrontOrganizations\Contracts\Contracs;
+use App\Http\Livewire\FrontOrganizations\Contracts\ContractsCreate;
 use App\Http\Livewire\FrontOrganizations\Owner\Agents\OwnersAgents;
 use App\Http\Livewire\FrontOrganizations\Owner\Createowner;
 use App\Http\Livewire\FrontOrganizations\Owner\Owner;
 use App\Http\Livewire\FrontOrganizations\Shared\PropertyMap;
+use App\Http\Livewire\FrontOrganizations\Tenants\TenantsBlacklist\TenantsBlacklist;
 use App\Http\Livewire\FrontOrganizations\Tenants\TenantsCreate;
 use App\Http\Livewire\FrontOrganizations\Tenants\TenantsIndex;
+use App\Http\Livewire\FrontOrganizations\Tenants\TenantsResidents\TenantsResidents;
 use App\Models\AccessContext;
 use Illuminate\Support\Facades\Route;
 
@@ -61,11 +65,14 @@ Route::domain('{subdomain}.' . config('services.tenant.domain'))
             // قائمه المستأجرين
              Route::livewire('/', TenantsIndex::class)->name('tenants-index');
             //  اظهار الوحدات
-             Route::livewire('/create', TenantsCreate::class)->name('tenants-create');
-            // //   اضافه الوحدات
-            //   Route::livewire('/units/Create', UnitsCreate::class)->name('units-create');
-            // // اظهار الوحدات المتاحة
-            //   Route::livewire('/units/units-available', UnitsCreate::class)->name('units-available');
+             Route::livewire('/create/Tenants', TenantsCreate::class)->name('tenants-create');
+            // //   اضافه افراد الاسره
+              Route::livewire('/Tenants/TenantsResidents', TenantsResidents::class)->name('TenantsResidents');
+            //   اظهار المستاجرين المحظورين
+              Route::livewire('/Tenants/contracts', Contracs::class)->name('Contracs-all');
+              
+              Route::livewire('/Tenants/ContractsCreate', ContractsCreate::class)->name('ContractsCreate');
+
            
            
         });

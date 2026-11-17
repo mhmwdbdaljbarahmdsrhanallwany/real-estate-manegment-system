@@ -2625,66 +2625,90 @@ return [
 
 
 
-
     'tenants' => [
 
         // =====================================================
         // معلومات الكيان الأساسية
         // =====================================================
-        'table'              => 'tenants',
-        'primary_key'        => 'tenant_id',
+
+        'table'               => 'tenants',
+        'primary_key'         => 'tenant_id',
         'organization_column' => 'organization_id',
-        'name_field'         => 'full_name',
-        'has_soft_deletes'   => true,
+        'name_field'          => 'full_name',
+        'has_soft_deletes'    => true,
+        'deleted_at_column'   => 'deleted_at',
 
+        'tenant_scoped' => true,
+        'allow_shared'  => false,
 
-        'tenant_scoped'      => true,
-        'allow_shared'       => false,
-
-
-
-        'title'    => 'إدارة المستأجرين',
-        'subtitle' => 'إضافة وإدارة بيانات المستأجرين وتوثيق هوياتهم ومعلومات التواصل والتقييم والحظر',
-
-        'icon' => 'fas fa-users',
-
-        'entity_label'        => 'المستأجر',
-        'entity_label_plural' => 'المستأجرين',
+        'title'              => 'إدارة المستأجرين',
+        'subtitle'           => 'إدارة المستأجرين وبياناتهم الشخصية وأفراد أسرهم',
+        'icon'               => 'fas fa-users',
+        'entity_name'        => 'المستأجرين',
+        'entity_singular'    => 'مستأجر',
+        'entity_sub'         => 'فرد أسرة',
+        'btn_add_main'       => 'إضافة مستأجر',
+        'btn_add_sub'        => 'إضافة فرد أسرة',
+        'sub_section_title'  => 'أفراد أسرة المستأجر',
+        'sub_section_icon'   => 'fas fa-people-roof',
 
         // =====================================================
-        // إعدادات العرض
+        // الحالة
         // =====================================================
-        'display' => [
-            'title'       => 'full_name',
-            'subtitle'    => 'phone',
-            'avatar'      => 'id_image',
-            'status'      => 'is_blacklisted',
-            'description' => 'id_number',
+
+        'status' => [
+            'column' => 'is_blacklisted',
+
+            'boolean_map' => [
+                'true'  => 'blocked',
+                'false' => 'active',
+            ],
+
+            'values' => ['active', 'blocked'],
+
+            'labels' => [
+                'active'  => 'نشط',
+                'blocked' => 'محظور',
+            ],
         ],
 
         // =====================================================
-        // الإجراءات
+        // العرض
         // =====================================================
-       'actions' => [
-    'create'   => true,
-    'view'     => true,
-    'edit'     => true,
-    'delete'   => true,
-    'restore'  => true,
-    'search'   => true,
-    'export'   => true,
-    'print'    => true,
 
-    // إجراءات خاصة بالمستأجرين
-    'blacklist' => true,
-    'activate'  => true,
-],
+        'display' => [
+            'list'       => true,
+            'details'    => true,
+            'statistics' => true,
+            'search'     => true,
+            'filters'    => true,
+            'pagination' => true,
+        ],
+
+        // =====================================================
+        // الصلاحيات والإجراءات
+        // =====================================================
+
+        'actions' => [
+            'create'    => true,
+            'edit'      => true,
+            'delete'    => true,
+            'view'      => true,
+            'restore'   => true,
+            'status'    => true,
+            'blacklist' => true,
+            'activate'  => true,
+            'export'    => true,
+            'print'     => true,
+        ],
 
         // =====================================================
         // البحث
         // =====================================================
+
         'search' => [
             'enabled' => true,
+
             'fields' => [
                 'full_name',
                 'phone',
@@ -2699,306 +2723,443 @@ return [
                 'emergency_contact_name',
                 'emergency_contact_phone',
             ],
+
             'placeholder' => 'ابحث بالاسم أو رقم الجوال أو الهوية أو البريد الإلكتروني...',
         ],
 
         // =====================================================
         // الصفحات
         // =====================================================
+
         'pagination' => [
-            'enabled' => true,
-            'per_page' => 15,
-            'options' => [10, 15, 25, 50, 100],
+            'enabled'  => true,
+            'per_page' => 10,
+            'options'  => [10, 25, 50, 100],
         ],
+
+        // =====================================================
+        // رسائل توضيح الحقول
+        // =====================================================
+
+        'field_hints' => [
+
+            'full_name' => 'أدخل الاسم الكامل للمستأجر.',
+            'phone' => 'أدخل رقم الجوال الأساسي للمستأجر.',
+            'phone2' => 'أدخل رقم جوال إضافياً إن وجد.',
+            'email' => 'أدخل البريد الإلكتروني للمستأجر.',
+            'id_type' => 'حدد نوع وثيقة الهوية.',
+            'id_number' => 'أدخل رقم الهوية أو الإقامة أو جواز السفر.',
+            'address' => 'أدخل عنوان إقامة المستأجر.',
+            'work_place' => 'أدخل جهة عمل المستأجر.',
+            'job_title' => 'أدخل المسمى الوظيفي للمستأجر.',
+            'monthly_income' => 'أدخل الدخل الشهري للمستأجر.',
+            'emergency_contact_name' => 'أدخل اسم شخص يمكن التواصل معه عند الطوارئ.',
+            'emergency_contact_phone' => 'أدخل رقم هاتف جهة الاتصال في الطوارئ.',
+            'bank_name' => 'أدخل اسم البنك.',
+            'bank_account_number' => 'أدخل رقم الحساب البنكي.',
+            'rating' => 'حدد تقييم المستأجر من 0 إلى 5.',
+            'is_blacklisted' => 'حدد ما إذا كان المستأجر محظوراً.',
+            'blacklist_reason' => 'اكتب سبب حظر المستأجر.',
+            'notes' => 'أضف أي ملاحظات إضافية.',
+        ],
+
+        'field_info'    => [],
+        'field_warning' => [],
 
         // =====================================================
         // الإحصائيات
         // =====================================================
+
         'stats' => [
+
             'total' => [
+                'type'  => 'count',
                 'label' => 'إجمالي المستأجرين',
                 'icon'  => 'fas fa-users',
-                'color' => 'primary',
-                'query' => [],
-            ],
-
-            'blacklisted' => [
-                'label' => 'المستأجرون المحظورون',
-                'icon'  => 'fas fa-user-slash',
-                'color' => 'danger',
-                'query' => [
-                    'is_blacklisted' => true,
-                ],
+                'color' => 'gold',
             ],
 
             'active' => [
-                'label' => 'غير المحظورين',
+                'type'  => 'count_status',
+                'value' => 'active',
+                'label' => 'المستأجرون النشطون',
                 'icon'  => 'fas fa-user-check',
-                'color' => 'success',
-                'query' => [
-                    'is_blacklisted' => false,
-                ],
+                'color' => 'emerald',
+            ],
+
+            'blocked' => [
+                'type'  => 'count_status',
+                'value' => 'blocked',
+                'label' => 'المستأجرون المحظورون',
+                'icon'  => 'fas fa-user-slash',
+                'color' => 'cherry',
             ],
 
             'rated' => [
-                'label' => 'المستأجرون الذين لديهم تقييم',
-                'icon'  => 'fas fa-star',
-                'color' => 'warning',
-                'query' => [
-                    'rating_min' => 1,
+                'type'     => 'count',
+                'field'    => 'rating',
+                'operator' => '>',
+                'value'    => 0,
+                'label'    => 'المستأجرون المقيمون',
+                'icon'     => 'fas fa-star',
+                'color'    => 'terracotta',
+            ],
+
+            'family_members' => [
+                'type'     => 'sum_relation',
+                'relation' => 'family_members',
+                'label'    => 'أفراد الأسرة',
+                'icon'     => 'fas fa-people-group',
+                'color'    => 'sky',
+
+                'auto_assignments' => [
+
+                    [
+                        'enabled' => true,
+
+                        // مصدر القيمة
+                        'table' => 'contracts',
+
+                        // ربط المصدر بالسجل الرئيسي
+                        'parent_foreign_key' => 'tenant_id',
+
+                        // العمود الذي يحتوي القيمة المراد إسنادها
+                        'source_value_column' => 'unit_id',
+
+                        // العمود الذي ستُحفظ فيه القيمة داخل الجدول التابع
+                        'target_column' => 'unit_id',
+
+                        // شروط اختيار السجل
+                        'status_column' => 'status',
+                        'active_value' => 'active',
+
+                        'deleted_at_column' => 'deleted_at',
+
+                        // ترتيب اختيار أحدث عقد
+                        'order_by' => 'created_at',
+                        'order_direction' => 'desc',
+
+                        'tie_breaker' => 'contract_id',
+                        'tie_breaker_direction' => 'desc',
+
+                        // شروط إلزامية
+                        'required' => true,
+
+                        'required_message' => 'لا يمكن إضافة أفراد الأسرة قبل إنشاء عقد إيجار وتفعيله.',
+                    ],
+
+                ],
+
+            ],
+        ],
+
+        // =====================================================
+        // مصادر القوائم المنسدلة
+        // =====================================================
+
+        'lookups' => [
+
+            'family_relationships' => [
+                'table'           => 'family_relationships',
+                'key'             => 'relationship_id',
+                'display'         => 'name',
+                'order_by'        => 'sort_order',
+                'order_direction' => 'asc',
+            ],
+
+        ],
+
+        // =====================================================
+        // العلاقات
+        // =====================================================
+
+        'relations' => [
+
+            'family_members' => [
+
+                'type'             => 'hasMany',
+                'table'            => 'unit_residents',
+                'primary_key'      => 'resident_id',
+                'foreign_key'      => 'tenant_id',
+                'has_soft_deletes' => false,
+                'status_column'    => 'is_active',
+                'enabled'          => true,
+
+                // ---------------------------------------------
+                // إعداد مصدر الوحدة السكنية
+                // ---------------------------------------------
+
+                'unit_source' => [
+                    'enabled'             => true,
+                    'type'                => 'latest_active_contract',
+                    'table'               => 'contracts',
+                    'tenant_foreign_key'  => 'tenant_id',
+                    'unit_foreign_key'    => 'unit_id',
+                    'status_column'       => 'status',
+                    'active_value'        => 'active',
+                    'deleted_at_column'   => 'deleted_at',
+                    'order_by'            => 'created_at',
+                    'order_direction'     => 'desc',
+                    'tie_breaker'         => 'contract_id',
+                    'tie_breaker_direction' => 'desc',
+                    'target_column'       => 'unit_id',
+                    'required'            => true,
+                    'auto_assign'         => true,
+                ],
+
+                // ---------------------------------------------
+                // حقول فرد الأسرة
+                // ---------------------------------------------
+
+                'fields' => [
+
+                    [
+                        'key'      => 'full_name',
+                        'label'    => 'اسم فرد الأسرة',
+                        'type'     => 'text',
+                        'icon'     => 'fas fa-user',
+                        'required' => true,
+                        'hint'     => 'أدخل الاسم الكامل لفرد الأسرة.',
+                        'help'     => 'أدخل الاسم الكامل لفرد الأسرة.',
+                    ],
+
+                    [
+                        'key'           => 'relationship_id',
+                        'label'         => 'صلة القرابة',
+                        'type'          => 'select',
+                        'icon'          => 'fas fa-people-arrows',
+                        'required'      => true,
+                        'hint'          => 'حدد صلة القرابة بالمستأجر الأساسي.',
+                        'help'          => 'حدد صلة القرابة بالمستأجر الأساسي.',
+                        'options_source' => 'family_relationships',
+                    ],
+
+                    [
+                        'key'   => 'gender',
+                        'label' => 'الجنس',
+                        'type'  => 'select',
+                        'icon'  => 'fas fa-venus-mars',
+                        'options' => [
+                            ['value' => 'male', 'label' => 'ذكر'],
+                            ['value' => 'female', 'label' => 'أنثى'],
+                        ],
+                    ],
+
+                    [
+                        'key'   => 'birth_date',
+                        'label' => 'تاريخ الميلاد',
+                        'type'  => 'date',
+                        'icon'  => 'fas fa-calendar',
+                    ],
+
+                    [
+                        'key'   => 'id_number',
+                        'label' => 'رقم الهوية',
+                        'type'  => 'text',
+                        'icon'  => 'fas fa-id-card',
+                    ],
+
+                    [
+                        'key'   => 'phone',
+                        'label' => 'رقم الجوال',
+                        'type'  => 'tel',
+                        'icon'  => 'fas fa-mobile-screen',
+                    ],
+
+                    [
+                        'key'     => 'is_saudi',
+                        'label'   => 'الجنسية',
+                        'type'    => 'select',
+                        'icon'    => 'fas fa-globe',
+                        'default' => 1,
+                        'options' => [
+                            ['value' => 1, 'label' => 'سعودي'],
+                            ['value' => 0, 'label' => 'غير سعودي'],
+                        ],
+                    ],
+
+                    [
+                        'key'     => 'is_active',
+                        'label'   => 'الحالة',
+                        'type'    => 'select',
+                        'icon'    => 'fas fa-toggle-on',
+                        'default' => 1,
+                        'options' => [
+                            ['value' => 1, 'label' => 'نشط'],
+                            ['value' => 0, 'label' => 'غير نشط'],
+                        ],
+                    ],
+
+                    [
+                        'key'   => 'moved_out_date',
+                        'label' => 'تاريخ المغادرة',
+                        'type'  => 'date',
+                        'icon'  => 'fas fa-calendar-xmark',
+                    ],
+
+                    [
+                        'key'   => 'notes',
+                        'label' => 'ملاحظات',
+                        'type'  => 'textarea',
+                        'full'  => true,
+                    ],
                 ],
             ],
         ],
 
         // =====================================================
-        // الحقول الرئيسية
+        // الحقول الرئيسية للمستأجر
         // =====================================================
+
         'main_fields' => [
 
-            // -------------------------------------------------
-            // البيانات الشخصية
-            // -------------------------------------------------
             [
-                'key'   => 'full_name',
-                'label' => 'الاسم الكامل',
-                'type'  => 'text',
+                'key'      => 'full_name',
+                'label'    => 'الاسم الكامل',
+                'type'     => 'text',
+                'icon'     => 'fas fa-user',
                 'required' => true,
-                'rules' => 'required|string|max:255',
-                'placeholder' => 'أدخل الاسم الكامل للمستأجر',
-                'icon' => 'fas fa-user',
+                'hint'     => 'أدخل الاسم الكامل للمستأجر.',
+                'help'     => 'أدخل الاسم الكامل للمستأجر.',
             ],
 
-            // -------------------------------------------------
-            // معلومات الاتصال
-            // -------------------------------------------------
             [
-                'key'   => 'phone',
-                'label' => 'رقم الجوال الأساسي',
-                'type'  => 'text',
+                'key'      => 'phone',
+                'label'    => 'رقم الجوال',
+                'type'     => 'tel',
+                'icon'     => 'fas fa-mobile-screen',
                 'required' => true,
-                'rules' => 'required|string|max:50',
-                'placeholder' => 'أدخل رقم الجوال',
-                'icon' => 'fas fa-phone',
             ],
 
             [
                 'key'   => 'phone2',
-                'label' => 'رقم الجوال الثانوي',
-                'type'  => 'text',
-                'required' => false,
-                'rules' => 'nullable|string|max:50',
-                'placeholder' => 'رقم إضافي للتواصل',
-                'icon' => 'fas fa-mobile-alt',
+                'label' => 'جوال إضافي',
+                'type'  => 'tel',
+                'icon'  => 'fas fa-mobile-screen-button',
             ],
 
             [
                 'key'   => 'email',
                 'label' => 'البريد الإلكتروني',
                 'type'  => 'email',
-                'required' => false,
-                'rules' => 'nullable|email|max:100',
-                'placeholder' => 'example@email.com',
-                'icon' => 'fas fa-envelope',
-            ],
-
-            // -------------------------------------------------
-            // معلومات الهوية
-            // -------------------------------------------------
-            [
-                'key'   => 'id_number',
-                'label' => 'رقم الهوية / الإقامة',
-                'type'  => 'text',
-                'required' => true,
-                'rules' => 'required|string|max:50',
-                'placeholder' => 'أدخل رقم الهوية أو الإقامة',
-                'icon' => 'fas fa-id-card',
+                'icon'  => 'fas fa-envelope',
             ],
 
             [
-                'key'   => 'id_type',
-                'label' => 'نوع الهوية',
-                'type'  => 'select',
+                'key'      => 'id_number',
+                'label'    => 'رقم الهوية',
+                'type'     => 'text',
+                'icon'     => 'fas fa-id-card',
                 'required' => true,
+            ],
+
+            [
+                'key'     => 'id_type',
+                'label'   => 'نوع الهوية',
+                'type'    => 'select',
+                'icon'    => 'fas fa-id-card-clip',
                 'default' => 'national_id',
                 'options' => [
                     ['value' => 'national_id', 'label' => 'هوية وطنية'],
                     ['value' => 'iqama', 'label' => 'إقامة'],
                     ['value' => 'passport', 'label' => 'جواز سفر'],
                 ],
-                'icon' => 'fas fa-address-card',
             ],
-
-
 
             [
                 'key'   => 'id_image',
                 'label' => 'صورة الهوية',
                 'type'  => 'file',
-                'required' => false,
-
-                'accept' => 'image/jpeg,image/png,image/webp',
-
+                'icon'  => 'fas fa-image',
                 'upload' => [
-                    'multiple'   => false,
                     'disk'       => 'public',
                     'directory'  => 'organization/tenants/identities',
                     'mimes'      => ['jpg', 'jpeg', 'png', 'webp'],
                     'max_kb'     => 10240,
                     'delete_old' => false,
                 ],
-
-                'icon' => 'fas fa-image',
             ],
 
-
-            // -------------------------------------------------
-            // معلومات السكن والعمل
-            // -------------------------------------------------
             [
                 'key'   => 'address',
-                'label' => 'عنوان السكن الحالي',
+                'label' => 'العنوان',
                 'type'  => 'text',
-                'required' => false,
-                'rules' => 'nullable|string|max:255',
-                'placeholder' => 'أدخل عنوان السكن الحالي',
-                'icon' => 'fas fa-map-marker-alt',
+                'icon'  => 'fas fa-location-dot',
+                'full'  => true,
             ],
 
             [
                 'key'   => 'work_place',
                 'label' => 'جهة العمل',
                 'type'  => 'text',
-                'required' => false,
-                'rules' => 'nullable|string|max:255',
-                'placeholder' => 'أدخل جهة العمل',
-                'icon' => 'fas fa-building',
+                'icon'  => 'fas fa-building',
             ],
 
             [
                 'key'   => 'job_title',
                 'label' => 'المسمى الوظيفي',
                 'type'  => 'text',
-                'required' => false,
-                'rules' => 'nullable|string|max:100',
-                'placeholder' => 'أدخل المسمى الوظيفي',
-                'icon' => 'fas fa-briefcase',
+                'icon'  => 'fas fa-briefcase',
             ],
 
             [
                 'key'   => 'monthly_income',
                 'label' => 'الدخل الشهري',
                 'type'  => 'number',
-                'required' => false,
-                'rules' => 'nullable|numeric|min:0|max:9999999999.99',
-                'min' => 0,
-                'step' => '0.01',
-                'placeholder' => 'أدخل الدخل الشهري',
-                'icon' => 'fas fa-money-bill-wave',
+                'icon'  => 'fas fa-money-bill-wave',
+                'min'   => 0,
+                'step'  => 0.01,
             ],
 
-            // -------------------------------------------------
-            // بيانات الاتصال في الطوارئ
-            // -------------------------------------------------
             [
                 'key'   => 'emergency_contact_name',
-                'label' => 'اسم جهة الاتصال في الطوارئ',
+                'label' => 'اسم جهة اتصال الطوارئ',
                 'type'  => 'text',
-                'required' => false,
-                'rules' => 'nullable|string|max:255',
-                'placeholder' => 'اسم الشخص الذي يمكن التواصل معه',
-                'icon' => 'fas fa-user-shield',
+                'icon'  => 'fas fa-user-shield',
             ],
 
             [
                 'key'   => 'emergency_contact_phone',
-                'label' => 'رقم جهة الاتصال في الطوارئ',
-                'type'  => 'text',
-                'required' => false,
-                'rules' => 'nullable|string|max:50',
-                'placeholder' => 'رقم هاتف جهة الاتصال',
-                'icon' => 'fas fa-phone-volume',
+                'label' => 'هاتف الطوارئ',
+                'type'  => 'tel',
+                'icon'  => 'fas fa-phone',
             ],
 
-            // -------------------------------------------------
-            // البيانات البنكية
-            // -------------------------------------------------
             [
                 'key'   => 'bank_name',
                 'label' => 'اسم البنك',
                 'type'  => 'text',
-                'required' => false,
-                'rules' => 'nullable|string|max:100',
-                'placeholder' => 'أدخل اسم البنك',
-                'icon' => 'fas fa-university',
+                'icon'  => 'fas fa-building-columns',
             ],
 
             [
                 'key'   => 'bank_account_number',
                 'label' => 'رقم الحساب البنكي',
                 'type'  => 'text',
-                'required' => false,
-                'rules' => 'nullable|string|max:50',
-                'placeholder' => 'أدخل رقم الحساب البنكي',
-                'icon' => 'fas fa-credit-card',
+                'icon'  => 'fas fa-credit-card',
             ],
 
-            // -------------------------------------------------
-            // الملاحظات
-            // -------------------------------------------------
             [
-                'key'   => 'notes',
-                'label' => 'ملاحظات إضافية',
-                'type'  => 'textarea',
-                'required' => false,
-                'rules' => 'nullable|string',
-                'placeholder' => 'أدخل أي ملاحظات متعلقة بالمستأجر',
-                'icon' => 'fas fa-sticky-note',
-            ],
-
-            // -------------------------------------------------
-            // تقييم المستأجر
-            // -------------------------------------------------
-            [
-                'key'   => 'rating',
-                'label' => 'تقييم المستأجر',
-                'type'  => 'number',
-                'required' => false,
+                'key'     => 'rating',
+                'label'   => 'التقييم',
+                'type'    => 'number',
+                'icon'    => 'fas fa-star',
                 'default' => 0,
-                'rules' => 'nullable|numeric|min:0|max:5',
-                'min' => 0,
-                'max' => 5,
-                'step' => '0.1',
-                'placeholder' => 'التقييم من 0 إلى 5',
-                'icon' => 'fas fa-star',
+                'min'     => 0,
+                'max'     => 5,
+                'step'    => 0.1,
             ],
 
-            // -------------------------------------------------
-            // قائمة الحظر
-            // -------------------------------------------------
-
-
             [
-                'key' => 'is_active',
-                'label' => 'الحالة',
-                'type' => 'select',
-                'default' => 0,
-                'show_in_list' => true,
-                'show_in_list' => true,
-                'options' => [
-                    ['value' => 1, 'label' => 'نشط'],
-                    ['value' => 0, 'label' => 'غير نشط'],
-                ],
-            ],
-            [
-                'key' => 'is_blacklisted',
-                'label' => 'حالة الحظر',
-                'type' => 'select',
-                'required' => true,
-                'default' => 0,
-                'show_in_list' => true,
-                'options' => [
-                    ['value' => 1, 'label' => 'محضور'],
-                    ['value' => 0, 'label' => 'غير محضور'],
+                'key'       => 'is_blacklisted',
+                'label'     => 'حالة الحظر',
+                'type'      => 'select',
+                'icon'      => 'fas fa-user-slash',
+                'default'   => 0,
+                'is_status' => true,
+                'options'   => [
+                    ['value' => 0, 'label' => 'غير محظور'],
+                    ['value' => 1, 'label' => 'محظور'],
                 ],
             ],
 
@@ -3006,25 +3167,32 @@ return [
                 'key'   => 'blacklist_reason',
                 'label' => 'سبب الحظر',
                 'type'  => 'textarea',
-                'required' => false,
-                'rules' => 'nullable|string',
-                'placeholder' => 'اكتب سبب حظر المستأجر إن وجد',
-                'icon' => 'fas fa-exclamation-triangle',
+                'icon'  => 'fas fa-ban',
+                'full'  => true,
+            ],
+
+            [
+                'key'   => 'notes',
+                'label' => 'ملاحظات',
+                'type'  => 'textarea',
+                'icon'  => 'fas fa-note-sticky',
+                'full'  => true,
             ],
         ],
 
         // =====================================================
         // الفلاتر
         // =====================================================
+
         'filters' => [
 
             [
                 'key'   => 'is_blacklisted',
-                'label' => 'حالة المستأجر',
+                'label' => 'حالة الحظر',
+                'icon'  => 'fas fa-user-slash',
                 'type'  => 'select',
-                'column' => 'is_blacklisted',
                 'options' => [
-                    ['value' => '', 'label' => 'جميع المستأجرين'],
+                    ['value' => 'all', 'label' => 'الكل'],
                     ['value' => 0, 'label' => 'غير محظور'],
                     ['value' => 1, 'label' => 'محظور'],
                 ],
@@ -3033,10 +3201,10 @@ return [
             [
                 'key'   => 'id_type',
                 'label' => 'نوع الهوية',
+                'icon'  => 'fas fa-id-card',
                 'type'  => 'select',
-                'column' => 'id_type',
                 'options' => [
-                    ['value' => '', 'label' => 'جميع أنواع الهوية'],
+                    ['value' => 'all', 'label' => 'الكل'],
                     ['value' => 'national_id', 'label' => 'هوية وطنية'],
                     ['value' => 'iqama', 'label' => 'إقامة'],
                     ['value' => 'passport', 'label' => 'جواز سفر'],
@@ -3046,41 +3214,57 @@ return [
             [
                 'key'   => 'rating',
                 'label' => 'التقييم',
+                'icon'  => 'fas fa-star',
                 'type'  => 'select',
-                'column' => 'rating',
                 'options' => [
-                    ['value' => '', 'label' => 'جميع التقييمات'],
-                    ['value' => '5', 'label' => '5 نجوم'],
-                    ['value' => '4', 'label' => '4 نجوم فأكثر'],
-                    ['value' => '3', 'label' => '3 نجوم فأكثر'],
-                    ['value' => '0', 'label' => 'بدون تقييم'],
+                    ['value' => 'all', 'label' => 'الكل'],
+                    ['value' => 5, 'label' => '5 نجوم'],
+                    ['value' => 4, 'label' => '4 نجوم فأكثر'],
+                    ['value' => 3, 'label' => '3 نجوم فأكثر'],
+                    ['value' => 0, 'label' => 'بدون تقييم'],
+                ],
+            ],
+
+            [
+                'key'      => 'hasSub',
+                'label'    => 'أفراد الأسرة',
+                'icon'     => 'fas fa-people-group',
+                'type'     => 'relation_exists',
+                'relation' => 'family_members',
+                'options'  => [
+                    ['value' => 'all', 'label' => 'الكل'],
+                    ['value' => 'has', 'label' => 'لديه أفراد أسرة'],
+                    ['value' => 'none', 'label' => 'بدون أفراد أسرة'],
                 ],
             ],
 
             [
                 'key'   => 'sort',
-                'label' => 'ترتيب المستأجرين',
-                'type'  => 'select',
+                'label' => 'الترتيب',
+                'icon'  => 'fas fa-sort',
+                'type'  => 'sort',
                 'options' => [
                     ['value' => 'newest', 'label' => 'الأحدث أولاً'],
                     ['value' => 'oldest', 'label' => 'الأقدم أولاً'],
-                    ['value' => 'name_asc', 'label' => 'الاسم تصاعدياً'],
-                    ['value' => 'name_desc', 'label' => 'الاسم تنازلياً'],
+                    ['value' => 'name_asc', 'label' => 'الاسم (أ-ي)'],
+                    ['value' => 'name_desc', 'label' => 'الاسم (ي-أ)'],
                     ['value' => 'rating_desc', 'label' => 'الأعلى تقييماً'],
                 ],
             ],
         ],
 
         // =====================================================
-        // معلومات العرض في القائمة والتفاصيل
+        // واجهة القائمة والتفاصيل
         // =====================================================
+
         'ui' => [
 
             'list' => [
-                'avatar'   => 'id_image',
-                'title'    => 'full_name',
-                'subtitle' => 'phone',
-                'status'   => 'is_blacklisted',
+                'avatar_field'   => 'id_image',
+                'title_field'    => 'full_name',
+                'subtitle_field' => 'phone',
+                'subtitle_icon'  => 'fas fa-mobile-screen',
+                'status_field'   => 'is_blacklisted',
 
                 'fields' => [
                     'id_number',
@@ -3092,87 +3276,1008 @@ return [
             ],
 
             'details' => [
-                'header' => [
-                    'title'    => 'full_name',
-                    'subtitle' => 'phone',
-                    'avatar'   => 'id_image',
-                    'status'   => 'is_blacklisted',
+
+                'avatar_field' => 'id_image',
+                'title_field'  => 'full_name',
+                'status_field' => 'is_blacklisted',
+
+                'header_fields' => [
+                    [
+                        'field' => 'id_number',
+                        'label' => 'رقم الهوية',
+                        'icon'  => 'fas fa-hashtag',
+                    ],
+                    [
+                        'field' => 'phone',
+                        'label' => 'رقم الجوال',
+                        'icon'  => 'fas fa-mobile-screen',
+                    ],
+                    [
+                        'field' => 'created_at',
+                        'label' => 'تاريخ التسجيل',
+                        'icon'  => 'fas fa-calendar',
+                    ],
                 ],
 
-                'sections' => [
+                'info_fields' => [
                     [
-                        'title' => 'البيانات الشخصية',
-                        'icon'  => 'fas fa-user',
-                        'fields' => [
-                            'full_name',
-                            'id_number',
-                            'id_type',
-                            'id_image',
-                        ],
+                        'field' => 'email',
+                        'label' => 'البريد الإلكتروني',
+                        'icon'  => 'fas fa-envelope',
+                        'color' => 'gold',
                     ],
-
                     [
-                        'title' => 'معلومات الاتصال',
-                        'icon'  => 'fas fa-address-book',
-                        'fields' => [
-                            'phone',
-                            'phone2',
-                            'email',
-                            'address',
-                        ],
+                        'field' => 'id_type',
+                        'label' => 'نوع الهوية',
+                        'icon'  => 'fas fa-id-card',
+                        'color' => 'orange',
                     ],
-
                     [
-                        'title' => 'معلومات العمل والدخل',
+                        'field' => 'address',
+                        'label' => 'العنوان',
+                        'icon'  => 'fas fa-location-dot',
+                        'color' => 'purple',
+                    ],
+                    [
+                        'field' => 'work_place',
+                        'label' => 'جهة العمل',
+                        'icon'  => 'fas fa-building',
+                        'color' => 'sky',
+                    ],
+                    [
+                        'field' => 'job_title',
+                        'label' => 'المسمى الوظيفي',
                         'icon'  => 'fas fa-briefcase',
-                        'fields' => [
-                            'work_place',
-                            'job_title',
-                            'monthly_income',
-                        ],
+                        'color' => 'blue',
                     ],
-
                     [
-                        'title' => 'جهات الاتصال في الطوارئ',
+                        'field' => 'monthly_income',
+                        'label' => 'الدخل الشهري',
+                        'icon'  => 'fas fa-money-bill-wave',
+                        'color' => 'green',
+                    ],
+                    [
+                        'field' => 'emergency_contact_name',
+                        'label' => 'جهة اتصال الطوارئ',
                         'icon'  => 'fas fa-user-shield',
-                        'fields' => [
-                            'emergency_contact_name',
-                            'emergency_contact_phone',
-                        ],
+                        'color' => 'orange',
                     ],
-
                     [
-                        'title' => 'البيانات البنكية',
-                        'icon'  => 'fas fa-university',
-                        'fields' => [
-                            'bank_name',
-                            'bank_account_number',
-                        ],
+                        'field' => 'emergency_contact_phone',
+                        'label' => 'هاتف الطوارئ',
+                        'icon'  => 'fas fa-phone',
+                        'color' => 'blue',
                     ],
-
                     [
-                        'title' => 'التقييم والحظر',
+                        'field' => 'bank_name',
+                        'label' => 'البنك',
+                        'icon' => 'fas fa-building-columns',
+                        'color' => 'sky',
+                    ],
+                    [
+                        'field' => 'bank_account_number',
+                        'label' => 'رقم الحساب',
+                        'icon'  => 'fas fa-credit-card',
+                        'color' => 'gold',
+                    ],
+                    [
+                        'field' => 'rating',
+                        'label' => 'التقييم',
                         'icon'  => 'fas fa-star',
-                        'fields' => [
-                            'rating',
-                            'is_blacklisted',
-                            'blacklist_reason',
-                        ],
+                        'color' => 'orange',
                     ],
-
                     [
-                        'title' => 'ملاحظات إضافية',
-                        'icon'  => 'fas fa-sticky-note',
-                        'fields' => [
-                            'notes',
-                        ],
+                        'field' => 'is_blacklisted',
+                        'label' => 'حالة الحظر',
+                        'icon'  => 'fas fa-user-slash',
+                        'color' => 'red',
                     ],
                 ],
 
                 'notes_field' => 'notes',
             ],
+
+            'relation' => [
+                'title_field'    => 'full_name',
+                'subtitle_field' => 'phone',
+                'type_field'     => 'relationship_id',
+                'status_field'   => 'is_active',
+                'status_icon'    => 'fas fa-user-check',
+            ],
+        ],
+
+        'sub_fields' => [],
+    ],
+
+
+
+    // =============================
+    //  اعداتات جدول صله القرابه 
+    // =============================
+
+
+    'family_relationships' => [
+
+        'table' => 'family_relationships',
+        'primary_key' => 'relationship_id',
+        'name_field' => 'name',
+
+        'has_soft_deletes' => false,
+        'tenant_scoped' => false,
+        'allow_shared' => true,
+
+        'title' => 'إدارة صلات القرابة',
+        'subtitle' => 'تعريف وإدارة أنواع صلات القرابة لأفراد الأسرة',
+        'icon' => 'fas fa-people-arrows',
+
+        'entity_name' => 'صلات القرابة',
+        'entity_singular' => 'صلة القرابة',
+
+        'btn_add_main' => 'إضافة صلة قرابة',
+
+        'display' => [
+            'list' => true,
+            'details' => true,
+            'statistics' => true,
+            'search' => true,
+            'filters' => false,
+            'pagination' => true,
+        ],
+
+        'actions' => [
+            'create' => true,
+            'edit' => true,
+            'delete' => true,
+            'view' => true,
+            'status' => false,
+        ],
+
+        'search_fields' => [
+            'name',
+            'name_en',
+            'description',
+        ],
+
+        'pagination' => [
+            'per_page' => 10,
+            'options' => [10, 25, 50, 100],
+        ],
+
+        'main_fields' => [
+
+            [
+                'key' => 'name',
+                'label' => 'اسم صلة القرابة',
+                'type' => 'text',
+                'required' => true,
+                'max' => 50,
+                'placeholder' => 'مثال: ابن',
+            ],
+
+            [
+                'key' => 'name_en',
+                'label' => 'الاسم بالإنجليزية',
+                'type' => 'text',
+                'required' => false,
+                'max' => 50,
+                'placeholder' => 'Example: Son',
+            ],
+
+            [
+                'key' => 'description',
+                'label' => 'الوصف',
+                'type' => 'textarea',
+                'required' => false,
+                'full' => true,
+            ],
+
+            [
+                'key' => 'sort_order',
+                'label' => 'ترتيب العرض',
+                'type' => 'number',
+                'required' => true,
+                'default' => 0,
+                'min' => 0,
+                'step' => 1,
+            ],
+        ],
+
+        'filters' => [],
+
+        'stats' => [
+            'total' => [
+                'label' => 'إجمالي صلات القرابة',
+                'icon' => 'fas fa-people-arrows',
+            ],
+        ],
+
+        'relations' => [],
+
+        'lookups' => [],
+
+        'ui' => [
+            'list' => [
+                'title' => 'name',
+                'subtitle' => 'name_en',
+            ],
+
+            'details' => [
+                'name',
+                'name_en',
+                'description',
+                'sort_order',
+                'created_at',
+            ],
         ],
     ],
+
+    // ================================
+    //  اعداداتات جدول الاسره
+    // ================================
+
+    'unit_residents' => [
+
+        'type' => 'hasMany',
+        'enabled' => true,
+
+        'table' => 'unit_residents',
+        'primary_key' => 'resident_id',
+        'foreign_key' => 'tenant_id',
+
+        'title_field' => 'full_name',
+        'subtitle_field' => 'phone',
+
+        'has_soft_deletes' => false,
+
+        // لا يحتوي الجدول على organization_id.
+        // يجب تطبيق العزل من خلال الوحدة ثم المبنى.
+        'tenant_scoped' => false,
+
+        'title' => 'إدارة سكان الوحدة',
+        'subtitle' => 'إدارة أفراد الأسرة المقيمين مع المستأجر الرئيسي',
+        'icon' => 'fas fa-users',
+        'entity_name' => 'السكان',
+        'entity_singular' => 'الفرد',
+
+        'btn_add_main' => 'إضافة فرد',
+
+        'actions' => [
+            'create' => true,
+            'edit' => true,
+            'delete' => true,
+            'view' => true,
+            'status' => true,
+        ],
+
+        'search_fields' => [
+            'full_name',
+            'id_number',
+            'phone',
+        ],
+
+        'pagination' => [
+            'per_page' => 10,
+            'options' => [10, 25, 50, 100],
+        ],
+
+        'main_fields' => [
+
+            [
+                'key' => 'unit_id',
+                'label' => 'الوحدة السكنية',
+                'type' => 'select',
+                'lookup' => 'unit_id',
+                'required' => true,
+            ],
+
+            [
+                'key' => 'tenant_id',
+                'label' => 'المستأجر الرئيسي',
+                'type' => 'select',
+                'lookup' => 'tenant_id',
+                'required' => true,
+            ],
+
+            [
+                'key' => 'relationship_id',
+                'label' => 'صلة القرابة',
+                'type' => 'select',
+                'lookup' => 'relationship_id',
+                'required' => true,
+            ],
+
+            [
+                'key' => 'full_name',
+                'label' => 'الاسم الكامل',
+                'type' => 'text',
+                'required' => true,
+                'max' => 255,
+            ],
+
+            [
+                'key' => 'gender',
+                'label' => 'الجنس',
+                'type' => 'select',
+                'required' => false,
+                'options' => [
+                    ['value' => 'male', 'label' => 'ذكر'],
+                    ['value' => 'female', 'label' => 'أنثى'],
+                ],
+            ],
+
+            [
+                'key' => 'birth_date',
+                'label' => 'تاريخ الميلاد',
+                'type' => 'date',
+                'required' => false,
+            ],
+
+            [
+                'key' => 'id_number',
+                'label' => 'رقم الهوية',
+                'type' => 'text',
+                'required' => false,
+                'max' => 50,
+            ],
+
+            [
+                'key' => 'phone',
+                'label' => 'رقم الجوال',
+                'type' => 'tel',
+                'required' => false,
+                'max' => 50,
+            ],
+
+            [
+                'key' => 'is_saudi',
+                'label' => 'الجنسية سعودية',
+                'type' => 'checkbox',
+                'default' => true,
+            ],
+
+            [
+                'key' => 'notes',
+                'label' => 'ملاحظات',
+                'type' => 'textarea',
+                'required' => false,
+                'full' => true,
+            ],
+
+            [
+                'key' => 'is_active',
+                'label' => 'لا يزال مقيماً',
+                'type' => 'checkbox',
+                'default' => true,
+            ],
+
+            [
+                'key' => 'moved_out_date',
+                'label' => 'تاريخ الانتقال',
+                'type' => 'date',
+                'required' => false,
+            ],
+        ],
+
+        'filters' => [
+            [
+                'key' => 'gender',
+                'label' => 'الجنس',
+                'options' => [
+                    ['value' => 'male', 'label' => 'ذكر'],
+                    ['value' => 'female', 'label' => 'أنثى'],
+                ],
+            ],
+            [
+                'key' => 'is_saudi',
+                'label' => 'الجنسية',
+                'options' => [
+                    ['value' => '1', 'label' => 'سعودي'],
+                    ['value' => '0', 'label' => 'غير سعودي'],
+                ],
+            ],
+            [
+                'key' => 'is_active',
+                'label' => 'حالة الإقامة',
+                'options' => [
+                    ['value' => '1', 'label' => 'مقيم'],
+                    ['value' => '0', 'label' => 'غادر السكن'],
+                ],
+            ],
+        ],
+
+        'relations' => [
+            'unit' => [
+                'type' => 'belongsTo',
+                'enabled' => true,
+                'table' => 'units',
+                'primary_key' => 'unit_id',
+                'foreign_key' => 'unit_id',
+                'name_field' => 'unit_number',
+            ],
+
+            'tenant' => [
+                'type' => 'belongsTo',
+                'enabled' => true,
+                'table' => 'tenants',
+                'primary_key' => 'tenant_id',
+                'foreign_key' => 'tenant_id',
+                'name_field' => 'full_name',
+            ],
+
+            'relationship' => [
+                'type' => 'belongsTo',
+                'enabled' => true,
+                'table' => 'family_relationships',
+                'primary_key' => 'relationship_id',
+                'foreign_key' => 'relationship_id',
+                'name_field' => 'name',
+            ],
+        ],
+
+        'lookups' => [
+            'unit_id' => [
+                'table' => 'units',
+                'key' => 'unit_id',
+                'display' => 'unit_number',
+            ],
+
+            'tenant_id' => [
+                'table' => 'tenants',
+                'key' => 'tenant_id',
+                'display' => 'full_name',
+            ],
+
+            'relationship_id' => [
+                'table' => 'family_relationships',
+                'key' => 'relationship_id',
+                'display' => 'name',
+            ],
+        ],
+
+        'ui' => [
+            'list' => [
+                'title' => 'full_name',
+                'subtitle' => 'phone',
+            ],
+            'details' => [
+                'full_name',
+                'gender',
+                'birth_date',
+                'id_number',
+                'phone',
+                'is_saudi',
+                'is_active',
+                'moved_out_date',
+                'notes',
+            ],
+        ],
+    ],
+
+
+
+
+    // =====================================================
+    // إعدادات إدارة عقود الإيجار
+    // =====================================================
+
+'contracts' => [
+
+    // =====================================================
+    // معلومات الكيان الأساسية
+    // =====================================================
+    'table'               => 'contracts',
+    'primary_key'         => 'contract_id',
+    'organization_column' => 'organization_id',
+    'name_field'          => 'contract_number',
+    'has_soft_deletes'    => true,
+    'deleted_at_column'   => 'deleted_at',
+
+    'tenant_scoped' => true,
+    'allow_shared'  => false,
+
+    // =====================================================
+    // إعدادات الحالة
+    // =====================================================
+    'status' => [
+        'column' => 'status',
+        'default' => 'draft',
+        'active_values' => ['active'],
+        'inactive_values' => [
+            'draft',
+            'terminated',
+            'expired',
+            'renewed',
+            'cancelled',
+        ],
+        'labels' => [
+            'draft'     => 'مسودة',
+            'active'    => 'نشط',
+            'terminated'=> 'منتهي',
+            'expired'   => 'منتهي الصلاحية',
+            'renewed'   => 'مُجدد',
+            'cancelled' => 'ملغي',
+        ],
+    ],
+
+    // =====================================================
+    // إعدادات العرض
+    // =====================================================
+    'display' => [
+        'title'       => 'إدارة العقود',
+        'subtitle'    => 'إدارة عقود الإيجار ومتابعة مددها ودفعاتها',
+        'singular'    => 'عقد',
+        'plural'      => 'العقود',
+        'icon'        => 'file-contract',
+        'primary'     => 'contract_number',
+        'description' => 'notes',
+    ],
+
+    // =====================================================
+    // الإجراءات
+    // =====================================================
+    'actions' => [
+        'create'  => true,
+        'view'    => true,
+        'edit'    => true,
+        'delete'  => true,
+        'restore' => true,
+        'block'   => false,
+        'export'  => true,
+    ],
+
+    // =====================================================
+    // البحث
+    // =====================================================
+    'search' => [
+        'enabled' => true,
+        'fields' => [
+            'contract_number',
+            'status',
+            'notes',
+            'termination_reason',
+        ],
+    ],
+
+    // =====================================================
+    // الترقيم
+    // =====================================================
+    'pagination' => [
+        'enabled' => true,
+        'per_page' => 15,
+        'options' => [10, 15, 25, 50, 100],
+    ],
+
+    // =====================================================
+    // تلميحات الحقول
+    // =====================================================
+    'field_hints' => [
+        'contract_number' => 'يُنشأ رقم العقد تلقائياً ولا يحتاج إلى إدخال يدوي.',
+        'tenant_id' => 'اختر المستأجر الذي سيُبرم معه العقد.',
+        'unit_id' => 'اختر الوحدة المؤجرة.',
+        'branch_id' => 'اختر الفرع المسؤول عن العقد.',
+        'start_date' => 'يُحدد تلقائياً بتاريخ إنشاء العقد.',
+        'end_date' => 'يُحسب تلقائياً بعد سنة من تاريخ البداية.',
+        'actual_end_date' => 'أدخل التاريخ الفعلي لانتهاء العقد عند حدوثه.',
+        'rent_amount' => 'قيمة الإيجار المتفق عليها.',
+        'payment_day' => 'اليوم المحدد لاستحقاق الإيجار من الشهر.',
+        'deposit_amount' => 'قيمة مبلغ التأمين.',
+        'late_fee_per_day' => 'الغرامة اليومية عند التأخر في السداد.',
+        'late_fee_fixed' => 'الغرامة الثابتة عند التأخر.',
+    ],
+
+    // =====================================================
+    // الإحصائيات
+    // =====================================================
+    'stats' => [
+        'total' => [
+            'label' => 'إجمالي العقود',
+            'type' => 'total',
+            'icon' => 'file-text',
+        ],
+        'active' => [
+            'label' => 'العقود النشطة',
+            'type' => 'count_status',
+            'value' => 'active',
+            'icon' => 'check-circle',
+        ],
+        'draft' => [
+            'label' => 'المسودات',
+            'type' => 'count_status',
+            'value' => 'draft',
+            'icon' => 'file-edit',
+        ],
+        'expired' => [
+            'label' => 'العقود المنتهية',
+            'type' => 'count',
+            'field' => 'status',
+            'value' => 'expired',
+            'icon' => 'calendar-x',
+        ],
+        'terminated' => [
+            'label' => 'العقود المفسوخة',
+            'type' => 'count',
+            'field' => 'status',
+            'value' => 'terminated',
+            'icon' => 'ban',
+        ],
+    ],
+
+    // =====================================================
+    // القوائم المرجعية
+    // =====================================================
+    'lookups' => [
+
+        'tenants' => [
+            'table' => 'tenants',
+            'key' => 'tenant_id',
+            'display' => 'full_name',
+            'organization_column' => 'organization_id',
+        ],
+
+        'units' => [
+            'table' => 'units',
+            'key' => 'unit_id',
+            'display' => 'unit_number',
+            'organization_column' => 'organization_id',
+        ],
+
+        'branches' => [
+            'table' => 'agency_branches',
+            'key' => 'branch_id',
+            'display' => 'branch_name',
+            'organization_column' => 'organization_id',
+        ],
+
+        'contracts' => [
+            'table' => 'contracts',
+            'key' => 'contract_id',
+            'display' => 'contract_number',
+            'organization_column' => 'organization_id',
+        ],
+    ],
+
+    // =====================================================
+    // الحقول الرئيسية
+    // =====================================================
+    'main_fields' => [
+
+        // رقم العقد
+        [
+            'key' => 'contract_number',
+            'label' => 'رقم العقد',
+            'type' => 'text',
+            'required' => false,
+            'readonly' => true,
+            'disabled' => true,
+            'full' => false,
+            'placeholder' => 'يُنشأ تلقائياً',
+            'hint' => 'رقم فريد يُولّد عند حفظ العقد.',
+        ],
+
+        // المستأجر
+        [
+            'key' => 'tenant_id',
+            'label' => 'المستأجر',
+            'type' => 'select',
+            'required' => true,
+            'options_source' => 'tenants',
+            'full' => false,
+            'placeholder' => 'اختر المستأجر',
+        ],
+
+        // الوحدة
+        [
+            'key' => 'unit_id',
+            'label' => 'الوحدة المؤجرة',
+            'type' => 'select',
+            'required' => true,
+            'options_source' => 'units',
+            'full' => false,
+            'placeholder' => 'اختر الوحدة',
+        ],
+
+        // الفرع
+        [
+            'key' => 'branch_id',
+            'label' => 'الفرع',
+            'type' => 'select',
+            'required' => false,
+            'options_source' => 'branches',
+            'full' => false,
+            'placeholder' => 'اختر الفرع',
+        ],
+
+        // تاريخ البداية
+        [
+            'key' => 'start_date',
+            'label' => 'تاريخ بداية العقد',
+            'type' => 'date',
+            'required' => false,
+            'readonly' => true,
+            'disabled' => true,
+            'full' => false,
+            'hint' => 'يُحدد تلقائياً عند إنشاء العقد.',
+        ],
+
+        // تاريخ النهاية
+        [
+            'key' => 'end_date',
+            'label' => 'تاريخ نهاية العقد',
+            'type' => 'date',
+            'required' => false,
+            'readonly' => true,
+            'disabled' => true,
+            'full' => false,
+            'hint' => 'يُحسب تلقائياً بإضافة سنة إلى تاريخ البداية.',
+        ],
+
+        // تاريخ الانتهاء الفعلي
+        [
+            'key' => 'actual_end_date',
+            'label' => 'تاريخ الانتهاء الفعلي',
+            'type' => 'date',
+            'required' => false,
+            'full' => false,
+            'hint' => 'يُدخل يدوياً عند انتهاء العقد فعلياً.',
+        ],
+
+        // قيمة الإيجار
+        [
+            'key' => 'rent_amount',
+            'label' => 'قيمة الإيجار',
+            'type' => 'number',
+            'required' => true,
+            'min' => 0,
+            'step' => '0.01',
+            'full' => false,
+            'placeholder' => 'أدخل قيمة الإيجار',
+        ],
+
+        // يوم الدفع
+        [
+            'key' => 'payment_day',
+            'label' => 'يوم استحقاق الدفع',
+            'type' => 'number',
+            'required' => false,
+            'default' => 1,
+            'min' => 1,
+            'max' => 31,
+            'full' => false,
+        ],
+
+        // دورية الدفع
+        [
+            'key' => 'payment_frequency',
+            'label' => 'دورية الدفع',
+            'type' => 'select',
+            'required' => true,
+            'default' => 'monthly',
+            'options' => [
+                ['value' => 'monthly', 'label' => 'شهري'],
+                ['value' => 'quarterly', 'label' => 'ربع سنوي'],
+                ['value' => 'half_yearly', 'label' => 'نصف سنوي'],
+                ['value' => 'yearly', 'label' => 'سنوي'],
+            ],
+            'full' => false,
+        ],
+
+        // فترة السماح
+        [
+            'key' => 'grace_period_days',
+            'label' => 'فترة السماح بالأيام',
+            'type' => 'number',
+            'required' => false,
+            'default' => 5,
+            'min' => 0,
+            'full' => false,
+        ],
+
+        // الغرامة اليومية
+        [
+            'key' => 'late_fee_per_day',
+            'label' => 'الغرامة اليومية',
+            'type' => 'number',
+            'required' => false,
+            'default' => 0,
+            'min' => 0,
+            'step' => '0.01',
+            'full' => false,
+        ],
+
+        // الغرامة الثابتة
+        [
+            'key' => 'late_fee_fixed',
+            'label' => 'الغرامة الثابتة',
+            'type' => 'number',
+            'required' => false,
+            'default' => 0,
+            'min' => 0,
+            'step' => '0.01',
+            'full' => false,
+        ],
+
+        // مبلغ التأمين
+        [
+            'key' => 'deposit_amount',
+            'label' => 'مبلغ التأمين',
+            'type' => 'number',
+            'required' => false,
+            'default' => 0,
+            'min' => 0,
+            'step' => '0.01',
+            'full' => false,
+        ],
+
+        // هل تم دفع التأمين
+        [
+            'key' => 'deposit_paid',
+            'label' => 'تم دفع التأمين',
+            'type' => 'checkbox',
+            'required' => false,
+            'default' => false,
+            'full' => false,
+        ],
+
+        // صورة العقد
+        [
+            'key' => 'contract_image',
+            'label' => 'صورة العقد',
+            'type' => 'file',
+            'required' => false,
+            'full' => true,
+            'upload' => [
+                'directory' => 'organization/contracts/images',
+                'disk' => 'public',
+                'mimes' => ['jpg', 'jpeg', 'png', 'webp'],
+                'max' => 5120,
+            ],
+        ],
+
+        // ملف PDF
+        [
+            'key' => 'contract_pdf',
+            'label' => 'ملف العقد PDF',
+            'type' => 'file',
+            'required' => false,
+            'full' => true,
+            'upload' => [
+                'directory' => 'organization/contracts/documents',
+                'disk' => 'public',
+                'mimes' => ['pdf'],
+                'max' => 10240,
+            ],
+        ],
+
+        // حالة العقد
+        [
+            'key' => 'status',
+            'label' => 'حالة العقد',
+            'type' => 'select',
+            'required' => true,
+            'default' => 'draft',
+            'options' => [
+                ['value' => 'draft', 'label' => 'مسودة'],
+                ['value' => 'active', 'label' => 'نشط'],
+                ['value' => 'terminated', 'label' => 'منتهي'],
+                ['value' => 'expired', 'label' => 'منتهي الصلاحية'],
+                ['value' => 'renewed', 'label' => 'مُجدد'],
+                ['value' => 'cancelled', 'label' => 'ملغي'],
+            ],
+            'full' => false,
+        ],
+
+        // سبب الإنهاء
+        [
+            'key' => 'termination_reason',
+            'label' => 'سبب إنهاء العقد',
+            'type' => 'textarea',
+            'required' => false,
+            'full' => true,
+        ],
+
+        // العقد السابق عند التجديد
+        [
+            'key' => 'renewed_from',
+            'label' => 'العقد السابق',
+            'type' => 'select',
+            'required' => false,
+            'options_source' => 'contracts',
+            'full' => false,
+            'placeholder' => 'اختر العقد السابق',
+        ],
+
+        // عدد مرات التجديد
+        [
+            'key' => 'renewal_count',
+            'label' => 'عدد مرات التجديد',
+            'type' => 'number',
+            'required' => false,
+            'default' => 0,
+            'min' => 0,
+            'full' => false,
+        ],
+
+        // ملاحظات
+        [
+            'key' => 'notes',
+            'label' => 'ملاحظات',
+            'type' => 'textarea',
+            'required' => false,
+            'full' => true,
+        ],
+
+        // الشروط والأحكام
+        [
+            'key' => 'terms_and_conditions',
+            'label' => 'الشروط والأحكام',
+            'type' => 'textarea',
+            'required' => false,
+            'full' => true,
+        ],
+    ],
+
+    // =====================================================
+    // الحقول الفرعية
+    // =====================================================
+    'sub_fields' => [],
+
+    // =====================================================
+    // الفلاتر
+    // =====================================================
+    'filters' => [
+
+        [
+            'key' => 'status',
+            'label' => 'حالة العقد',
+            'type' => 'select',
+            'options' => [
+                ['value' => 'draft', 'label' => 'مسودة'],
+                ['value' => 'active', 'label' => 'نشط'],
+                ['value' => 'terminated', 'label' => 'منتهي'],
+                ['value' => 'expired', 'label' => 'منتهي الصلاحية'],
+                ['value' => 'renewed', 'label' => 'مُجدد'],
+                ['value' => 'cancelled', 'label' => 'ملغي'],
+            ],
+        ],
+
+        [
+            'key' => 'payment_frequency',
+            'label' => 'دورية الدفع',
+            'type' => 'select',
+            'options' => [
+                ['value' => 'monthly', 'label' => 'شهري'],
+                ['value' => 'quarterly', 'label' => 'ربع سنوي'],
+                ['value' => 'half_yearly', 'label' => 'نصف سنوي'],
+                ['value' => 'yearly', 'label' => 'سنوي'],
+            ],
+        ],
+
+        [
+            'key' => 'start_date',
+            'label' => 'من تاريخ بداية العقد',
+            'type' => 'date',
+        ],
+
+        [
+            'key' => 'end_date',
+            'label' => 'إلى تاريخ نهاية العقد',
+            'type' => 'date',
+        ],
+    ],
+
+    // =====================================================
+    // إعدادات الواجهة
+    // =====================================================
+    'ui' => [
+        'form_columns' => 2,
+        'show_stats' => true,
+        'show_filters' => true,
+        'show_search' => true,
+        'show_details' => true,
+        'show_timeline' => false,
+        'show_empty_state' => true,
+    ],
+],
 
 
 ];

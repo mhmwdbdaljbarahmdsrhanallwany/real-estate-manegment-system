@@ -1232,90 +1232,286 @@ class UniversalForm extends Component
     }
 
     // التحقق من بيانات العنصر التابع ورفع ملفاته ثم إضافته أو تحديثه للسجل الرئيسي.
-    public function saveChild(): void
-    {
-        $stored = [];
+    
+public function saveChild(): void
+{
+    $stored = [];
 
-        try {
-            if (!$this->selectedId) {
-                throw new AuthorizationException('اختر السجل الرئيسي أولاً.');
-            }
-
-            $this->findScopedRecord($this->selectedId);
-            $relationKey = $this->firstCrudRelationKey();
-
-            if (!$relationKey) {
-                throw new \RuntimeException('لا توجد علاقة فرعية قابلة للإدارة.');
-            }
-
-            $relation = $this->config['relations'][$relationKey];
-            $table = $relation['table'];
-            $pk = $relation['primary_key'];
-            $foreign = $relation['foreign_key'];
-
-            $existing = $this->editingChildId
-                ? $this->findChildRecord($this->selectedId, $this->editingChildId, $relation)
-                : [];
-
-            $payload = $this->validateConfiguredFields(
-                $this->childForm,
-                $relation['fields'] ?? [],
-                $table,
-                false
-            );
-
-            $filePayload = $this->storeConfiguredUploads(
-                $relation['fields'] ?? [],
-                'childUploads',
-                $this->editingChildId === null,
-                $existing,
-                $relationKey,
-                $stored
-            );
-
-            $payload = array_merge($payload, $filePayload);
-            $payload[$foreign] = $this->selectedId;
-
-            if (Schema::hasColumn($table, 'updated_at')) {
-                $payload['updated_at'] = now();
-            }
-
-            DB::transaction(function () use ($table, $pk, $foreign, $payload) {
-                if ($this->editingChildId) {
-                    DB::table($table)
-                        ->where($pk, $this->editingChildId)
-                        ->where($foreign, $this->selectedId)
-                        ->update($payload);
-                } else {
-                    if (Schema::hasColumn($table, 'created_at')) {
-                        $payload['created_at'] = now();
-                    }
-
-                    DB::table($table)->insert($payload);
-                }
-            });
-
-            $this->deleteReplacedUploads($relation['fields'] ?? [], $existing, $filePayload, $relationKey);
-
-            $this->showChildModal = false;
-            $this->childUploads = [];
-            $this->childForm = [];
-            $this->editingChildId = null;
-
-            $this->setToast($existing ? 'تم تحديث بيانات العنصر التابع.' : 'تمت إضافة العنصر التابع.');
-        } catch (ValidationException $e) {
-            $this->rollbackStoredUploads($stored);
-            throw $e;
-        } catch (Throwable $e) {
-            $this->rollbackStoredUploads($stored);
-            report($e);
-
-            $this->setToast(
-                $e instanceof AuthorizationException ? $e->getMessage() : 'تعذر حفظ العنصر التابع.',
-                'error'
-            );
+    try {
+        if (!$this->selectedId) {
+            throw new AuthorizationException('اختر السجل الرئيسي أولاً.');
         }
+
+        // التحقق من السجل الرئيسي وعزله عن المؤسسات الأخرى
+        $this->findScopedRecord($this->selectedId);
+
+        $relationKey = $this->firstCrudRelationKey();
+
+        if (!$relationKey) {
+            throw new \RuntimeException('لا توجد علاقة فرعية قابلة للإدارة.');
+        }
+
+        $relation = $this->config['relations'][$relationKey];
+
+        $table   = $relation['table'];
+        $pk      = $relation['primary_key'];
+        $foreign = $relation['foreign_key'];
+
+        $existing = $this->editingChildId
+            ? $this->findChildRecord(
+                $this->selectedId,
+                $this->editingChildId,
+                $relation
+            )
+            : [];
+
+        // التحقق من الحقول المسموح بها
+        $payload = $this->validateConfiguredFields(
+            $this->childForm,
+            $relation['fields'] ?? [],
+            $table,
+            false
+        );
+
+        /*
+         * =====================================================
+         * محرك الإسناد التلقائي للقيم من مصدر خارجي
+         * =====================================================
+         *
+         * يعمل عند تفعيل auto_assign أو unit_source
+         * في إعدادات العلاقة.
+         *
+         * لا يعتمد على اسم الجدول أو اسم الكيان.
+         */
+
+        $autoAssignments = $relation['auto_assignments'] ?? [];
+
+        // دعم إعداد unit_source القديم
+        if (
+            empty($autoAssignments)
+            && !empty($relation['unit_source'])
+        ) {
+            $autoAssignments = [
+                $relation['unit_source'],
+            ];
+        }
+
+        foreach ($autoAssignments as $assignment) {
+
+            if (empty($assignment['enabled'])) {
+                continue;
+            }
+
+            $sourceTable = $assignment['table'] ?? null;
+
+            $parentForeignKey = $assignment['parent_foreign_key']
+                ?? $assignment['tenant_foreign_key']
+                ?? null;
+
+            $sourceValueColumn = $assignment['source_value_column']
+                ?? $assignment['unit_foreign_key']
+                ?? null;
+
+            $targetColumn = $assignment['target_column'] ?? null;
+
+            if (
+                !$sourceTable
+                || !$parentForeignKey
+                || !$sourceValueColumn
+                || !$targetColumn
+            ) {
+                throw new \RuntimeException(
+                    'إعدادات الإسناد التلقائي غير مكتملة للعلاقة: ' . $relationKey
+                );
+            }
+
+            // التأكد من وجود الجدول والأعمدة
+            if (
+                !Schema::hasTable($sourceTable)
+                || !Schema::hasColumn($sourceTable, $parentForeignKey)
+                || !Schema::hasColumn($sourceTable, $sourceValueColumn)
+                || !Schema::hasColumn($table, $targetColumn)
+            ) {
+                throw new \RuntimeException(
+                    'تعذر التحقق من أعمدة مصدر الإسناد التلقائي.'
+                );
+            }
+
+            $sourceQuery = DB::table($sourceTable)
+                ->where($parentForeignKey, $this->selectedId);
+
+            // شرط الحالة
+            $statusColumn = $assignment['status_column'] ?? null;
+
+            if ($statusColumn && Schema::hasColumn($sourceTable, $statusColumn)) {
+                $sourceQuery->where(
+                    $statusColumn,
+                    $assignment['active_value'] ?? 1
+                );
+            }
+
+            // استبعاد السجلات المحذوفة
+            $deletedAtColumn = $assignment['deleted_at_column'] ?? null;
+
+            if (
+                $deletedAtColumn
+                && Schema::hasColumn($sourceTable, $deletedAtColumn)
+            ) {
+                $sourceQuery->whereNull($deletedAtColumn);
+            }
+
+            // التحقق من المؤسسة عند تحديد عمود المؤسسة في الإعدادات
+            $organizationColumn = $assignment['organization_column'] ?? null;
+
+            if (
+                $organizationColumn
+                && Schema::hasColumn($sourceTable, $organizationColumn)
+            ) {
+                $sourceQuery->where(
+                    $organizationColumn,
+                    $this->organizationId
+                );
+            }
+
+            // شروط إضافية قابلة للتحديد من الإعدادات
+            foreach (($assignment['where'] ?? []) as $column => $value) {
+                if (!Schema::hasColumn($sourceTable, $column)) {
+                    throw new \RuntimeException(
+                        'عمود الشرط غير موجود في مصدر الإسناد: ' . $column
+                    );
+                }
+
+                $sourceQuery->where($column, $value);
+            }
+
+            // ترتيب السجلات لتحديد أحدث سجل
+            $orderBy = $assignment['order_by'] ?? null;
+
+            if ($orderBy && Schema::hasColumn($sourceTable, $orderBy)) {
+                $sourceQuery->orderBy(
+                    $orderBy,
+                    $assignment['order_direction'] ?? 'desc'
+                );
+            }
+
+            // ترتيب إضافي عند تساوي التاريخ
+            $tieBreaker = $assignment['tie_breaker'] ?? null;
+
+            if ($tieBreaker && Schema::hasColumn($sourceTable, $tieBreaker)) {
+                $sourceQuery->orderBy(
+                    $tieBreaker,
+                    $assignment['tie_breaker_direction'] ?? 'desc'
+                );
+            }
+
+            // جلب القيمة المطلوبة
+            $sourceValue = $sourceQuery->value($sourceValueColumn);
+
+            if (
+                $sourceValue === null
+                && !empty($assignment['required'])
+            ) {
+                throw ValidationException::withMessages([
+                    'childForm' => $assignment['required_message']
+                        ?? 'لا يمكن الحفظ؛ لم يتم العثور على السجل المرتبط المطلوب.',
+                ]);
+            }
+
+            if ($sourceValue !== null) {
+                // القيمة تأتي من قاعدة البيانات وليس من المتصفح
+                $payload[$targetColumn] = $sourceValue;
+            }
+        }
+
+        /*
+         * =====================================================
+         * رفع الملفات
+         * =====================================================
+         */
+
+        $filePayload = $this->storeConfiguredUploads(
+            $relation['fields'] ?? [],
+            'childUploads',
+            $this->editingChildId === null,
+            $existing,
+            $relationKey,
+            $stored
+        );
+
+        $payload = array_merge($payload, $filePayload);
+
+        // ربط العنصر بالسجل الرئيسي
+        $payload[$foreign] = $this->selectedId;
+
+        if (Schema::hasColumn($table, 'updated_at')) {
+            $payload['updated_at'] = now();
+        }
+
+        /*
+         * =====================================================
+         * الحفظ
+         * =====================================================
+         */
+
+        DB::transaction(function () use (
+            $table,
+            $pk,
+            $foreign,
+            $payload
+        ) {
+            if ($this->editingChildId) {
+
+                DB::table($table)
+                    ->where($pk, $this->editingChildId)
+                    ->where($foreign, $this->selectedId)
+                    ->update($payload);
+
+            } else {
+
+                if (Schema::hasColumn($table, 'created_at')) {
+                    $payload['created_at'] = now();
+                }
+
+                DB::table($table)->insert($payload);
+            }
+        });
+
+        $this->deleteReplacedUploads(
+            $relation['fields'] ?? [],
+            $existing,
+            $filePayload,
+            $relationKey
+        );
+
+        $this->showChildModal = false;
+        $this->childUploads = [];
+        $this->childForm = [];
+        $this->editingChildId = null;
+
+        $this->setToast(
+            $existing
+                ? 'تم تحديث بيانات العنصر التابع.'
+                : 'تمت إضافة العنصر التابع.'
+        );
+
+    } catch (ValidationException $e) {
+
+        $this->rollbackStoredUploads($stored);
+        throw $e;
+
+    } catch (Throwable $e) {
+
+        $this->rollbackStoredUploads($stored);
+        report($e);
+
+        $this->setToast(
+            $e instanceof AuthorizationException
+                ? $e->getMessage()
+                : 'تعذر حفظ العنصر التابع.',
+            'error'
+        );
     }
+}
 
     // جلب عنصر تابع والتحقق من ارتباطه بالسجل الرئيسي المحدد.
     protected function findChildRecord(int $parentId, int $childId, array $relation): array

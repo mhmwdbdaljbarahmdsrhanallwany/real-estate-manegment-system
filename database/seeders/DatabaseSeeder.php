@@ -1,11 +1,12 @@
 <?php
 
 namespace Database\Seeders;
+use Database\Seeders\Organizations\FamilyRelationshipsSeeder;
 
 use App\Models\User;
+use Database\Seeders\SuperAdminSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
@@ -15,6 +16,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        //====================================
+
+        $this->call([
+            FamilyRelationshipsSeeder::class,
+        ]);
+        //====================================
+
+
         User::factory(10)->create();
 
         User::factory()->create([

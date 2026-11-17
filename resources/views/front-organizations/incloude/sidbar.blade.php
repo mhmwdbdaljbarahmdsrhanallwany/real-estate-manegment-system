@@ -328,13 +328,13 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="tenants-residents.html" class="nav-link">
+              <a wire:navigate href="{{ route('organizations.tenants.TenantsResidents',['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>أفراد الأسرة</p>
               </a>
             </li>
-            <li class="nav-item">
-              <a href="tenants-blacklist.html" class="nav-link">
+            {{--  <li class="nav-item">
+              <a wire:navigate href="{{ route('organizations.tenants.tenants-blacklist',['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>القائمة السوداء</p>
                 <span class="badge badge-danger right">3</span>
@@ -345,13 +345,13 @@
                 <i class="far fa-circle nav-icon"></i>
                 <p>سجل العقود السابقة</p>
               </a>
-            </li>
+            </li>  
             <li class="nav-item">
               <a href="tenants-ratings.html" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>تقييمات المستأجرين</p>
               </a>
-            </li>
+            </li>--}}
           </ul>
         </li>
 
@@ -364,13 +364,13 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="contracts.html" class="nav-link">
+              <a href="{{ route('organizations.tenants.Contracs-all',['subdomain' => request()->route('subdomain')]) }}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>جميع العقود</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="contracts-create.html" class="nav-link">
+              <a href="{{ route('organizations.tenants.ContractsCreate',['subdomain' => request()->route('subdomain')]) }}"" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>إنشاء عقد جديد</p>
                 <span class="badge badge-success right">+ جديد</span>
