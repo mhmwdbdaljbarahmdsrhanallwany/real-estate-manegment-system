@@ -3760,6 +3760,7 @@ return [
     // إعدادات إدارة عقود الإيجار
     // =====================================================
 
+   
 'contracts' => [
 
     // =====================================================
@@ -3781,7 +3782,11 @@ return [
     'status' => [
         'column' => 'status',
         'default' => 'draft',
-        'active_values' => ['active'],
+
+        'active_values' => [
+            'active',
+        ],
+
         'inactive_values' => [
             'draft',
             'terminated',
@@ -3789,47 +3794,126 @@ return [
             'renewed',
             'cancelled',
         ],
+
         'labels' => [
-            'draft'     => 'مسودة',
-            'active'    => 'نشط',
-            'terminated'=> 'منتهي',
-            'expired'   => 'منتهي الصلاحية',
-            'renewed'   => 'مُجدد',
-            'cancelled' => 'ملغي',
+            'draft'      => 'مسودة',
+            'active'     => 'نشط',
+            'terminated' => 'منتهي',
+            'expired'    => 'منتهي الصلاحية',
+            'renewed'    => 'مُجدد',
+            'cancelled'  => 'ملغي',
         ],
     ],
 
     // =====================================================
-    // إعدادات العرض
+    // إعدادات العرض الرئيسية
     // =====================================================
-    'display' => [
-        'title'       => 'إدارة العقود',
-        'subtitle'    => 'إدارة عقود الإيجار ومتابعة مددها ودفعاتها',
-        'singular'    => 'عقد',
-        'plural'      => 'العقود',
-        'icon'        => 'file-contract',
-        'primary'     => 'contract_number',
-        'description' => 'notes',
-    ],
+    'title'       => 'إدارة العقود',
+    'subtitle'    => 'إدارة عقود الإيجار ومتابعة مددها ودفعاتها',
+    'singular'    => 'عقد',
+    'plural'      => 'العقود',
+    'icon'        => 'fas fa-file-contract',
+    'primary'     => 'contract_number',
+    'description' => 'notes',
 
     // =====================================================
     // الإجراءات
     // =====================================================
-    'actions' => [
-        'create'  => true,
-        'view'    => true,
-        'edit'    => true,
-        'delete'  => true,
-        'restore' => true,
-        'block'   => false,
-        'export'  => true,
+
+'actions' => [
+    'create'              => true,
+    'view'                => true,
+    'edit'                => true,
+    'delete'              => true,
+    'restore'             => true,
+    'export'              => true,
+
+    'activate'            => true,
+    'renew'               => true,
+    'terminate'           => true,
+    'cancel'              => true,
+    'undo_cancel'         => true,
+    'print'               => true,
+
+    'block'               => false,
+],
+
+'cancellation' => [
+    'enabled'               => true,
+
+    'status_field'          => 'status',
+    'cancelled_value'       => 'cancelled',
+
+    'previous_status_field' => 'status_before_cancellation',
+    'date_field'            => 'cancelled_at',
+
+    // الحالات التي يسمح بإلغائها
+    'allowed_statuses'      => [
+        'draft',
+        'active',
     ],
+],
+
+
+'renewal' => [
+    'enabled' => true,
+
+    // مفتاح الربط بين السجل الجديد والسابق
+    'source_key' => 'renewed_from',
+
+    // الحقول التي تنسخ إلى السجل الجديد
+    'copy_fields' => [
+        'tenant_id',
+        'unit_id',
+        'branch_id',
+        'rent_amount',
+        'payment_frequency',
+        'payment_day',
+        'grace_period_days',
+        'late_fee_per_day',
+        'late_fee_fixed',
+        'deposit_amount',
+        'deposit_paid',
+        'notes',
+        'terms_and_conditions',
+    ],
+
+    // الحقول التي يعاد تعيينها
+    'reset_fields' => [
+        'contract_number' => 'auto_generate',
+        'status'          => 'draft',
+        'actual_end_date' => null,
+        'terminated_at'   => null,
+        'terminated_by'   => null,
+    ],
+
+    // إعدادات تاريخ البداية
+    'date_rules' => [
+        'start_date' => [
+            'source' => 'end_date',
+            'operation' => 'add_days',
+            'value' => 1,
+        ],
+        'end_date' => [
+            'value' => null,
+        ],
+    ],
+
+    // زيادة رقم التجديد
+    'counter' => [
+        'field' => 'renewal_count',
+        'operation' => 'increment',
+        'source' => 'previous',
+    ],
+],
+
 
     // =====================================================
     // البحث
     // =====================================================
     'search' => [
         'enabled' => true,
+
         'fields' => [
             'contract_number',
             'status',
@@ -3842,63 +3926,68 @@ return [
     // الترقيم
     // =====================================================
     'pagination' => [
-        'enabled' => true,
+        'enabled'  => true,
         'per_page' => 15,
-        'options' => [10, 15, 25, 50, 100],
+        'options'  => [10, 15, 25, 50, 100],
     ],
 
     // =====================================================
     // تلميحات الحقول
     // =====================================================
     'field_hints' => [
-        'contract_number' => 'يُنشأ رقم العقد تلقائياً ولا يحتاج إلى إدخال يدوي.',
-        'tenant_id' => 'اختر المستأجر الذي سيُبرم معه العقد.',
-        'unit_id' => 'اختر الوحدة المؤجرة.',
-        'branch_id' => 'اختر الفرع المسؤول عن العقد.',
-        'start_date' => 'يُحدد تلقائياً بتاريخ إنشاء العقد.',
-        'end_date' => 'يُحسب تلقائياً بعد سنة من تاريخ البداية.',
-        'actual_end_date' => 'أدخل التاريخ الفعلي لانتهاء العقد عند حدوثه.',
-        'rent_amount' => 'قيمة الإيجار المتفق عليها.',
-        'payment_day' => 'اليوم المحدد لاستحقاق الإيجار من الشهر.',
-        'deposit_amount' => 'قيمة مبلغ التأمين.',
+        'contract_number'  => 'يُنشأ رقم العقد تلقائياً ولا يحتاج إلى إدخال يدوي.',
+        'tenant_id'        => 'اختر المستأجر الذي سيُبرم معه العقد.',
+        'unit_id'          => 'اختر الوحدة المؤجرة.',
+        'branch_id'        => 'اختر الفرع المسؤول عن العقد.',
+        'start_date'       => 'يُحدد تلقائياً بتاريخ إنشاء العقد.',
+        'end_date'         => 'يُحسب تلقائياً بعد سنة من تاريخ البداية.',
+        'actual_end_date'  => 'أدخل التاريخ الفعلي لانتهاء العقد عند حدوثه.',
+        'rent_amount'      => 'قيمة الإيجار المتفق عليها.',
+        'payment_day'      => 'اليوم المحدد لاستحقاق الإيجار من الشهر.',
+        'deposit_amount'   => 'قيمة مبلغ التأمين.',
         'late_fee_per_day' => 'الغرامة اليومية عند التأخر في السداد.',
-        'late_fee_fixed' => 'الغرامة الثابتة عند التأخر.',
+        'late_fee_fixed'   => 'الغرامة الثابتة عند التأخر.',
     ],
 
     // =====================================================
     // الإحصائيات
     // =====================================================
     'stats' => [
+
         'total' => [
             'label' => 'إجمالي العقود',
-            'type' => 'total',
-            'icon' => 'file-text',
+            'type'  => 'total',
+            'icon'  => 'fas fa-file-lines',
         ],
+
         'active' => [
             'label' => 'العقود النشطة',
-            'type' => 'count_status',
+            'type'  => 'count_status',
             'value' => 'active',
-            'icon' => 'check-circle',
+            'icon'  => 'fas fa-circle-check',
         ],
+
         'draft' => [
             'label' => 'المسودات',
-            'type' => 'count_status',
+            'type'  => 'count_status',
             'value' => 'draft',
-            'icon' => 'file-edit',
+            'icon'  => 'fas fa-file-pen',
         ],
+
         'expired' => [
             'label' => 'العقود المنتهية',
-            'type' => 'count',
+            'type'  => 'count',
             'field' => 'status',
             'value' => 'expired',
-            'icon' => 'calendar-x',
+            'icon'  => 'fas fa-calendar-xmark',
         ],
+
         'terminated' => [
             'label' => 'العقود المفسوخة',
-            'type' => 'count',
+            'type'  => 'count',
             'field' => 'status',
             'value' => 'terminated',
-            'icon' => 'ban',
+            'icon'  => 'fas fa-ban',
         ],
     ],
 
@@ -3907,20 +3996,75 @@ return [
     // =====================================================
     'lookups' => [
 
+        // الملاك: من المؤسسة الحالية فقط
+        'owners' => [
+            'table' => 'owners',
+            'key' => 'owner_id',
+            'virtual' => true,
+            'display' => 'full_name',
+            'organization_column' => 'organization_id',
+            'soft_deletes' => true,
+
+            'filters' => [
+                'is_active' => 1,
+                'is_blacklisted' => 0,
+            ],
+        ],
+
+        // المباني: تتغير حسب المالك المختار
+        'buildings' => [
+            'table' => 'buildings',
+            'key' => 'building_id',
+            'display' => 'building_name',
+            'organization_column' => 'organization_id',
+            'soft_deletes' => true,
+
+            'depends_on' => [
+                'field' => 'owner_id',
+                'column' => 'owner_id',
+            ],
+
+            'filters' => [
+                'is_active' => 1,
+            ],
+        ],
+
+        // الوحدات: تتغير حسب المبنى المختار
+        // عزل المؤسسة يتم من خلال جدول buildings
+        'units' => [
+            'table' => 'units',
+            'key' => 'unit_id',
+            'display' => 'unit_number',
+            'soft_deletes' => true,
+
+            'depends_on' => [
+                'field' => 'building_id',
+                'column' => 'building_id',
+            ],
+
+            'organization_via' => [
+                'table' => 'buildings',
+                'local_column' => 'building_id',
+                'foreign_column' => 'building_id',
+                'organization_column' => 'organization_id',
+            ],
+        ],
+
+        // المستأجرون: من المؤسسة الحالية فقط
         'tenants' => [
             'table' => 'tenants',
             'key' => 'tenant_id',
             'display' => 'full_name',
             'organization_column' => 'organization_id',
+            'soft_deletes' => true,
+
+            'filters' => [
+                'is_active' => 1,
+                'is_blacklisted' => 0,
+            ],
         ],
 
-        'units' => [
-            'table' => 'units',
-            'key' => 'unit_id',
-            'display' => 'unit_number',
-            'organization_column' => 'organization_id',
-        ],
-
+        // الفروع
         'branches' => [
             'table' => 'agency_branches',
             'key' => 'branch_id',
@@ -3928,13 +4072,17 @@ return [
             'organization_column' => 'organization_id',
         ],
 
+        // العقود السابقة
         'contracts' => [
             'table' => 'contracts',
             'key' => 'contract_id',
             'display' => 'contract_number',
             'organization_column' => 'organization_id',
+            'soft_deletes' => true,
         ],
     ],
+
+
 
     // =====================================================
     // الحقول الرئيسية
@@ -3952,17 +4100,41 @@ return [
             'full' => false,
             'placeholder' => 'يُنشأ تلقائياً',
             'hint' => 'رقم فريد يُولّد عند حفظ العقد.',
+
+            // إعدادات التوليد التلقائي للقيمة
+            'auto_generate' => [
+                'enabled' => true,
+                'prefix' => 'CTR',
+                'organization_scoped' => true,
+                'organization_prefix' => 'ORG',
+                'date_format' => 'Ymd',
+                'random_length' => 6,
+                'separator' => '-',
+            ],
         ],
 
-        // المستأجر
+        // المالك
         [
-            'key' => 'tenant_id',
-            'label' => 'المستأجر',
+            'key' => 'owner_id',
+            'label' => 'المالك',
             'type' => 'select',
             'required' => true,
-            'options_source' => 'tenants',
+            'virtual' => true,
+            'options_source' => 'owners',
             'full' => false,
-            'placeholder' => 'اختر المستأجر',
+            'placeholder' => 'اختر المالك',
+        ],
+
+        // المبنى
+        [
+            'key' => 'building_id',
+            'label' => 'المبنى',
+            'type' => 'select',
+            'required' => true,
+            'virtual' => true,
+            'options_source' => 'buildings',
+            'full' => false,
+            'placeholder' => 'اختر المبنى',
         ],
 
         // الوحدة
@@ -3974,6 +4146,17 @@ return [
             'options_source' => 'units',
             'full' => false,
             'placeholder' => 'اختر الوحدة',
+        ],
+
+        // المستأجر
+        [
+            'key' => 'tenant_id',
+            'label' => 'المستأجر',
+            'type' => 'select',
+            'required' => true,
+            'options_source' => 'tenants',
+            'full' => false,
+            'placeholder' => 'اختر المستأجر',
         ],
 
         // الفرع
@@ -4052,12 +4235,14 @@ return [
             'type' => 'select',
             'required' => true,
             'default' => 'monthly',
+
             'options' => [
                 ['value' => 'monthly', 'label' => 'شهري'],
                 ['value' => 'quarterly', 'label' => 'ربع سنوي'],
                 ['value' => 'half_yearly', 'label' => 'نصف سنوي'],
                 ['value' => 'yearly', 'label' => 'سنوي'],
             ],
+
             'full' => false,
         ],
 
@@ -4125,6 +4310,7 @@ return [
             'type' => 'file',
             'required' => false,
             'full' => true,
+
             'upload' => [
                 'directory' => 'organization/contracts/images',
                 'disk' => 'public',
@@ -4140,6 +4326,7 @@ return [
             'type' => 'file',
             'required' => false,
             'full' => true,
+
             'upload' => [
                 'directory' => 'organization/contracts/documents',
                 'disk' => 'public',
@@ -4155,6 +4342,7 @@ return [
             'type' => 'select',
             'required' => true,
             'default' => 'draft',
+
             'options' => [
                 ['value' => 'draft', 'label' => 'مسودة'],
                 ['value' => 'active', 'label' => 'نشط'],
@@ -4163,6 +4351,7 @@ return [
                 ['value' => 'renewed', 'label' => 'مُجدد'],
                 ['value' => 'cancelled', 'label' => 'ملغي'],
             ],
+
             'full' => false,
         ],
 
@@ -4226,10 +4415,12 @@ return [
     // =====================================================
     'filters' => [
 
+        // فلتر حالة العقد
         [
             'key' => 'status',
             'label' => 'حالة العقد',
             'type' => 'select',
+
             'options' => [
                 ['value' => 'draft', 'label' => 'مسودة'],
                 ['value' => 'active', 'label' => 'نشط'],
@@ -4240,10 +4431,12 @@ return [
             ],
         ],
 
+        // فلتر دورية الدفع
         [
             'key' => 'payment_frequency',
             'label' => 'دورية الدفع',
             'type' => 'select',
+
             'options' => [
                 ['value' => 'monthly', 'label' => 'شهري'],
                 ['value' => 'quarterly', 'label' => 'ربع سنوي'],
@@ -4252,12 +4445,14 @@ return [
             ],
         ],
 
+        // فلتر تاريخ البداية
         [
             'key' => 'start_date',
             'label' => 'من تاريخ بداية العقد',
             'type' => 'date',
         ],
 
+        // فلتر تاريخ النهاية
         [
             'key' => 'end_date',
             'label' => 'إلى تاريخ نهاية العقد',
@@ -4266,18 +4461,148 @@ return [
     ],
 
     // =====================================================
-    // إعدادات الواجهة
+    // واجهة القائمة والتفاصيل
     // =====================================================
     'ui' => [
-        'form_columns' => 2,
-        'show_stats' => true,
-        'show_filters' => true,
-        'show_search' => true,
-        'show_details' => true,
-        'show_timeline' => false,
-        'show_empty_state' => true,
+
+        // =================================================
+        // واجهة القائمة
+        // =================================================
+        'list' => [
+            'avatar_field'   => 'contract_image',
+            'title_field'    => 'contract_number',
+            'subtitle_field' => 'status',
+            'status_field'   => 'status',
+
+            'fields' => [
+                'unit_id',
+                'tenant_id',
+                'rent_amount',
+                'start_date',
+                'end_date',
+                'payment_frequency',
+            ],
+        ],
+
+        // =================================================
+        // واجهة التفاصيل
+        // =================================================
+        'details' => [
+
+            'avatar_field' => 'contract_image',
+            'title_field'  => 'contract_number',
+            'status_field' => 'status',
+
+            // معلومات رأس بطاقة التفاصيل
+            'header_fields' => [
+
+                [
+                    'field' => 'tenant_id',
+                    'label' => 'المستأجر',
+                    'icon'  => 'fas fa-user',
+                ],
+
+                [
+                    'field' => 'rent_amount',
+                    'label' => 'قيمة الإيجار',
+                    'icon'  => 'fas fa-money-bill-wave',
+                ],
+
+                [
+                    'field' => 'start_date',
+                    'label' => 'بداية العقد',
+                    'icon'  => 'fas fa-calendar-check',
+                ],
+            ],
+
+            
+
+            // معلومات تفاصيل العقد
+            'info_fields' => [
+
+                [
+                    'field' => 'owner_id',
+                    'label' => 'المالك',
+                    'icon'  => 'fas fa-user-tie',
+                    'color' => 'gold',
+                ],
+
+                [
+                    'field' => 'building_id',
+                    'label' => 'المبنى',
+                    'icon'  => 'fas fa-building',
+                    'color' => 'sky',
+                ],
+
+                [
+                    'field' => 'unit_id',
+                    'label' => 'الوحدة',
+                    'icon'  => 'fas fa-door-open',
+                    'color' => 'purple',
+                ],
+
+                [
+                    'field' => 'tenant_id',
+                    'label' => 'المستأجر',
+                    'icon'  => 'fas fa-user',
+                    'color' => 'blue',
+                ],
+
+                [
+                    'field' => 'branch_id',
+                    'label' => 'الفرع',
+                    'icon'  => 'fas fa-code-branch',
+                    'color' => 'orange',
+                ],
+
+                [
+                    'field' => 'payment_frequency',
+                    'label' => 'دورية الدفع',
+                    'icon'  => 'fas fa-calendar-alt',
+                    'color' => 'green',
+                ],
+
+                [
+                    'field' => 'payment_day',
+                    'label' => 'يوم الدفع',
+                    'icon'  => 'fas fa-calendar-day',
+                    'color' => 'sky',
+                ],
+
+                [
+                    'field' => 'deposit_amount',
+                    'label' => 'مبلغ التأمين',
+                    'icon'  => 'fas fa-wallet',
+                    'color' => 'gold',
+                ],
+
+                [
+                    'field' => 'grace_period_days',
+                    'label' => 'فترة السماح',
+                    'icon'  => 'fas fa-clock',
+                    'color' => 'purple',
+                ],
+
+                [
+                    'field' => 'late_fee_per_day',
+                    'label' => 'غرامة التأخير اليومية',
+                    'icon'  => 'fas fa-triangle-exclamation',
+                    'color' => 'red',
+                ],
+
+                [
+                    'field' => 'actual_end_date',
+                    'label' => 'تاريخ الانتهاء الفعلي',
+                    'icon'  => 'fas fa-calendar-xmark',
+                    'color' => 'orange',
+                ],
+            ],
+
+            'notes_field' => 'notes',
+        ],
     ],
 ],
+
 
 
 ];

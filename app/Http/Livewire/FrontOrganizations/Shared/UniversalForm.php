@@ -163,6 +163,73 @@ class UniversalForm extends Component
         }
     }
 
+    // توليد قيمة تلقائية فريدة لأي حقل مفعّل له auto_generate في إعدادات الكيان.
+    protected function generateConfiguredFieldValue(
+        string $table,
+        string $column,
+        array $settings
+    ): string {
+        // التأكد من سلامة اسم العمود ووجوده في الجدول.
+        $this->assertSafeIdentifier($column);
+
+        if (!Schema::hasColumn($table, $column)) {
+            throw new AuthorizationException(
+                "عمود التوليد التلقائي [{$column}] غير موجود في [{$table}]."
+            );
+        }
+
+        // استخراج إعدادات الرقم من configs.php.
+        $prefix = trim((string) ($settings['prefix'] ?? ''));
+        $separator = (string) ($settings['separator'] ?? '-');
+        $dateFormat = (string) ($settings['date_format'] ?? 'Ymd');
+        $randomLength = max(4, min(20, (int) ($settings['random_length'] ?? 6)));
+
+        // تجهيز أجزاء الرقم.
+        $parts = [];
+
+        if ($prefix !== '') {
+            $parts[] = $prefix;
+        }
+
+        // إضافة معرف المؤسسة عند تفعيل هذا الخيار.
+        if (!empty($settings['organization_scoped'])) {
+            $organizationPrefix = trim(
+                (string) ($settings['organization_prefix'] ?? 'ORG')
+            );
+
+            $parts[] = $organizationPrefix . $this->organizationId;
+        }
+
+        // إضافة التاريخ الحالي.
+        $parts[] = now()->format($dateFormat);
+
+        // محاولة إنشاء رقم غير مستخدم مسبقاً.
+        for ($attempt = 0; $attempt < 20; $attempt++) {
+            $random = strtoupper(
+                \Illuminate\Support\Str::random($randomLength)
+            );
+
+            $candidate = implode(
+                $separator,
+                array_merge($parts, [$random])
+            );
+
+            // التأكد من عدم وجود الرقم مسبقاً في الجدول.
+            $exists = DB::table($table)
+                ->where($column, $candidate)
+                ->exists();
+
+            if (!$exists) {
+                return $candidate;
+            }
+        }
+
+        // إيقاف الحفظ عند تعذر إنشاء رقم فريد.
+        throw new \RuntimeException(
+            "تعذر إنشاء قيمة فريدة للحقل [{$column}]."
+        );
+    }
+
     // تحديد سياسة عزل المؤسسة سواء كانت مباشرة أو عبر علاقة أو غير مطبقة.
     protected function tenantConfig(?array $cfg = null): array
     {
@@ -650,59 +717,298 @@ class UniversalForm extends Component
         return $key ? ($record[$key] ?? []) : [];
     }
 
-    // تحميل القوائم المرجعية مع تطبيق عزل المؤسسة على السجلات المرتبطة.
+
+    /**
+     * تحميل القوائم المرجعية من قاعدة البيانات.
+     * يدعم عزل المؤسسة والقوائم التابعة والفلاتر والحذف المنطقي.
+     */
     public function getLookupsProperty(): array
     {
+        // مصفوفة ستحتوي على جميع القوائم بعد تحميلها.
         $result = [];
 
+        // المرور على القوائم المعرفة في إعدادات الكيان داخل configs.php.
         foreach (($this->config['lookups'] ?? []) as $name => $lookup) {
-            $table = $lookup['table'] ?? null;
-            $key = $lookup['key'] ?? null;
+
+            // استخراج اسم الجدول والمفتاح الأساسي وعمود العرض من الإعدادات.
+            $table   = $lookup['table'] ?? null;
+            $key     = $lookup['key'] ?? null;
             $display = $lookup['display'] ?? null;
 
+            // التأكد من اكتمال إعدادات القائمة قبل تنفيذ الاستعلام.
             if (!$table || !$key || !$display) {
-                throw new AuthorizationException("إعداد القائمة [{$name}] غير مكتمل.");
+                throw new AuthorizationException(
+                    "إعداد القائمة [{$name}] غير مكتمل."
+                );
             }
 
+            // التحقق من أن أسماء الجداول والأعمدة آمنة وليست مدخلات عشوائية.
             foreach ([$table, $key, $display] as $identifier) {
                 $this->assertSafeIdentifier($identifier);
             }
 
+            // التأكد من وجود الجدول وعمودي المفتاح والاسم في قاعدة البيانات.
             if (
                 !Schema::hasTable($table) ||
                 !Schema::hasColumn($table, $key) ||
                 !Schema::hasColumn($table, $display)
             ) {
-                throw new AuthorizationException("جدول أو أعمدة القائمة [{$name}] غير موجودة.");
+                throw new AuthorizationException(
+                    "جدول أو أعمدة القائمة [{$name}] غير موجودة."
+                );
             }
 
+            // إنشاء استعلام مبدئي لجلب بيانات القائمة من الجدول المحدد.
             $query = DB::table($table);
 
-            if (!empty($lookup['organization_column']) && Schema::hasColumn($table, $lookup['organization_column'])) {
-                $query->where($lookup['organization_column'], $this->organizationId);
-            } elseif ($table !== 'organizations' && Schema::hasColumn($table, 'organization_id')) {
-                $query->where($table . '.organization_id', $this->organizationId);
+            /*
+         * عزل المؤسسة عن طريق جدول مرتبط.
+         * مثال: الوحدات لا تحتوي organization_id،
+         * لذلك نصل إلى المؤسسة عن طريق جدول buildings.
+         */
+            if (!empty($lookup['organization_via'])) {
+
+                // قراءة إعدادات الجدول الوسيط وأعمدة الربط.
+                $via = $lookup['organization_via'];
+
+                $viaTable = $via['table'] ?? null;
+                $localColumn = $via['local_column'] ?? null;
+                $foreignColumn = $via['foreign_column'] ?? null;
+                $organizationColumn = $via['organization_column'] ?? null;
+
+                // التأكد من اكتمال بيانات الربط وعزل المؤسسة.
+                if (
+                    !$viaTable ||
+                    !$localColumn ||
+                    !$foreignColumn ||
+                    !$organizationColumn
+                ) {
+                    throw new AuthorizationException(
+                        "إعداد عزل المؤسسة للقائمة [{$name}] غير مكتمل."
+                    );
+                }
+
+                // التحقق من سلامة أسماء الجدول والأعمدة المستخدمة في الربط.
+                foreach (
+                    [
+                        $viaTable,
+                        $localColumn,
+                        $foreignColumn,
+                        $organizationColumn,
+                    ] as $identifier
+                ) {
+                    $this->assertSafeIdentifier($identifier);
+                }
+
+                // التأكد من وجود الجدول الوسيط وأعمدة الربط والمؤسسة.
+                if (
+                    !Schema::hasTable($viaTable) ||
+                    !Schema::hasColumn($table, $localColumn) ||
+                    !Schema::hasColumn($viaTable, $foreignColumn) ||
+                    !Schema::hasColumn($viaTable, $organizationColumn)
+                ) {
+                    throw new AuthorizationException(
+                        "أعمدة عزل المؤسسة للقائمة [{$name}] غير صحيحة."
+                    );
+                }
+
+                // ربط جدول القائمة بالجدول الوسيط باستخدام المفتاح المشترك.
+                $query->join(
+                    $viaTable,
+                    $table . '.' . $localColumn,
+                    '=',
+                    $viaTable . '.' . $foreignColumn
+                );
+
+                // جلب السجلات التابعة للمؤسسة الحالية فقط.
+                $query->where(
+                    $viaTable . '.' . $organizationColumn,
+                    $this->organizationId
+                );
             }
 
+            /*
+         * عزل المؤسسة مباشرة عندما يحتوي جدول القائمة على organization_id.
+         */ elseif (!empty($lookup['organization_column'])) {
+
+                // قراءة اسم عمود المؤسسة من إعدادات القائمة.
+                $organizationColumn = $lookup['organization_column'];
+
+                // التحقق من سلامة اسم العمود.
+                $this->assertSafeIdentifier($organizationColumn);
+
+                // التأكد من وجود عمود المؤسسة فعلياً.
+                if (!Schema::hasColumn($table, $organizationColumn)) {
+                    throw new AuthorizationException(
+                        "عمود المؤسسة غير موجود في القائمة [{$name}]."
+                    );
+                }
+
+                // تقييد النتائج بمعرف المؤسسة الحالية.
+                $query->where(
+                    $table . '.' . $organizationColumn,
+                    $this->organizationId
+                );
+            }
+
+            /*
+         * عزل تلقائي احتياطي للجداول التي تحتوي organization_id.
+         * يستثني جدول organizations.
+         */ elseif (
+                $table !== 'organizations' &&
+                Schema::hasColumn($table, 'organization_id')
+            ) {
+                // جلب سجلات المؤسسة الحالية فقط.
+                $query->where(
+                    $table . '.organization_id',
+                    $this->organizationId
+                );
+            }
+
+            // إذا كانت القائمة للمؤسسات، نعرض المؤسسة الحالية فقط.
             if ($table === 'organizations' && $key === 'organization_id') {
-                $query->where($table . '.' . $key, $this->organizationId);
+                $query->where(
+                    $table . '.' . $key,
+                    $this->organizationId
+                );
             }
 
+            /*
+         * معالجة القوائم التابعة.
+         * مثال: buildings تعتمد على owner_id.
+         */
+            if (!empty($lookup['depends_on'])) {
+
+                // قراءة اسم الحقل الأب واسم العمود المرتبط به في قاعدة البيانات.
+                $dependency = $lookup['depends_on'];
+
+                $parentField = $dependency['field'] ?? null;
+                $parentColumn = $dependency['column'] ?? null;
+
+                // التأكد من اكتمال إعداد العلاقة.
+                if (!$parentField || !$parentColumn) {
+                    throw new AuthorizationException(
+                        "إعداد الاعتماد للقائمة [{$name}] غير مكتمل."
+                    );
+                }
+
+                // التحقق من سلامة أسماء الحقول والأعمدة.
+                $this->assertSafeIdentifier($parentField);
+                $this->assertSafeIdentifier($parentColumn);
+
+                // التأكد من وجود عمود الربط في جدول القائمة.
+                if (!Schema::hasColumn($table, $parentColumn)) {
+                    throw new AuthorizationException(
+                        "عمود الاعتماد [{$parentColumn}] غير موجود في [{$table}]."
+                    );
+                }
+
+                // قراءة قيمة الحقل الأب التي اختارها المستخدم في النموذج.
+                $parentValue = $this->form[$parentField] ?? null;
+
+                // إذا لم يختر المستخدم الأب، نعيد قائمة فارغة.
+                if ($parentValue === null || $parentValue === '') {
+                    $result[$name] = [];
+                    continue;
+                }
+
+                // جلب السجلات المرتبطة بقيمة الحقل الأب فقط.
+                $query->where(
+                    $table . '.' . $parentColumn,
+                    $parentValue
+                );
+            }
+
+            /*
+         * تطبيق شروط التصفية المعرفة في configs.php.
+         * مثال: is_active = 1 و is_blacklisted = 0.
+         */
+            foreach (($lookup['filters'] ?? []) as $column => $value) {
+
+                // التحقق من سلامة اسم عمود الفلترة.
+                $this->assertSafeIdentifier($column);
+
+                // التأكد من وجود العمود قبل استخدامه في الاستعلام.
+                if (!Schema::hasColumn($table, $column)) {
+                    throw new AuthorizationException(
+                        "عمود الفلترة [{$column}] غير موجود في [{$table}]."
+                    );
+                }
+
+                // إذا كانت القيمة مصفوفة، نستخدم whereIn.
+                if (is_array($value)) {
+                    $query->whereIn($table . '.' . $column, $value);
+                }
+
+                // إذا كانت القيمة NULL، نستخدم whereNull.
+                elseif ($value === null) {
+                    $query->whereNull($table . '.' . $column);
+                }
+
+                // في بقية الحالات نستخدم مقارنة مباشرة.
+                else {
+                    $query->where($table . '.' . $column, $value);
+                }
+            }
+
+            /*
+         * استبعاد السجلات المحذوفة منطقياً.
+         */
+            if (!empty($lookup['soft_deletes'])) {
+
+                // تحديد اسم عمود الحذف، والافتراضي deleted_at.
+                $deletedAtColumn = $lookup['deleted_at_column'] ?? 'deleted_at';
+
+                // التحقق من سلامة اسم العمود.
+                $this->assertSafeIdentifier($deletedAtColumn);
+
+                // التأكد من وجود عمود الحذف في الجدول.
+                if (!Schema::hasColumn($table, $deletedAtColumn)) {
+                    throw new AuthorizationException(
+                        "عمود الحذف المنطقي [{$deletedAtColumn}] غير موجود في [{$table}]."
+                    );
+                }
+
+                // إرجاع السجلات التي لم يتم حذفها فقط.
+                $query->whereNull($table . '.' . $deletedAtColumn);
+            }
+
+            /*
+         * تنفيذ الاستعلام وإرجاع الخيارات بالشكل الموحد.
+         */
             $result[$name] = $query
-                ->select($table . '.' . $key . ' as id', $table . '.' . $display . ' as name')
+
+                // تحديد المفتاح كـ id وعمود العرض كـ name.
+                ->select(
+                    $table . '.' . $key . ' as id',
+                    $table . '.' . $display . ' as name'
+                )
+
+                // ترتيب الخيارات حسب الاسم.
                 ->orderBy($table . '.' . $display)
+
+                // تنفيذ استعلام قاعدة البيانات وجلب النتائج.
                 ->get()
-                ->map(fn ($item) => ['id' => $item->id, 'name' => $item->name])
+
+                // تحويل كل سجل إلى مصفوفة id و name.
+                ->map(fn($item) => [
+                    'id'   => $item->id,
+                    'name' => $item->name,
+                ])
+
+                // تحويل مجموعة النتائج إلى مصفوفة PHP.
                 ->all();
         }
 
+        // إعادة جميع القوائم إلى Livewire وBlade.
         return $result;
     }
+
 
     // حساب الإحصائيات المعرفة في إعدادات الكيان مثل الإجمالي والحالات والقيم الفريدة.
     public function getStatsProperty(): array
     {
-        $allRows = $this->entityQuery()->get()->map(fn ($row) => (array) $row)->all();
+        $allRows = $this->entityQuery()->get()->map(fn($row) => (array) $row)->all();
         $status = $this->config['status'] ?? [];
 
         foreach ($allRows as &$row) {
@@ -722,20 +1028,20 @@ class UniversalForm extends Component
             } elseif ($type === 'count_status') {
                 $value = count(array_filter(
                     $allRows,
-                    fn ($row) => ($row['_status'] ?? null) === ($stat['value'] ?? null)
+                    fn($row) => ($row['_status'] ?? null) === ($stat['value'] ?? null)
                 ));
             } elseif ($type === 'count' && !empty($stat['field'])) {
                 $field = $stat['field'];
 
                 $value = count(array_filter(
                     $allRows,
-                    fn ($row) => (string) ($row[$field] ?? '') === (string) ($stat['value'] ?? '')
+                    fn($row) => (string) ($row[$field] ?? '') === (string) ($stat['value'] ?? '')
                 ));
             } elseif ($type === 'unique') {
                 $field = $stat['field'] ?? null;
                 $values = array_filter(
                     array_column($allRows, $field),
-                    fn ($item) => $item !== null && $item !== ''
+                    fn($item) => $item !== null && $item !== ''
                 );
 
                 $value = count(array_unique($values));
@@ -980,6 +1286,294 @@ class UniversalForm extends Component
         }
     }
 
+    // إنشاء سجل جديد بناءً على سجل سابق وفق إعدادات التجديد الخاصة بالكيان.
+public function renewRecord(int $id): void
+{
+    try {
+        $renewal = $this->config['renewal'] ?? [];
+
+        if (empty($renewal['enabled'])) {
+            throw new \RuntimeException('عملية التجديد غير مفعّلة لهذا الكيان.');
+        }
+
+        $pk = $this->config['primary_key'];
+        $record = (array) $this->findScopedRecord($id);
+
+        // التأكد من وجود السجل السابق.
+        if (empty($record[$pk])) {
+            throw new \RuntimeException('السجل المطلوب تجديده غير موجود.');
+        }
+
+        // تجهيز نموذج إنشاء سجل جديد.
+        $this->openRecordModal();
+
+        $fields = $this->config['main_fields'] ?? [];
+
+        // تحديد الحقول المسموح بنسخها.
+        $copyFields = $renewal['copy_fields'] ?? [];
+
+        foreach ($fields as $field) {
+            $key = $field['key'] ?? null;
+
+            if (!$key || !in_array($key, $copyFields, true)) {
+                continue;
+            }
+
+            // عدم نسخ الملفات المرفوعة.
+            if (($field['type'] ?? '') === 'file') {
+                continue;
+            }
+
+            if (array_key_exists($key, $record)) {
+                $this->form[$key] = $record[$key];
+            }
+        }
+
+        // تطبيق القيم الافتراضية للحقول.
+        foreach (($renewal['reset_fields'] ?? []) as $key => $value) {
+            $this->form[$key] = $value === 'auto_generate'
+                ? ''
+                : $value;
+        }
+
+        // ربط السجل الجديد بالسجل السابق.
+        $sourceKey = $renewal['source_key'] ?? null;
+
+        if ($sourceKey) {
+            $this->form[$sourceKey] = $id;
+        }
+
+        // تطبيق قواعد التواريخ.
+        foreach (($renewal['date_rules'] ?? []) as $key => $rule) {
+            if (array_key_exists('value', $rule)) {
+                $this->form[$key] = $rule['value'];
+                continue;
+            }
+
+            $source = $rule['source'] ?? null;
+            $operation = $rule['operation'] ?? null;
+
+            if (!$source || !isset($record[$source])) {
+                continue;
+            }
+
+            if ($operation === 'add_days') {
+                $this->form[$key] = \Carbon\Carbon::parse($record[$source])
+                    ->addDays((int) ($rule['value'] ?? 0))
+                    ->toDateString();
+            }
+        }
+
+        // حساب قيمة العداد وفق الإعدادات.
+        $counter = $renewal['counter'] ?? [];
+        $counterField = $counter['field'] ?? null;
+
+        if ($counterField && ($counter['operation'] ?? null) === 'increment') {
+            $this->form[$counterField] =
+                (int) ($record[$counterField] ?? 0) + 1;
+        }
+
+        // التأكد من أن العملية إنشاء وليست تعديلاً.
+        $this->editingId = null;
+
+        $this->setToast('تم تجهيز بيانات السجل الجديد بنجاح.');
+
+    } catch (\Throwable $e) {
+        report($e);
+
+        $this->setToast(
+            $e->getMessage(),
+            'error'
+        );
+    }
+}
+
+// إلغاء سجل وفق إعدادات الإلغاء الخاصة بالكيان مع التحقق من نطاق المؤسسة.
+
+
+public function cancelRecord(int $id): void
+{
+    $cancellation = $this->config['cancellation'] ?? [];
+
+    if (empty($cancellation['enabled'])) {
+        $this->setToast('إلغاء السجل غير مفعّل.', 'error');
+        return;
+    }
+
+    $pk = $this->config['primary_key'];
+
+    $statusField = $cancellation['status_field'] ?? null;
+    $cancelledValue = $cancellation['cancelled_value'] ?? null;
+    $previousField = $cancellation['previous_status_field'] ?? null;
+    $dateField = $cancellation['date_field'] ?? null;
+
+    try {
+        DB::transaction(function () use (
+            $id,
+            $pk,
+            $statusField,
+            $cancelledValue,
+            $previousField,
+            $dateField,
+            $cancellation
+        ) {
+            $record = $this->entityQuery()
+                ->where($pk, $id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$record) {
+                throw new \RuntimeException('السجل غير موجود أو لا تملك صلاحية الوصول إليه.');
+            }
+
+            if (
+                !$statusField ||
+                !$previousField ||
+                !\Illuminate\Support\Facades\Schema::hasColumn(
+                    $this->config['table'],
+                    $statusField
+                ) ||
+                !\Illuminate\Support\Facades\Schema::hasColumn(
+                    $this->config['table'],
+                    $previousField
+                )
+            ) {
+                throw new \RuntimeException('إعدادات الإلغاء أو أعمدة قاعدة البيانات غير مكتملة.');
+            }
+
+            $currentStatus = $record->{$statusField};
+
+            if ($currentStatus === $cancelledValue) {
+                throw new \RuntimeException('هذا السجل ملغي بالفعل.');
+            }
+
+            $allowedStatuses = $cancellation['allowed_statuses'] ?? [];
+
+            if (!in_array($currentStatus, $allowedStatuses, true)) {
+                throw new \RuntimeException('لا يمكن إلغاء السجل في حالته الحالية.');
+            }
+
+            $payload = [
+                $previousField => $currentStatus,
+                $statusField   => $cancelledValue,
+            ];
+
+            if (
+                $dateField &&
+                \Illuminate\Support\Facades\Schema::hasColumn(
+                    $this->config['table'],
+                    $dateField
+                )
+            ) {
+                $payload[$dateField] = now();
+            }
+
+            $this->entityQuery()
+                ->where($pk, $id)
+                ->update($payload);
+        });
+
+        $this->selectedId = $id;
+
+        $this->setToast('تم إلغاء السجل بنجاح. يمكنك التراجع عن الإلغاء.', 'success');
+
+    } catch (\Throwable $e) {
+        $this->setToast($e->getMessage(), 'error');
+    }
+}
+
+/**
+ * استعادة الحالة السابقة للسجل وإلغاء أثر عملية الإلغاء.
+ */
+public function undoCancellation(int $id): void
+{
+    $cancellation = $this->config['cancellation'] ?? [];
+
+    if (empty($cancellation['enabled'])) {
+        $this->setToast('التراجع عن الإلغاء غير مفعّل.', 'error');
+        return;
+    }
+
+    $pk = $this->config['primary_key'];
+
+    $statusField = $cancellation['status_field'] ?? null;
+    $cancelledValue = $cancellation['cancelled_value'] ?? null;
+    $previousField = $cancellation['previous_status_field'] ?? null;
+    $dateField = $cancellation['date_field'] ?? null;
+
+    try {
+        DB::transaction(function () use (
+            $id,
+            $pk,
+            $statusField,
+            $cancelledValue,
+            $previousField,
+            $dateField
+        ) {
+            $record = $this->entityQuery()
+                ->where($pk, $id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$record) {
+                throw new \RuntimeException('السجل غير موجود أو لا تملك صلاحية الوصول إليه.');
+            }
+
+            if (
+                !$statusField ||
+                !$previousField ||
+                !\Illuminate\Support\Facades\Schema::hasColumn(
+                    $this->config['table'],
+                    $statusField
+                ) ||
+                !\Illuminate\Support\Facades\Schema::hasColumn(
+                    $this->config['table'],
+                    $previousField
+                )
+            ) {
+                throw new \RuntimeException('إعدادات التراجع أو أعمدة قاعدة البيانات غير مكتملة.');
+            }
+
+            if ($record->{$statusField} !== $cancelledValue) {
+                throw new \RuntimeException('السجل ليس ملغياً.');
+            }
+
+            $previousStatus = $record->{$previousField};
+
+            if ($previousStatus === null || $previousStatus === '') {
+                throw new \RuntimeException('الحالة السابقة غير محفوظة، لا يمكن التراجع.');
+            }
+
+            $payload = [
+                $statusField   => $previousStatus,
+                $previousField => null,
+            ];
+
+            if (
+                $dateField &&
+                \Illuminate\Support\Facades\Schema::hasColumn(
+                    $this->config['table'],
+                    $dateField
+                )
+            ) {
+                $payload[$dateField] = null;
+            }
+
+            $this->entityQuery()
+                ->where($pk, $id)
+                ->update($payload);
+        });
+
+        $this->selectedId = $id;
+
+        $this->setToast('تم التراجع عن الإلغاء واستعادة الحالة السابقة.', 'success');
+
+    } catch (\Throwable $e) {
+        $this->setToast($e->getMessage(), 'error');
+    }
+}
+
+
     // إغلاق نموذج السجل الرئيسي ومسح الملفات المؤقتة وأخطاء التحقق.
     public function closeRecordModal(): void
     {
@@ -988,102 +1582,187 @@ class UniversalForm extends Component
         $this->resetValidation();
     }
 
-    // التحقق من بيانات السجل ورفع ملفاته ثم إنشاء السجل أو تحديثه داخل المؤسسة الحالية.
-    public function saveRecord(): void
-    {
-        $stored = [];
-        $this->normalizeCoordinates();
+   
+// التحقق من بيانات السجل ورفع ملفاته ثم إنشاء السجل أو تحديثه داخل المؤسسة الحالية.
+public function saveRecord(): void
+{
+    $stored = [];
+    $this->normalizeCoordinates();
 
-        try {
-            $table = $this->config['table'];
-            $pk = $this->config['primary_key'];
-            $fields = $this->config['main_fields'] ?? [];
-            $existing = $this->editingId ? (array) $this->findScopedRecord($this->editingId) : [];
+    try {
+        $table = $this->config['table'];
+        $pk = $this->config['primary_key'];
+        $fields = $this->config['main_fields'] ?? [];
 
-            $payload = $this->validateConfiguredFields($this->form, $fields, $table, true);
+        $existing = $this->editingId
+            ? (array) $this->findScopedRecord($this->editingId)
+            : [];
 
-            $filePayload = $this->storeConfiguredUploads(
-                $fields,
-                'mainUploads',
-                $this->editingId === null,
-                $existing,
-                'main',
-                $stored
-            );
+        // التحقق من الحقول وإعداد بيانات السجل للحفظ.
+        $payload = $this->validateConfiguredFields(
+            $this->form,
+            $fields,
+            $table,
+            true
+        );
 
-            $payload = array_merge($payload, $filePayload);
-            \Log::debug('UNITS DOCUMENTS DEBUG', [
-    'documents_value' => $payload['documents'] ?? 'MISSING',
-    'documents_type' => gettype($payload['documents'] ?? null),
-    'documents_json_valid' => isset($payload['documents'])
-        ? json_validate((string) $payload['documents'])
-        : null,
-    'file_payload' => $filePayload,
-]);
-            $this->applyStatusToPayload($payload, $this->form, $fields, $table);
+        // توليد قيم الحقول المعرّفة للتوليد التلقائي مع الحفاظ على قيمتها عند التعديل.
+        foreach ($fields as $field) {
+            $key = $field['key'] ?? null;
+            $generation = $field['auto_generate'] ?? [];
 
-            $tenant = $this->tenantConfig();
-
-            if ($tenant['type'] === 'direct') {
-                $payload[$tenant['column']] = $this->organizationId;
-            } elseif ($tenant['type'] === 'related') {
-                $foreign = $tenant['path'][0]['foreign_key'] ?? null;
-
-                if (!$foreign || empty($payload[$foreign])) {
-                    if (!$this->editingId) {
-                        throw new AuthorizationException('يجب تحديد السجل المرتبط بالمؤسسة.');
-                    }
-                } else {
-                    $this->validateRelatedForeignKey($tenant, $payload[$foreign]);
-                }
+            if (!$key || empty($generation['enabled'])) {
+                continue;
             }
 
-            $this->validateLookupFields($fields, $payload);
-
-            if (Schema::hasColumn($table, 'updated_at')) {
-                $payload['updated_at'] = now();
+            if ($this->editingId) {
+                if (array_key_exists($key, $existing)) {
+                    $payload[$key] = $existing[$key];
+                }
+            } else {
+                $payload[$key] = $this->generateConfiguredFieldValue(
+                    $table,
+                    $key,
+                    $generation
+                );
             }
-
-            $savedId = DB::transaction(function () use ($table, $pk, $payload, $existing) {
-                if ($this->editingId) {
-                    $this->entityQuery()
-                        ->where($pk, $this->editingId)
-                        ->update($payload);
-
-                    return $this->editingId;
-                }
-
-                if (Schema::hasColumn($table, 'created_at')) {
-                    $payload['created_at'] = now();
-                }
-
-                return (int) DB::table($table)->insertGetId($payload, $pk);
-            });
-
-            $this->deleteReplacedUploads($fields, $existing, $filePayload, 'main');
-            $this->selectedId = (int) $savedId;
-            $this->showRecordModal = false;
-            $this->mainUploads = [];
-            $this->editingId = null;
-            $this->form = [];
-
-            $this->setToast($existing ? 'تم تحديث البيانات بنجاح.' : 'تمت إضافة البيانات بنجاح.');
-            $this->resetPage();
-        } catch (ValidationException $e) {
-            $this->rollbackStoredUploads($stored);
-            throw $e;
-        } catch (Throwable $e) {
-            $this->rollbackStoredUploads($stored);
-            report($e);
-
-            $this->setToast(
-                $e instanceof AuthorizationException
-                    ? $e->getMessage()
-                    : 'تعذر حفظ البيانات. راجع سجل الأخطاء.',
-                'error'
-            );
         }
+
+        // تخزين الملفات المرفوعة وفق إعدادات حقول الكيان.
+        $filePayload = $this->storeConfiguredUploads(
+            $fields,
+            'mainUploads',
+            $this->editingId === null,
+            $existing,
+            'main',
+            $stored
+        );
+
+        $payload = array_merge($payload, $filePayload);
+
+        // تسجيل معلومات تشخيص ملفات المستندات والتحقق من صلاحية JSON دون استخدام دوال غير مدعومة في PHP 8.2.
+        \Log::debug('UNITS DOCUMENTS DEBUG', [
+            'documents_value' => $payload['documents'] ?? 'MISSING',
+            'documents_type' => gettype($payload['documents'] ?? null),
+            'documents_json_valid' => isset($payload['documents'])
+                ? (function ($value) {
+                    json_decode((string) $value);
+                    return json_last_error() === JSON_ERROR_NONE;
+                })($payload['documents'])
+                : null,
+            'file_payload' => $filePayload,
+        ]);
+
+        // تطبيق قيم الحالة وفق إعدادات الحقول والجدول.
+        $this->applyStatusToPayload(
+            $payload,
+            $this->form,
+            $fields,
+            $table
+        );
+
+        // التحقق من نطاق المؤسسة وإسناد المؤسسة الحالية للسجل.
+        $tenant = $this->tenantConfig();
+
+        if ($tenant['type'] === 'direct') {
+            $payload[$tenant['column']] = $this->organizationId;
+
+        } elseif ($tenant['type'] === 'related') {
+            $foreign = $tenant['path'][0]['foreign_key'] ?? null;
+
+            if (!$foreign || empty($payload[$foreign])) {
+                if (!$this->editingId) {
+                    throw new AuthorizationException(
+                        'يجب تحديد السجل المرتبط بالمؤسسة.'
+                    );
+                }
+            } else {
+                $this->validateRelatedForeignKey(
+                    $tenant,
+                    $payload[$foreign]
+                );
+            }
+        }
+
+        // التحقق من صحة السجلات المرتبطة ونطاقها قبل الحفظ.
+        $this->validateLookupFields($fields, $payload);
+
+        // تحديث تاريخ آخر تعديل عند توفر العمود في الجدول.
+        if (Schema::hasColumn($table, 'updated_at')) {
+            $payload['updated_at'] = now();
+        }
+
+        // تنفيذ عملية الإنشاء أو التحديث داخل معاملة قاعدة البيانات.
+        $savedId = DB::transaction(function () use (
+            $table,
+            $pk,
+            $payload,
+            $existing
+        ) {
+            if ($this->editingId) {
+                $this->entityQuery()
+                    ->where($pk, $this->editingId)
+                    ->update($payload);
+
+                return $this->editingId;
+            }
+
+            // إضافة تاريخ الإنشاء عند توفر العمود.
+            if (Schema::hasColumn($table, 'created_at')) {
+                $payload['created_at'] = now();
+            }
+
+            return (int) DB::table($table)->insertGetId(
+                $payload,
+                $pk
+            );
+        });
+
+        // حذف الملفات القديمة التي استُبدلت بعد نجاح الحفظ.
+        $this->deleteReplacedUploads(
+            $fields,
+            $existing,
+            $filePayload,
+            'main'
+        );
+
+        // تحديث حالة الواجهة بعد نجاح العملية.
+        $this->selectedId = (int) $savedId;
+        $this->showRecordModal = false;
+        $this->mainUploads = [];
+        $this->editingId = null;
+        $this->form = [];
+
+        // عرض رسالة نجاح وإعادة الصفحة إلى بدايتها.
+        $this->setToast(
+            $existing
+                ? 'تم تحديث البيانات بنجاح.'
+                : 'تمت إضافة البيانات بنجاح.'
+        );
+
+        $this->resetPage();
+
+    } catch (ValidationException $e) {
+        // التراجع عن الملفات المخزنة عند فشل التحقق.
+        $this->rollbackStoredUploads($stored);
+
+        throw $e;
+
+    } catch (Throwable $e) {
+        // التراجع عن الملفات المخزنة وتسجيل الخطأ.
+        $this->rollbackStoredUploads($stored);
+
+        report($e);
+
+        $this->setToast(
+            $e instanceof AuthorizationException
+                ? $e->getMessage()
+                : 'تعذر حفظ البيانات. راجع سجل الأخطاء.',
+            'error'
+        );
     }
+}
+
 
     // فتح نافذة تأكيد حذف السجل بعد التحقق من انتمائه للمؤسسة الحالية.
     public function openDeleteModal(int $id): void
@@ -1232,48 +1911,48 @@ class UniversalForm extends Component
     }
 
     // التحقق من بيانات العنصر التابع ورفع ملفاته ثم إضافته أو تحديثه للسجل الرئيسي.
-    
-public function saveChild(): void
-{
-    $stored = [];
 
-    try {
-        if (!$this->selectedId) {
-            throw new AuthorizationException('اختر السجل الرئيسي أولاً.');
-        }
+    public function saveChild(): void
+    {
+        $stored = [];
 
-        // التحقق من السجل الرئيسي وعزله عن المؤسسات الأخرى
-        $this->findScopedRecord($this->selectedId);
+        try {
+            if (!$this->selectedId) {
+                throw new AuthorizationException('اختر السجل الرئيسي أولاً.');
+            }
 
-        $relationKey = $this->firstCrudRelationKey();
+            // التحقق من السجل الرئيسي وعزله عن المؤسسات الأخرى
+            $this->findScopedRecord($this->selectedId);
 
-        if (!$relationKey) {
-            throw new \RuntimeException('لا توجد علاقة فرعية قابلة للإدارة.');
-        }
+            $relationKey = $this->firstCrudRelationKey();
 
-        $relation = $this->config['relations'][$relationKey];
+            if (!$relationKey) {
+                throw new \RuntimeException('لا توجد علاقة فرعية قابلة للإدارة.');
+            }
 
-        $table   = $relation['table'];
-        $pk      = $relation['primary_key'];
-        $foreign = $relation['foreign_key'];
+            $relation = $this->config['relations'][$relationKey];
 
-        $existing = $this->editingChildId
-            ? $this->findChildRecord(
-                $this->selectedId,
-                $this->editingChildId,
-                $relation
-            )
-            : [];
+            $table   = $relation['table'];
+            $pk      = $relation['primary_key'];
+            $foreign = $relation['foreign_key'];
 
-        // التحقق من الحقول المسموح بها
-        $payload = $this->validateConfiguredFields(
-            $this->childForm,
-            $relation['fields'] ?? [],
-            $table,
-            false
-        );
+            $existing = $this->editingChildId
+                ? $this->findChildRecord(
+                    $this->selectedId,
+                    $this->editingChildId,
+                    $relation
+                )
+                : [];
 
-        /*
+            // التحقق من الحقول المسموح بها
+            $payload = $this->validateConfiguredFields(
+                $this->childForm,
+                $relation['fields'] ?? [],
+                $table,
+                false
+            );
+
+            /*
          * =====================================================
          * محرك الإسناد التلقائي للقيم من مصدر خارجي
          * =====================================================
@@ -1284,234 +1963,231 @@ public function saveChild(): void
          * لا يعتمد على اسم الجدول أو اسم الكيان.
          */
 
-        $autoAssignments = $relation['auto_assignments'] ?? [];
+            $autoAssignments = $relation['auto_assignments'] ?? [];
 
-        // دعم إعداد unit_source القديم
-        if (
-            empty($autoAssignments)
-            && !empty($relation['unit_source'])
-        ) {
-            $autoAssignments = [
-                $relation['unit_source'],
-            ];
-        }
-
-        foreach ($autoAssignments as $assignment) {
-
-            if (empty($assignment['enabled'])) {
-                continue;
-            }
-
-            $sourceTable = $assignment['table'] ?? null;
-
-            $parentForeignKey = $assignment['parent_foreign_key']
-                ?? $assignment['tenant_foreign_key']
-                ?? null;
-
-            $sourceValueColumn = $assignment['source_value_column']
-                ?? $assignment['unit_foreign_key']
-                ?? null;
-
-            $targetColumn = $assignment['target_column'] ?? null;
-
+            // دعم إعداد unit_source القديم
             if (
-                !$sourceTable
-                || !$parentForeignKey
-                || !$sourceValueColumn
-                || !$targetColumn
+                empty($autoAssignments)
+                && !empty($relation['unit_source'])
             ) {
-                throw new \RuntimeException(
-                    'إعدادات الإسناد التلقائي غير مكتملة للعلاقة: ' . $relationKey
-                );
+                $autoAssignments = [
+                    $relation['unit_source'],
+                ];
             }
 
-            // التأكد من وجود الجدول والأعمدة
-            if (
-                !Schema::hasTable($sourceTable)
-                || !Schema::hasColumn($sourceTable, $parentForeignKey)
-                || !Schema::hasColumn($sourceTable, $sourceValueColumn)
-                || !Schema::hasColumn($table, $targetColumn)
-            ) {
-                throw new \RuntimeException(
-                    'تعذر التحقق من أعمدة مصدر الإسناد التلقائي.'
-                );
-            }
+            foreach ($autoAssignments as $assignment) {
 
-            $sourceQuery = DB::table($sourceTable)
-                ->where($parentForeignKey, $this->selectedId);
+                if (empty($assignment['enabled'])) {
+                    continue;
+                }
 
-            // شرط الحالة
-            $statusColumn = $assignment['status_column'] ?? null;
+                $sourceTable = $assignment['table'] ?? null;
 
-            if ($statusColumn && Schema::hasColumn($sourceTable, $statusColumn)) {
-                $sourceQuery->where(
-                    $statusColumn,
-                    $assignment['active_value'] ?? 1
-                );
-            }
+                $parentForeignKey = $assignment['parent_foreign_key']
+                    ?? $assignment['tenant_foreign_key']
+                    ?? null;
 
-            // استبعاد السجلات المحذوفة
-            $deletedAtColumn = $assignment['deleted_at_column'] ?? null;
+                $sourceValueColumn = $assignment['source_value_column']
+                    ?? $assignment['unit_foreign_key']
+                    ?? null;
 
-            if (
-                $deletedAtColumn
-                && Schema::hasColumn($sourceTable, $deletedAtColumn)
-            ) {
-                $sourceQuery->whereNull($deletedAtColumn);
-            }
+                $targetColumn = $assignment['target_column'] ?? null;
 
-            // التحقق من المؤسسة عند تحديد عمود المؤسسة في الإعدادات
-            $organizationColumn = $assignment['organization_column'] ?? null;
-
-            if (
-                $organizationColumn
-                && Schema::hasColumn($sourceTable, $organizationColumn)
-            ) {
-                $sourceQuery->where(
-                    $organizationColumn,
-                    $this->organizationId
-                );
-            }
-
-            // شروط إضافية قابلة للتحديد من الإعدادات
-            foreach (($assignment['where'] ?? []) as $column => $value) {
-                if (!Schema::hasColumn($sourceTable, $column)) {
+                if (
+                    !$sourceTable
+                    || !$parentForeignKey
+                    || !$sourceValueColumn
+                    || !$targetColumn
+                ) {
                     throw new \RuntimeException(
-                        'عمود الشرط غير موجود في مصدر الإسناد: ' . $column
+                        'إعدادات الإسناد التلقائي غير مكتملة للعلاقة: ' . $relationKey
                     );
                 }
 
-                $sourceQuery->where($column, $value);
+                // التأكد من وجود الجدول والأعمدة
+                if (
+                    !Schema::hasTable($sourceTable)
+                    || !Schema::hasColumn($sourceTable, $parentForeignKey)
+                    || !Schema::hasColumn($sourceTable, $sourceValueColumn)
+                    || !Schema::hasColumn($table, $targetColumn)
+                ) {
+                    throw new \RuntimeException(
+                        'تعذر التحقق من أعمدة مصدر الإسناد التلقائي.'
+                    );
+                }
+
+                $sourceQuery = DB::table($sourceTable)
+                    ->where($parentForeignKey, $this->selectedId);
+
+                // شرط الحالة
+                $statusColumn = $assignment['status_column'] ?? null;
+
+                if ($statusColumn && Schema::hasColumn($sourceTable, $statusColumn)) {
+                    $sourceQuery->where(
+                        $statusColumn,
+                        $assignment['active_value'] ?? 1
+                    );
+                }
+
+                // استبعاد السجلات المحذوفة
+                $deletedAtColumn = $assignment['deleted_at_column'] ?? null;
+
+                if (
+                    $deletedAtColumn
+                    && Schema::hasColumn($sourceTable, $deletedAtColumn)
+                ) {
+                    $sourceQuery->whereNull($deletedAtColumn);
+                }
+
+                // التحقق من المؤسسة عند تحديد عمود المؤسسة في الإعدادات
+                $organizationColumn = $assignment['organization_column'] ?? null;
+
+                if (
+                    $organizationColumn
+                    && Schema::hasColumn($sourceTable, $organizationColumn)
+                ) {
+                    $sourceQuery->where(
+                        $organizationColumn,
+                        $this->organizationId
+                    );
+                }
+
+                // شروط إضافية قابلة للتحديد من الإعدادات
+                foreach (($assignment['where'] ?? []) as $column => $value) {
+                    if (!Schema::hasColumn($sourceTable, $column)) {
+                        throw new \RuntimeException(
+                            'عمود الشرط غير موجود في مصدر الإسناد: ' . $column
+                        );
+                    }
+
+                    $sourceQuery->where($column, $value);
+                }
+
+                // ترتيب السجلات لتحديد أحدث سجل
+                $orderBy = $assignment['order_by'] ?? null;
+
+                if ($orderBy && Schema::hasColumn($sourceTable, $orderBy)) {
+                    $sourceQuery->orderBy(
+                        $orderBy,
+                        $assignment['order_direction'] ?? 'desc'
+                    );
+                }
+
+                // ترتيب إضافي عند تساوي التاريخ
+                $tieBreaker = $assignment['tie_breaker'] ?? null;
+
+                if ($tieBreaker && Schema::hasColumn($sourceTable, $tieBreaker)) {
+                    $sourceQuery->orderBy(
+                        $tieBreaker,
+                        $assignment['tie_breaker_direction'] ?? 'desc'
+                    );
+                }
+
+                // جلب القيمة المطلوبة
+                $sourceValue = $sourceQuery->value($sourceValueColumn);
+
+                if (
+                    $sourceValue === null
+                    && !empty($assignment['required'])
+                ) {
+                    throw ValidationException::withMessages([
+                        'childForm' => $assignment['required_message']
+                            ?? 'لا يمكن الحفظ؛ لم يتم العثور على السجل المرتبط المطلوب.',
+                    ]);
+                }
+
+                if ($sourceValue !== null) {
+                    // القيمة تأتي من قاعدة البيانات وليس من المتصفح
+                    $payload[$targetColumn] = $sourceValue;
+                }
             }
 
-            // ترتيب السجلات لتحديد أحدث سجل
-            $orderBy = $assignment['order_by'] ?? null;
-
-            if ($orderBy && Schema::hasColumn($sourceTable, $orderBy)) {
-                $sourceQuery->orderBy(
-                    $orderBy,
-                    $assignment['order_direction'] ?? 'desc'
-                );
-            }
-
-            // ترتيب إضافي عند تساوي التاريخ
-            $tieBreaker = $assignment['tie_breaker'] ?? null;
-
-            if ($tieBreaker && Schema::hasColumn($sourceTable, $tieBreaker)) {
-                $sourceQuery->orderBy(
-                    $tieBreaker,
-                    $assignment['tie_breaker_direction'] ?? 'desc'
-                );
-            }
-
-            // جلب القيمة المطلوبة
-            $sourceValue = $sourceQuery->value($sourceValueColumn);
-
-            if (
-                $sourceValue === null
-                && !empty($assignment['required'])
-            ) {
-                throw ValidationException::withMessages([
-                    'childForm' => $assignment['required_message']
-                        ?? 'لا يمكن الحفظ؛ لم يتم العثور على السجل المرتبط المطلوب.',
-                ]);
-            }
-
-            if ($sourceValue !== null) {
-                // القيمة تأتي من قاعدة البيانات وليس من المتصفح
-                $payload[$targetColumn] = $sourceValue;
-            }
-        }
-
-        /*
+            /*
          * =====================================================
          * رفع الملفات
          * =====================================================
          */
 
-        $filePayload = $this->storeConfiguredUploads(
-            $relation['fields'] ?? [],
-            'childUploads',
-            $this->editingChildId === null,
-            $existing,
-            $relationKey,
-            $stored
-        );
+            $filePayload = $this->storeConfiguredUploads(
+                $relation['fields'] ?? [],
+                'childUploads',
+                $this->editingChildId === null,
+                $existing,
+                $relationKey,
+                $stored
+            );
 
-        $payload = array_merge($payload, $filePayload);
+            $payload = array_merge($payload, $filePayload);
 
-        // ربط العنصر بالسجل الرئيسي
-        $payload[$foreign] = $this->selectedId;
+            // ربط العنصر بالسجل الرئيسي
+            $payload[$foreign] = $this->selectedId;
 
-        if (Schema::hasColumn($table, 'updated_at')) {
-            $payload['updated_at'] = now();
-        }
+            if (Schema::hasColumn($table, 'updated_at')) {
+                $payload['updated_at'] = now();
+            }
 
-        /*
+            /*
          * =====================================================
          * الحفظ
          * =====================================================
          */
 
-        DB::transaction(function () use (
-            $table,
-            $pk,
-            $foreign,
-            $payload
-        ) {
-            if ($this->editingChildId) {
+            DB::transaction(function () use (
+                $table,
+                $pk,
+                $foreign,
+                $payload
+            ) {
+                if ($this->editingChildId) {
 
-                DB::table($table)
-                    ->where($pk, $this->editingChildId)
-                    ->where($foreign, $this->selectedId)
-                    ->update($payload);
+                    DB::table($table)
+                        ->where($pk, $this->editingChildId)
+                        ->where($foreign, $this->selectedId)
+                        ->update($payload);
+                } else {
 
-            } else {
+                    if (Schema::hasColumn($table, 'created_at')) {
+                        $payload['created_at'] = now();
+                    }
 
-                if (Schema::hasColumn($table, 'created_at')) {
-                    $payload['created_at'] = now();
+                    DB::table($table)->insert($payload);
                 }
+            });
 
-                DB::table($table)->insert($payload);
-            }
-        });
+            $this->deleteReplacedUploads(
+                $relation['fields'] ?? [],
+                $existing,
+                $filePayload,
+                $relationKey
+            );
 
-        $this->deleteReplacedUploads(
-            $relation['fields'] ?? [],
-            $existing,
-            $filePayload,
-            $relationKey
-        );
+            $this->showChildModal = false;
+            $this->childUploads = [];
+            $this->childForm = [];
+            $this->editingChildId = null;
 
-        $this->showChildModal = false;
-        $this->childUploads = [];
-        $this->childForm = [];
-        $this->editingChildId = null;
+            $this->setToast(
+                $existing
+                    ? 'تم تحديث بيانات العنصر التابع.'
+                    : 'تمت إضافة العنصر التابع.'
+            );
+        } catch (ValidationException $e) {
 
-        $this->setToast(
-            $existing
-                ? 'تم تحديث بيانات العنصر التابع.'
-                : 'تمت إضافة العنصر التابع.'
-        );
+            $this->rollbackStoredUploads($stored);
+            throw $e;
+        } catch (Throwable $e) {
 
-    } catch (ValidationException $e) {
+            $this->rollbackStoredUploads($stored);
+            report($e);
 
-        $this->rollbackStoredUploads($stored);
-        throw $e;
-
-    } catch (Throwable $e) {
-
-        $this->rollbackStoredUploads($stored);
-        report($e);
-
-        $this->setToast(
-            $e instanceof AuthorizationException
-                ? $e->getMessage()
-                : 'تعذر حفظ العنصر التابع.',
-            'error'
-        );
+            $this->setToast(
+                $e instanceof AuthorizationException
+                    ? $e->getMessage()
+                    : 'تعذر حفظ العنصر التابع.',
+                'error'
+            );
+        }
     }
-}
 
     // جلب عنصر تابع والتحقق من ارتباطه بالسجل الرئيسي المحدد.
     protected function findChildRecord(int $parentId, int $childId, array $relation): array
@@ -1656,175 +2332,200 @@ public function saveChild(): void
      * ============================================================ */
 
     // بناء قواعد التحقق من الحقول وفق أنواعها وإرجاع البيانات الصالحة للتخزين.
-   
-protected function validateConfiguredFields(array $data, array $fields, string $table, bool $main): array
-{
-    $rules = [];
-    $attributes = [];
-    $messages = [];
-    $allowed = [];
 
-    foreach ($fields as $field) {
-        $key = $field['key'] ?? null;
+    protected function validateConfiguredFields(array $data, array $fields, string $table, bool $main): array
+    {
+        $rules = [];
+        $attributes = [];
+        $messages = [];
+        $allowed = [];
 
-        if (!$key) {
-            continue;
-        }
+        foreach ($fields as $field) {
+            $key = $field['key'] ?? null;
 
-        $this->assertSafeIdentifier($key);
-
-        if (($field['type'] ?? 'text') === 'file') {
-            continue;
-        }
-
-        if (!empty($field['is_status'])) {
-            $statusColumn = $this->config['status']['column'] ?? $key;
-
-            if ($key !== $statusColumn && !Schema::hasColumn($table, $key)) {
-                $allowed[] = $key;
-                $attributes[$key] = $field['label'] ?? $key;
-                $rules[$key] = ['required', 'string'];
+            if (!$key) {
                 continue;
             }
-        }
 
-        if (!Schema::hasColumn($table, $key)) {
-            throw new AuthorizationException("الحقل [{$key}] غير موجود في جدول [{$table}].");
-        }
+            $this->assertSafeIdentifier($key);
 
-        $allowed[] = $key;
-        $attributes[$key] = $field['label'] ?? $key;
-        $custom = $field['rules'] ?? $field['validation'] ?? [];
+            // تجاوز الحقول الافتراضية قبل فحص أعمدة الجدول
+            if (!empty($field['virtual'])) {
+                continue;
+            }
+            if (($field['type'] ?? 'text') === 'file') {
+                continue;
+            }
 
-        if (is_string($custom)) {
-            $custom = array_filter(explode('|', $custom));
-        }
+            // فحص العمود الفعلي بعد استبعاد الحقول الافتراضية
+            if (!Schema::hasColumn($table, $key)) {
+                throw new AuthorizationException(
+                    "الحقل [{$key}] غير موجود في جدول [{$table}]."
+                );
+            }
 
-        if (!is_array($custom)) {
-            $custom = [$custom];
-        }
+            if (!empty($field['is_status'])) {
+                $statusColumn = $this->config['status']['column'] ?? $key;
 
-        $fieldRules = array_values(array_filter(
-            $custom,
-            fn ($rule) => is_string($rule) && $rule !== ''
-        ));
-
-        if (!in_array('required', $fieldRules, true) && !in_array('nullable', $fieldRules, true)) {
-            $fieldRules[] = !empty($field['required']) ? 'required' : 'nullable';
-        }
-
-        switch ($field['type'] ?? 'text') {
-            case 'email':
-                $fieldRules[] = 'email';
-                break;
-
-            case 'date':
-                $fieldRules[] = 'date';
-                break;
-
-            case 'number':
-                $fieldRules[] = 'numeric';
-
-                if ($key === ($this->config['location_picker']['latitude_field'] ?? null)) {
-                    $fieldRules[] = 'between:-90,90';
+                if ($key !== $statusColumn && !Schema::hasColumn($table, $key)) {
+                    $allowed[] = $key;
+                    $attributes[$key] = $field['label'] ?? $key;
+                    $rules[$key] = ['required', 'string'];
+                    continue;
                 }
+            }
 
-                if ($key === ($this->config['location_picker']['longitude_field'] ?? null)) {
-                    $fieldRules[] = 'between:-180,180';
-                }
+            if (!Schema::hasColumn($table, $key)) {
+                throw new AuthorizationException("الحقل [{$key}] غير موجود في جدول [{$table}].");
+            }
 
-                break;
+            $allowed[] = $key;
+            $attributes[$key] = $field['label'] ?? $key;
+            $custom = $field['rules'] ?? $field['validation'] ?? [];
 
-            case 'checkbox':
-                $fieldRules[] = 'boolean';
-                break;
+            if (is_string($custom)) {
+                $custom = array_filter(explode('|', $custom));
+            }
 
-            case 'text':
-            case 'textarea':
-            case 'tel':
-                $fieldRules[] = 'string';
-                break;
+            if (!is_array($custom)) {
+                $custom = [$custom];
+            }
 
-            case 'select':
-                if (!empty($field['options'])) {
-                    $values = array_map(
-                        fn ($option) => (string) ($option['value'] ?? ''),
-                        $field['options']
-                    );
+            $fieldRules = array_values(array_filter(
+                $custom,
+                fn($rule) => is_string($rule) && $rule !== ''
+            ));
 
-                    $fieldRules[] = Rule::in($values);
-                }
+            if (!in_array('required', $fieldRules, true) && !in_array('nullable', $fieldRules, true)) {
+                $fieldRules[] = !empty($field['required']) ? 'required' : 'nullable';
+            }
 
-                break;
+            switch ($field['type'] ?? 'text') {
+                case 'email':
+                    $fieldRules[] = 'email';
+                    break;
+
+                case 'date':
+                    $fieldRules[] = 'date';
+                    break;
+
+                case 'number':
+                    $fieldRules[] = 'numeric';
+
+                    if ($key === ($this->config['location_picker']['latitude_field'] ?? null)) {
+                        $fieldRules[] = 'between:-90,90';
+                    }
+
+                    if ($key === ($this->config['location_picker']['longitude_field'] ?? null)) {
+                        $fieldRules[] = 'between:-180,180';
+                    }
+
+                    break;
+
+                case 'checkbox':
+                    $fieldRules[] = 'boolean';
+                    break;
+
+                case 'text':
+                case 'textarea':
+                case 'tel':
+                    $fieldRules[] = 'string';
+                    break;
+
+                case 'select':
+                    if (!empty($field['options'])) {
+                        $values = array_map(
+                            fn($option) => (string) ($option['value'] ?? ''),
+                            $field['options']
+                        );
+
+                        $fieldRules[] = Rule::in($values);
+                    }
+
+                    break;
+            }
+
+            if (isset($field['max'])) {
+                $fieldRules[] = 'max:' . (int) $field['max'];
+            }
+
+            if (isset($field['min'])) {
+                $fieldRules[] = 'min:' . (int) $field['min'];
+            }
+
+            $rules[$key] = array_values(array_unique($fieldRules, SORT_REGULAR));
+
+            $messages[$key . '.required'] = 'حقل :attribute مطلوب.';
+            $messages[$key . '.email'] = 'يرجى إدخال بريد إلكتروني صحيح في :attribute.';
+            $messages[$key . '.date'] = 'يرجى إدخال تاريخ صحيح في :attribute.';
+            $messages[$key . '.numeric'] = 'يجب أن تكون قيمة :attribute رقمية.';
+            $messages[$key . '.between'] = 'قيمة :attribute خارج النطاق المسموح.';
         }
 
-        if (isset($field['max'])) {
-            $fieldRules[] = 'max:' . (int) $field['max'];
+        $payload = Arr::only($data, $allowed);
+
+        // تحويل الأرقام العربية والفواصل العشرية إلى صيغة رقمية موحدة.
+        $latitudeKey = $this->config['location_picker']['latitude_field'] ?? 'latitude';
+        $longitudeKey = $this->config['location_picker']['longitude_field'] ?? 'longitude';
+
+        foreach ([$latitudeKey, $longitudeKey] as $coordinateKey) {
+            if (!array_key_exists($coordinateKey, $payload) || !is_string($payload[$coordinateKey])) {
+                continue;
+            }
+
+            $value = trim($payload[$coordinateKey]);
+
+            $value = strtr($value, [
+                '٠' => '0',
+                '١' => '1',
+                '٢' => '2',
+                '٣' => '3',
+                '٤' => '4',
+                '٥' => '5',
+                '٦' => '6',
+                '٧' => '7',
+                '٨' => '8',
+                '٩' => '9',
+                '۰' => '0',
+                '۱' => '1',
+                '۲' => '2',
+                '۳' => '3',
+                '۴' => '4',
+                '۵' => '5',
+                '۶' => '6',
+                '۷' => '7',
+                '۸' => '8',
+                '۹' => '9',
+                '٫' => '.',
+                '،' => '.',
+            ]);
+
+            $payload[$coordinateKey] = $value;
         }
 
-        if (isset($field['min'])) {
-            $fieldRules[] = 'min:' . (int) $field['min'];
-        }
-
-        $rules[$key] = array_values(array_unique($fieldRules, SORT_REGULAR));
-
-        $messages[$key . '.required'] = 'حقل :attribute مطلوب.';
-        $messages[$key . '.email'] = 'يرجى إدخال بريد إلكتروني صحيح في :attribute.';
-        $messages[$key . '.date'] = 'يرجى إدخال تاريخ صحيح في :attribute.';
-        $messages[$key . '.numeric'] = 'يجب أن تكون قيمة :attribute رقمية.';
-        $messages[$key . '.between'] = 'قيمة :attribute خارج النطاق المسموح.';
-    }
-
-    $payload = Arr::only($data, $allowed);
-
-    // تحويل الأرقام العربية والفواصل العشرية إلى صيغة رقمية موحدة.
-    $latitudeKey = $this->config['location_picker']['latitude_field'] ?? 'latitude';
-    $longitudeKey = $this->config['location_picker']['longitude_field'] ?? 'longitude';
-
-    foreach ([$latitudeKey, $longitudeKey] as $coordinateKey) {
-        if (!array_key_exists($coordinateKey, $payload) || !is_string($payload[$coordinateKey])) {
-            continue;
-        }
-
-        $value = trim($payload[$coordinateKey]);
-
-        $value = strtr($value, [
-            '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3',
-            '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7',
-            '٨' => '8', '٩' => '9',
-            '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3',
-            '۴' => '4', '۵' => '5', '۶' => '6', '۷' => '7',
-            '۸' => '8', '۹' => '9',
-            '٫' => '.',
-            '،' => '.',
-        ]);
-
-        $payload[$coordinateKey] = $value;
-    }
-
-    foreach ($payload as $key => $value) {
-        if ($value === '' && empty($this->fieldRequired($fields, $key))) {
-            $payload[$key] = null;
-        }
-    }
-
-    $validator = Validator::make($payload, $rules, $messages);
-    $validator->setAttributeNames($attributes);
-    $validated = $validator->validate();
-
-    foreach ($fields as $field) {
-        if (!empty($field['is_status'])) {
-            $key = $field['key'];
-            $column = $this->config['status']['column'] ?? $key;
-
-            if ($key !== $column) {
-                unset($validated[$key]);
+        foreach ($payload as $key => $value) {
+            if ($value === '' && empty($this->fieldRequired($fields, $key))) {
+                $payload[$key] = null;
             }
         }
-    }
 
-    return $validated;
-}
+        $validator = Validator::make($payload, $rules, $messages);
+        $validator->setAttributeNames($attributes);
+        $validated = $validator->validate();
+
+        foreach ($fields as $field) {
+            if (!empty($field['is_status'])) {
+                $key = $field['key'];
+                $column = $this->config['status']['column'] ?? $key;
+
+                if ($key !== $column) {
+                    unset($validated[$key]);
+                }
+            }
+        }
+
+        return $validated;
+    }
 
     // تحديد ما إذا كان الحقل مطلوباً وفق إعدادات الحقول.
     protected function fieldRequired(array $fields, string $key): bool
@@ -1949,63 +2650,68 @@ protected function validateConfiguredFields(array $data, array $fields, string $
         }
     }
 
-   
-// تحديد إعدادات رفع الملفات ومسار التخزين داخل مجلد المؤسسة.
-protected function uploadOptions(array $field, string $scope): array
-{
-    $upload = $field['upload'] ?? [];
 
-    if (!is_array($upload)) {
-        throw new AuthorizationException('إعدادات رفع الملف غير صحيحة.');
-    }
+    // تحديد إعدادات رفع الملفات ومسار التخزين داخل مجلد المؤسسة.
+    protected function uploadOptions(array $field, string $scope): array
+    {
+        $upload = $field['upload'] ?? [];
 
-    // المسار الافتراضي لجميع ملفات المؤسسة.
-    $directory = $upload['directory'] ?? (
-        'organization/' . $this->entityKey .
-        ($scope === 'main' ? '' : '/' . $scope)
-    );
-
-    $directory = trim(str_replace('\\', '/', $directory), '/');
-
-    foreach (explode('/', $directory) as $part) {
-        if (
-            $part === '' ||
-            in_array($part, ['.', '..'], true) ||
-            !preg_match('/^[A-Za-z0-9_-]+$/', $part)
-        ) {
-            throw new AuthorizationException('مسار حفظ الملف غير آمن.');
+        if (!is_array($upload)) {
+            throw new AuthorizationException('إعدادات رفع الملف غير صحيحة.');
         }
-    }
 
-    $disk = $upload['disk'] ?? 'public';
+        // المسار الافتراضي لجميع ملفات المؤسسة.
+        $directory = $upload['directory'] ?? (
+            'organization/' . $this->entityKey .
+            ($scope === 'main' ? '' : '/' . $scope)
+        );
 
-    if (!config("filesystems.disks.{$disk}")) {
-        throw new AuthorizationException("قرص التخزين [{$disk}] غير معرف.");
-    }
+        $directory = trim(str_replace('\\', '/', $directory), '/');
 
-    $mimes = $upload['mimes'] ?? [
-        'pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'
-    ];
-
-    if (is_string($mimes)) {
-        $mimes = array_filter(array_map('trim', explode(',', $mimes)));
-    }
-
-    foreach ($mimes as $mime) {
-        if (!preg_match('/^[A-Za-z0-9]+$/', (string) $mime)) {
-            throw new AuthorizationException('امتداد ملف غير صالح في الإعدادات.');
+        foreach (explode('/', $directory) as $part) {
+            if (
+                $part === '' ||
+                in_array($part, ['.', '..'], true) ||
+                !preg_match('/^[A-Za-z0-9_-]+$/', $part)
+            ) {
+                throw new AuthorizationException('مسار حفظ الملف غير آمن.');
+            }
         }
-    }
 
-    return [
-        'disk' => $disk,
-        'directory' => $directory,
-        'mimes' => $mimes,
-        'max_kb' => (int) ($upload['max_kb'] ?? 10240),
-        'multiple' => (bool) ($upload['multiple'] ?? false),
-        'delete_old' => (bool) ($upload['delete_old'] ?? false),
-    ];
-}
+        $disk = $upload['disk'] ?? 'public';
+
+        if (!config("filesystems.disks.{$disk}")) {
+            throw new AuthorizationException("قرص التخزين [{$disk}] غير معرف.");
+        }
+
+        $mimes = $upload['mimes'] ?? [
+            'pdf',
+            'jpg',
+            'jpeg',
+            'png',
+            'doc',
+            'docx'
+        ];
+
+        if (is_string($mimes)) {
+            $mimes = array_filter(array_map('trim', explode(',', $mimes)));
+        }
+
+        foreach ($mimes as $mime) {
+            if (!preg_match('/^[A-Za-z0-9]+$/', (string) $mime)) {
+                throw new AuthorizationException('امتداد ملف غير صالح في الإعدادات.');
+            }
+        }
+
+        return [
+            'disk' => $disk,
+            'directory' => $directory,
+            'mimes' => $mimes,
+            'max_kb' => (int) ($upload['max_kb'] ?? 10240),
+            'multiple' => (bool) ($upload['multiple'] ?? false),
+            'delete_old' => (bool) ($upload['delete_old'] ?? false),
+        ];
+    }
 
     // التحقق من الملفات المرفوعة وتخزينها وإرجاع مساراتها لإضافتها إلى بيانات السجل.
     protected function storeConfiguredUploads(
@@ -2304,26 +3010,26 @@ protected function uploadOptions(array $field, string $scope): array
             $this->form[$field] = $value;
         }
     }
-    
-public function updatedForm($value, $key): void
-{
-    $this->resetValidation($key);
-}
 
-public function updatedChildForm($value, $key): void
-{
-    $this->resetValidation($key);
-}
+    public function updatedForm($value, $key): void
+    {
+        $this->resetValidation($key);
+    }
 
-public function updatedMainUploads($value, $key): void
-{
-    $this->resetValidation('mainUploads.' . $key);
-}
+    public function updatedChildForm($value, $key): void
+    {
+        $this->resetValidation($key);
+    }
 
-public function updatedChildUploads($value, $key): void
-{
-    $this->resetValidation('childUploads.' . $key);
-}
+    public function updatedMainUploads($value, $key): void
+    {
+        $this->resetValidation('mainUploads.' . $key);
+    }
+
+    public function updatedChildUploads($value, $key): void
+    {
+        $this->resetValidation('childUploads.' . $key);
+    }
 
 
     // تجهيز بيانات الصفحة وإرسال السجلات والإحصائيات والعلاقات إلى واجهة Blade.
@@ -2351,7 +3057,7 @@ public function updatedChildUploads($value, $key): void
                 }
             }
         }
-        
+
 
         return view('front-organizations.livewire.shared.universal-form', [
             'records' => $records,

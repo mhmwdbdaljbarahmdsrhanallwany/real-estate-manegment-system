@@ -6,7 +6,9 @@ UniversalForm — Blade View
 @if(!empty($config['location_picker']['enabled']))
 @assets
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
 @endassets
 @endif
 
@@ -2007,7 +2009,99 @@ UniversalForm — Blade View
         transition-duration: 0.01ms !important;
       }
     }
+
+
+    /* حاوية أيقونات التفاعل */
+    .owner-item-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-inline-start: auto;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateX(5px);
+      transition: all .2s ease;
+      flex-shrink: 0;
+    }
+
+    /* إظهار الأيقونات عند مرور الماوس أو التركيز */
+    .owner-item:hover .owner-item-actions,
+    .owner-item:focus-within .owner-item-actions {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    /* تصميم الأيقونات */
+    .owner-hover-action {
+      width: 27px;
+      height: 27px;
+      min-width: 27px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--action-color);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--action-color);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+
+    .owner-hover-action:hover {
+      background: var(--action-color);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    .owner-hover-action.view {
+      --action-color: #64748b;
+    }
+
+    .owner-hover-action.edit {
+      --action-color: #7c3aed;
+    }
+
+    .owner-hover-action.delete {
+      --action-color: #dc2626;
+    }
+
+    /* الأجهزة التي لا تدعم الماوس */
+    @media (hover: none) {
+      .owner-item-actions {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: none;
+      }
+    }
+
+    .owner-hover-action.renew {
+      --action-color: #0284c7;
+    }
+
+    .owner-hover-action.terminate {
+      --action-color: #d97706;
+    }
+
+    .owner-hover-action.cancel {
+      --action-color: #dc2626;
+    }
+
+    .owner-hover-action.print {
+      --action-color: #475569;
+    }
+
+    .owner-hover-action.restore {
+      --action-color: #059669;
+    }
   </style>
+
+
   <div class="content-area">
 
     {{-- ========== Toolbar ========== --}}
@@ -2040,7 +2134,7 @@ UniversalForm — Blade View
       </div>
     </div>
 
-    {{-- ========== Filters ========== --}}
+    {{-- ========== الفلاتر ========== --}}
     @if(!empty($config['display']['filters']) && !empty($config['filters']))
     <div class="filters-bar">
       @php
@@ -2168,7 +2262,6 @@ UniversalForm — Blade View
 
     {{-- ========== Workspace ========== --}}
     <div class="workspace">
-
       {{-- List Panel --}}
       <aside class="owners-panel">
         <div class="panel-header">
@@ -2212,10 +2305,46 @@ UniversalForm — Blade View
               @endif
             </span>
 
-            <span class="status-tag {{ $record->status_key ?? 'active' }}">
-              <span></span>
-              {{ $record->status_label ?? '—' }}
-            </span>
+
+            <div class="owner-item-actions">
+
+              {{-- عرض التفاصيل --}}
+              @if(!empty($config['actions']['view']))
+              <button type="button" class="owner-hover-action view"
+                wire:click.stop="selectRecord({{ $record->{$config['primary_key']} }})" title="عرض جميع تفاصيل العقد">
+                <i class="fas fa-eye"></i>
+              </button>
+              @endif
+
+              {{-- تعديل --}}
+              @if(!empty($config['actions']['edit']))
+              <button type="button" class="owner-hover-action edit" wire:click.stop="openRecordModal({{ $recordId }})"
+                title="تعديل">
+                <i class="fas fa-pen"></i>
+              </button>
+              @endif
+
+
+
+
+              {{-- استعادة السجل المحذوف --}}
+              @if(!empty($config['actions']['restore']) && !empty($record->deleted_at))
+              <button type="button" class="owner-hover-action restore" wire:click.stop="restoreRecord({{ $recordId }})"
+                title="استعادة العقد">
+                <i class="fas fa-trash-restore"></i>
+              </button>
+              @endif
+
+              {{-- حذف العقد --}}
+              @if(!empty($config['actions']['delete']) && empty($record->deleted_at))
+              <button type="button" class="owner-hover-action delete" wire:click.stop="openDeleteModal({{ $recordId }})"
+                title="حذف">
+                <i class="fas fa-trash"></i>
+              </button>
+              @endif
+
+            </div>
+
           </div>
           @empty
           <div class="empty-list-state">
@@ -2307,6 +2436,7 @@ UniversalForm — Blade View
             </div>
 
             <div class="details-actions">
+
               @if($hasChildRelation)
               <button type="button" class="btn-action agent" wire:click="openChildModal">
                 <i class="fas fa-plus"></i>
@@ -2322,23 +2452,75 @@ UniversalForm — Blade View
               </button>
               @endif
 
+              {{-- إلغاء السجل --}}
+              @if(
+              !empty($config['actions']['cancel']) &&
+              !empty($config['cancellation']['enabled']) &&
+              $record->status !== ($config['cancellation']['cancelled_value'] ?? 'cancelled')
+              )
+              <button type="button" class="owner-hover-action delete"
+                wire:click.stop="cancelRecord({{ $record->{$config['primary_key']} }})"
+                wire:confirm="هل أنت متأكد من إلغاء هذا العقد؟" title="إلغاء العقد">
+                <i class="fas fa-ban"></i>
+              </button>
+              @endif
+
+              {{-- التراجع عن الإلغاء --}}
+              @if(
+              !empty($config['actions']['undo_cancel']) &&
+              !empty($config['cancellation']['enabled']) &&
+              $record->status === ($config['cancellation']['cancelled_value'] ?? 'cancelled')
+              )
+              <button type="button" class="owner-hover-action view"
+                wire:click.stop="undoCancellation({{ $record->{$config['primary_key']} }})"
+                wire:confirm="هل تريد التراجع عن إلغاء هذا العقد واستعادة حالته السابقة؟" title="التراجع عن الإلغاء">
+                <i class="fas fa-undo"></i>
+              </button>
+              @endif
+
+              {{-- طباعة العقد --}}
+              @if(!empty($config['actions']['print']))
+              <button type="button" class="owner-hover-action print" wire:click.stop="printContract({{ $recordId }})"
+                title="طباعة العقد">
+                <i class="fas fa-print"></i>
+              </button>
+              @endif
+
               @if(!empty($config['actions']['status']))
               <button type="button" class="btn-action block" id="blockBtn" wire:click="$set('showBlockModal', true)">
                 <i class="fas fa-ban"></i>
-
                 <span>
                   {{ ($selectedRecord['status_key'] ?? '') === 'blocked' ? 'إلغاء الحظر' : 'حظر' }}
                 </span>
               </button>
               @endif
-
-              @if(!empty($config['actions']['delete']))
-              <button type="button" class="btn-action delete"
-                wire:click="openDeleteModal({{ $selectedRecord[$config['primary_key']] }})">
-                <i class="fas fa-trash"></i>
-                حذف
+              {{-- تفعيل العقد --}}
+              @if(!empty($config['actions']['activate']) && ($record->status ?? null) === 'draft')
+              <button type="button" class="owner-hover-action restore"
+                wire:click.stop="activateRecord({{ $recordId }})" title="تفعيل العقد">
+                <i class="fas fa-circle-check"></i>
               </button>
               @endif
+
+              {{-- تجديد العقد --}}
+              @if(!empty($config['actions']['renew']) && !empty($config['renewal']['enabled']))
+
+              <button type="button" class="owner-hover-action renew" wire:click.stop="renewRecord({{ $recordId }})"
+                wire:loading.attr="disabled" wire:target="renewRecord" title="تجديد" aria-label="تجديد">
+
+                <i class="fas fa-rotate"></i>
+              </button>
+
+              @endif
+
+              {{-- إنهاء العقد --}}
+              @if(!empty($config['actions']['terminate']) && ($record->status ?? null) === 'active')
+              <button type="button" class="owner-hover-action terminate"
+                wire:click.stop="terminateContract({{ $recordId }})" title="إنهاء العقد">
+                <i class="fas fa-file-circle-xmark"></i>
+              </button>
+              @endif
+
             </div>
           </div>
 
@@ -2620,13 +2802,13 @@ UniversalForm — Blade View
           </div>
         </div>
         @endif
-        
+
       </main>
     </div>
   </div>
 
   {{-- ============================================================
-  Modal: Save Record (Owner / Main Record)
+  Modal: Save Record (data / Main Record)
   ============================================================ --}}
   <div class="modal-overlay {{ $showRecordModal ? 'show' : '' }}" id="ownerModal"
     aria-hidden="{{ $showRecordModal ? 'false' : 'true' }}">
@@ -2652,10 +2834,10 @@ UniversalForm — Blade View
       <div class="modal-body">
         <form id="ownerForm" wire:submit="saveRecord">
 
-          
-<div class="form-grid">
-    @foreach(($config['main_fields'] ?? []) as $f)
-        @php
+
+          <div class="form-grid">
+            @foreach(($config['main_fields'] ?? []) as $f)
+            @php
             $isFull = !empty($f['full']);
             $fieldType = $f['type'] ?? 'text';
             $fieldKey = $f['key'];
@@ -2664,180 +2846,152 @@ UniversalForm — Blade View
 
             // مصدر الرسالة التوضيحية: الحقل ثم إعدادات الكيان.
             $fieldHelp = $f['help']
-                ?? $f['hint']
-                ?? ($config['field_help'][$fieldKey] ?? null)
-                ?? ($config['field_hints'][$fieldKey] ?? null);
+            ?? $f['hint']
+            ?? ($config['field_help'][$fieldKey] ?? null)
+            ?? ($config['field_hints'][$fieldKey] ?? null);
 
             $fieldInfo = $f['info']
-                ?? ($config['field_info'][$fieldKey] ?? null);
+            ?? ($config['field_info'][$fieldKey] ?? null);
 
             $fieldWarning = $f['warning']
-                ?? ($config['field_warning'][$fieldKey] ?? null);
+            ?? ($config['field_warning'][$fieldKey] ?? null);
 
             // أولوية النص الذي يظهر داخل الحقل.
             $fieldPlaceholder = $fieldHelp
-                ?: ($fieldInfo ?: ($fieldWarning ?: ($f['placeholder'] ?? '')));
+            ?: ($fieldInfo ?: ($fieldWarning ?: ($f['placeholder'] ?? '')));
 
             $inputId = 'f_' . $fieldKey;
-        @endphp
+            @endphp
 
-        @if($this->isTenantManagedField($fieldKey))
+            @if($this->isTenantManagedField($fieldKey))
             @continue
-        @endif
+            @endif
 
-        <div class="form-group {{ $isFull ? 'full' : '' }}">
+            <div class="form-group {{ $isFull ? 'full' : '' }}">
 
-            @if($fieldType !== 'checkbox')
-                <label class="form-label" for="{{ $inputId }}">
-                    {{ $f['label'] ?? $fieldKey }}
+              @if($fieldType !== 'checkbox')
+              <label class="form-label" for="{{ $inputId }}">
+                {{ $f['label'] ?? $fieldKey }}
 
-                    @if(!empty($f['required']))
-                        <span class="required">*</span>
-                    @endif
+                @if(!empty($f['required']))
+                <span class="required">*</span>
+                @endif
+              </label>
+              @endif
+
+              @if($fieldType === 'select')
+
+              <select class="form-control text-center" id="{{ $inputId }}" wire:model.live="form.{{ $fieldKey }}">
+                <option value="">
+                  {{ $fieldPlaceholder ?: '— اختر —' }}
+                </option>
+
+                @foreach($fieldOptions as $opt)
+                <option value="{{ $opt['id'] ?? $opt['value'] ?? '' }}">
+                  {{ $opt['name'] ?? $opt['label'] ?? '' }}
+                </option>
+                @endforeach
+              </select>
+
+              @elseif($fieldType === 'textarea')
+
+              <textarea class="form-control text-center" id="{{ $inputId }}" rows="3"
+                wire:model.live.debounce.500ms="form.{{ $fieldKey }}" placeholder="{{ $fieldPlaceholder }}"></textarea>
+
+              @elseif($fieldType === 'checkbox')
+
+              <div class="form-check d-flex align-items-center gap-2">
+                <input type="checkbox" class="form-check-input" id="{{ $inputId }}"
+                  wire:model.live="form.{{ $fieldKey }}">
+
+                <label class="form-check-label mb-0" for="{{ $inputId }}">
+                  {{ $f['label'] ?? $fieldKey }}
+
+                  @if(!empty($f['required']))
+                  <span class="required">*</span>
+                  @endif
                 </label>
-            @endif
+              </div>
 
-            @if($fieldType === 'select')
+              @if($fieldHelp || $fieldInfo || $fieldWarning)
+              <small class="d-block text-muted mt-1">
+                <i class="fas fa-info-circle me-1"></i>
+                {{ $fieldHelp ?: ($fieldInfo ?: $fieldWarning) }}
+              </small>
+              @endif
 
-                <select
-                    class="form-control text-center"
-                    id="{{ $inputId }}"
-                    wire:model.live="form.{{ $fieldKey }}"
-                >
-                    <option value="">
-                        {{ $fieldPlaceholder ?: '— اختر —' }}
-                    </option>
+              @elseif($fieldType === 'file')
 
-                    @foreach($fieldOptions as $opt)
-                        <option value="{{ $opt['id'] ?? $opt['value'] ?? '' }}">
-                            {{ $opt['name'] ?? $opt['label'] ?? '' }}
-                        </option>
-                    @endforeach
-                </select>
+              <input type="file" class="form-control" id="{{ $inputId }}" wire:model="mainUploads.{{ $fieldKey }}"
+                @if(!empty($f['upload']['multiple'])) multiple @endif
+                accept="{{ !empty($f['upload']['mimes']) ? '.' . implode(',.', $f['upload']['mimes']) : '' }}">
 
-            @elseif($fieldType === 'textarea')
+              <div wire:loading wire:target="mainUploads.{{ $fieldKey }}" class="small text-muted mt-1">
+                جارٍ رفع الملف...
+              </div>
 
-                <textarea
-                    class="form-control text-center"
-                    id="{{ $inputId }}"
-                    rows="3"
-                    wire:model.live.debounce.500ms="form.{{ $fieldKey }}"
-                    placeholder="{{ $fieldPlaceholder }}"
-                ></textarea>
+              @if($fieldHelp || $fieldInfo || $fieldWarning)
+              <small class="d-block text-muted mt-1">
+                <i class="fas fa-info-circle me-1"></i>
+                {{ $fieldHelp ?: ($fieldInfo ?: $fieldWarning) }}
+              </small>
+              @endif
 
-            @elseif($fieldType === 'checkbox')
+              @if(!empty($f['upload']['multiple']))
+              <small class="text-muted d-block mt-1">
+                يمكن اختيار أكثر من ملف.
+              </small>
+              @endif
 
-                <div class="form-check d-flex align-items-center gap-2">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        id="{{ $inputId }}"
-                        wire:model.live="form.{{ $fieldKey }}"
-                    >
+              @if($editingId && !empty($selectedRecord[$fieldKey]))
+              @php
+              $currentStored = $selectedRecord[$fieldKey];
 
-                    <label class="form-check-label mb-0" for="{{ $inputId }}">
-                        {{ $f['label'] ?? $fieldKey }}
+              $currentPaths = is_array($currentStored)
+              ? $currentStored
+              : (
+              json_decode((string)$currentStored, true)
+              ?: [$currentStored]
+              );
+              @endphp
 
-                        @if(!empty($f['required']))
-                            <span class="required">*</span>
-                        @endif
-                    </label>
-                </div>
+              <small class="d-block text-muted mt-1">
+                الملفات الحالية: {{ count($currentPaths) }} —
+                ارفع ملفات جديدة لاستبدالها وفق إعداد الحقل.
+              </small>
+              @endif
 
-                @if($fieldHelp || $fieldInfo || $fieldWarning)
-                    <small class="d-block text-muted mt-1">
-                        <i class="fas fa-info-circle me-1"></i>
-                        {{ $fieldHelp ?: ($fieldInfo ?: $fieldWarning) }}
-                    </small>
-                @endif
+              @else
 
-            @elseif($fieldType === 'file')
-
-                <input
-                    type="file"
-                    class="form-control"
-                    id="{{ $inputId }}"
-                    wire:model="mainUploads.{{ $fieldKey }}"
-                    @if(!empty($f['upload']['multiple'])) multiple @endif
-                    accept="{{ !empty($f['upload']['mimes']) ? '.' . implode(',.', $f['upload']['mimes']) : '' }}"
-                >
-
-                <div
-                    wire:loading
-                    wire:target="mainUploads.{{ $fieldKey }}"
-                    class="small text-muted mt-1"
-                >
-                    جارٍ رفع الملف...
-                </div>
-
-                @if($fieldHelp || $fieldInfo || $fieldWarning)
-                    <small class="d-block text-muted mt-1">
-                        <i class="fas fa-info-circle me-1"></i>
-                        {{ $fieldHelp ?: ($fieldInfo ?: $fieldWarning) }}
-                    </small>
-                @endif
-
-                @if(!empty($f['upload']['multiple']))
-                    <small class="text-muted d-block mt-1">
-                        يمكن اختيار أكثر من ملف.
-                    </small>
-                @endif
-
-                @if($editingId && !empty($selectedRecord[$fieldKey]))
-                    @php
-                        $currentStored = $selectedRecord[$fieldKey];
-
-                        $currentPaths = is_array($currentStored)
-                            ? $currentStored
-                            : (
-                                json_decode((string)$currentStored, true)
-                                ?: [$currentStored]
-                            );
-                    @endphp
-
-                    <small class="d-block text-muted mt-1">
-                        الملفات الحالية: {{ count($currentPaths) }} —
-                        ارفع ملفات جديدة لاستبدالها وفق إعداد الحقل.
-                    </small>
-                @endif
-
-            @else
-
-    <input
-        type="{{ in_array($fieldType, ['text', 'email', 'tel', 'date', 'number', 'url', 'time']) ? $fieldType : 'text' }}"
-        class="form-control text-center"
-        id="{{ $inputId }}"
-        wire:model="form.{{ $fieldKey }}"
-        placeholder="{{ $fieldPlaceholder }}"
-        @if($fieldType === 'number')
-            step="{{ $f['step'] ?? 'any' }}"
-            @if(isset($f['min'])) min="{{ $f['min'] }}" @endif
-            @if(isset($f['max'])) max="{{ $f['max'] }}" @endif
-        @endif
-    >
+              <input
+                type="{{ in_array($fieldType, ['text', 'email', 'tel', 'date', 'number', 'url', 'time']) ? $fieldType : 'text' }}"
+                class="form-control text-center" id="{{ $inputId }}" wire:model="form.{{ $fieldKey }}"
+                placeholder="{{ $fieldPlaceholder }}" @if($fieldType==='number' ) step="{{ $f['step'] ?? 'any' }}"
+                @if(isset($f['min'])) min="{{ $f['min'] }}" @endif @if(isset($f['max'])) max="{{ $f['max'] }}" @endif
+                @endif>
 
 
 
-            @endif
+              @endif
 
-            {{-- أخطاء التحقق لا تظهر إلا إذا كان الحقل يحتوي على خطأ --}}
-            @error($fieldKey)
-                <small class="text-danger d-block mt-1">
-                    <i class="fas fa-exclamation-circle me-1"></i>
-                    {{ $message }}
-                </small>
-            @enderror
+              {{-- أخطاء التحقق لا تظهر إلا إذا كان الحقل يحتوي على خطأ --}}
+              @error($fieldKey)
+              <small class="text-danger d-block mt-1">
+                <i class="fas fa-exclamation-circle me-1"></i>
+                {{ $message }}
+              </small>
+              @enderror
 
-            @error('mainUploads.' . $fieldKey)
-                <small class="text-danger d-block mt-1">
-                    <i class="fas fa-exclamation-circle me-1"></i>
-                    {{ $message }}
-                </small>
-            @enderror
+              @error('mainUploads.' . $fieldKey)
+              <small class="text-danger d-block mt-1">
+                <i class="fas fa-exclamation-circle me-1"></i>
+                {{ $message }}
+              </small>
+              @enderror
 
-        </div>
-    @endforeach
-</div>
+            </div>
+            @endforeach
+          </div>
 
 
           {{-- منتقي الموقع يظهر فقط للكيانات التي تفعله في configs.php --}}
@@ -2940,169 +3094,142 @@ UniversalForm — Blade View
         </button>
       </div>
 
-    
 
-<form id="agentForm" wire:submit="saveChild">
-    <div class="form-grid">
-        @foreach(($firstRel['fields'] ?? []) as $f)
-            @php
-                $isFull = !empty($f['full']);
-                $fieldType = $f['type'] ?? 'text';
-                $fieldKey = $f['key'];
 
-                $fieldOptions = $this->fieldOptions($f);
+      <form id="agentForm" wire:submit="saveChild">
+        <div class="form-grid">
+          @foreach(($firstRel['fields'] ?? []) as $f)
+          @php
+          $isFull = !empty($f['full']);
+          $fieldType = $f['type'] ?? 'text';
+          $fieldKey = $f['key'];
 
-                $fieldHelp = $f['help']
-                    ?? $f['hint']
-                    ?? ($firstRel['field_help'][$fieldKey] ?? null)
-                    ?? ($firstRel['field_hints'][$fieldKey] ?? null)
-                    ?? ($config['field_help'][$fieldKey] ?? null)
-                    ?? ($config['field_hints'][$fieldKey] ?? null);
+          $fieldOptions = $this->fieldOptions($f);
 
-                $fieldInfo = $f['info']
-                    ?? ($firstRel['field_info'][$fieldKey] ?? null)
-                    ?? ($config['field_info'][$fieldKey] ?? null);
+          $fieldHelp = $f['help']
+          ?? $f['hint']
+          ?? ($firstRel['field_help'][$fieldKey] ?? null)
+          ?? ($firstRel['field_hints'][$fieldKey] ?? null)
+          ?? ($config['field_help'][$fieldKey] ?? null)
+          ?? ($config['field_hints'][$fieldKey] ?? null);
 
-                $fieldWarning = $f['warning']
-                    ?? ($firstRel['field_warning'][$fieldKey] ?? null)
-                    ?? ($config['field_warning'][$fieldKey] ?? null);
+          $fieldInfo = $f['info']
+          ?? ($firstRel['field_info'][$fieldKey] ?? null)
+          ?? ($config['field_info'][$fieldKey] ?? null);
 
-                $fieldPlaceholder = $fieldHelp
-                    ?: ($fieldInfo ?: ($fieldWarning ?: ($f['placeholder'] ?? '')));
+          $fieldWarning = $f['warning']
+          ?? ($firstRel['field_warning'][$fieldKey] ?? null)
+          ?? ($config['field_warning'][$fieldKey] ?? null);
 
-                $inputId = 'a_' . $fieldKey;
-            @endphp
+          $fieldPlaceholder = $fieldHelp
+          ?: ($fieldInfo ?: ($fieldWarning ?: ($f['placeholder'] ?? '')));
 
-            <div class="form-group {{ $isFull ? 'full' : '' }}">
+          $inputId = 'a_' . $fieldKey;
+          @endphp
 
-                @if($fieldType !== 'checkbox')
-                    <label class="form-label" for="{{ $inputId }}">
-                        {{ $f['label'] ?? $fieldKey }}
+          <div class="form-group {{ $isFull ? 'full' : '' }}">
 
-                        @if(!empty($f['required']))
-                            <span class="required">*</span>
-                        @endif
-                    </label>
-                @endif
+            @if($fieldType !== 'checkbox')
+            <label class="form-label" for="{{ $inputId }}">
+              {{ $f['label'] ?? $fieldKey }}
 
-                @if($fieldType === 'select')
+              @if(!empty($f['required']))
+              <span class="required">*</span>
+              @endif
+            </label>
+            @endif
 
-                    <select
-                        class="form-control text-center"
-                        id="{{ $inputId }}"
-                        wire:model.live="childForm.{{ $fieldKey }}"
-                    >
-                        <option value="">
-                            {{ $fieldPlaceholder ?: '— اختر —' }}
-                        </option>
+            @if($fieldType === 'select')
 
-                        @foreach($fieldOptions as $opt)
-                            <option value="{{ $opt['id'] ?? $opt['value'] ?? '' }}">
-                                {{ $opt['name'] ?? $opt['label'] ?? '' }}
-                            </option>
-                        @endforeach
-                    </select>
+            <select class="form-control text-center" id="{{ $inputId }}" wire:model.live="childForm.{{ $fieldKey }}">
+              <option value="">
+                {{ $fieldPlaceholder ?: '— اختر —' }}
+              </option>
 
-                @elseif($fieldType === 'textarea')
+              @foreach($fieldOptions as $opt)
+              <option value="{{ $opt['id'] ?? $opt['value'] ?? '' }}">
+                {{ $opt['name'] ?? $opt['label'] ?? '' }}
+              </option>
+              @endforeach
+            </select>
 
-                    <textarea
-                        class="form-control text-center"
-                        id="{{ $inputId }}"
-                        rows="2"
-                        wire:model.live.debounce.500ms="childForm.{{ $fieldKey }}"
-                        placeholder="{{ $fieldPlaceholder }}"
-                    ></textarea>
+            @elseif($fieldType === 'textarea')
 
-                @elseif($fieldType === 'checkbox')
+            <textarea class="form-control text-center" id="{{ $inputId }}" rows="2"
+              wire:model.live.debounce.500ms="childForm.{{ $fieldKey }}"
+              placeholder="{{ $fieldPlaceholder }}"></textarea>
 
-                    <div class="form-check d-flex align-items-center gap-2">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            id="{{ $inputId }}"
-                            wire:model.live="childForm.{{ $fieldKey }}"
-                        >
+            @elseif($fieldType === 'checkbox')
 
-                        <label class="form-check-label mb-0" for="{{ $inputId }}">
-                            {{ $f['label'] ?? $fieldKey }}
-                        </label>
-                    </div>
+            <div class="form-check d-flex align-items-center gap-2">
+              <input type="checkbox" class="form-check-input" id="{{ $inputId }}"
+                wire:model.live="childForm.{{ $fieldKey }}">
 
-                    @if($fieldHelp || $fieldInfo || $fieldWarning)
-                        <small class="d-block text-muted mt-1">
-                            <i class="fas fa-info-circle me-1"></i>
-                            {{ $fieldHelp ?: ($fieldInfo ?: $fieldWarning) }}
-                        </small>
-                    @endif
-
-                @elseif($fieldType === 'file')
-
-                    <input
-                        type="file"
-                        class="form-control"
-                        id="{{ $inputId }}"
-                        wire:model="childUploads.{{ $fieldKey }}"
-                        @if(!empty($f['upload']['multiple'])) multiple @endif
-                        accept="{{ !empty($f['upload']['mimes']) ? '.' . implode(',.', $f['upload']['mimes']) : '' }}"
-                    >
-
-                    <div
-                        wire:loading
-                        wire:target="childUploads.{{ $fieldKey }}"
-                        class="small text-muted mt-1"
-                    >
-                        جارٍ رفع الملف...
-                    </div>
-
-                    @if($fieldHelp || $fieldInfo || $fieldWarning)
-                        <small class="d-block text-muted mt-1">
-                            <i class="fas fa-info-circle me-1"></i>
-                            {{ $fieldHelp ?: ($fieldInfo ?: $fieldWarning) }}
-                        </small>
-                    @endif
-
-                    @if($editingChildId)
-                        <small class="d-block text-muted mt-1">
-                            يوجد ملف محفوظ؛ ارفع ملفاً جديداً لاستبداله.
-                        </small>
-                    @endif
-
-                @else
-
-                    <input
-                        type="{{ in_array($fieldType, ['text', 'email', 'tel', 'date', 'number', 'url', 'time']) ? $fieldType : 'text' }}"
-                        class="form-control text-center"
-                        id="{{ $inputId }}"
-                        wire:model.live.debounce.500ms="childForm.{{ $fieldKey }}"
-                        placeholder="{{ $fieldPlaceholder }}"
-                        @if($fieldType === 'number')
-                            step="{{ $f['step'] ?? 'any' }}"
-                            @if(isset($f['min'])) min="{{ $f['min'] }}" @endif
-                            @if(isset($f['max'])) max="{{ $f['max'] }}" @endif
-                        @endif
-                    >
-
-                @endif
-
-                {{-- أخطاء التحقق --}}
-                @error($fieldKey)
-                    <small class="text-danger d-block mt-1">
-                        <i class="fas fa-exclamation-circle me-1"></i>
-                        {{ $message }}
-                    </small>
-                @enderror
-
-                @error('childUploads.' . $fieldKey)
-                    <small class="text-danger d-block mt-1">
-                        <i class="fas fa-exclamation-circle me-1"></i>
-                        {{ $message }}
-                    </small>
-                @enderror
-
+              <label class="form-check-label mb-0" for="{{ $inputId }}">
+                {{ $f['label'] ?? $fieldKey }}
+              </label>
             </div>
-        @endforeach
-    </div>
-</form>
+
+            @if($fieldHelp || $fieldInfo || $fieldWarning)
+            <small class="d-block text-muted mt-1">
+              <i class="fas fa-info-circle me-1"></i>
+              {{ $fieldHelp ?: ($fieldInfo ?: $fieldWarning) }}
+            </small>
+            @endif
+
+            @elseif($fieldType === 'file')
+
+            <input type="file" class="form-control" id="{{ $inputId }}" wire:model="childUploads.{{ $fieldKey }}"
+              @if(!empty($f['upload']['multiple'])) multiple @endif
+              accept="{{ !empty($f['upload']['mimes']) ? '.' . implode(',.', $f['upload']['mimes']) : '' }}">
+
+            <div wire:loading wire:target="childUploads.{{ $fieldKey }}" class="small text-muted mt-1">
+              جارٍ رفع الملف...
+            </div>
+
+            @if($fieldHelp || $fieldInfo || $fieldWarning)
+            <small class="d-block text-muted mt-1">
+              <i class="fas fa-info-circle me-1"></i>
+              {{ $fieldHelp ?: ($fieldInfo ?: $fieldWarning) }}
+            </small>
+            @endif
+
+            @if($editingChildId)
+            <small class="d-block text-muted mt-1">
+              يوجد ملف محفوظ؛ ارفع ملفاً جديداً لاستبداله.
+            </small>
+            @endif
+
+            @else
+
+            <input
+              type="{{ in_array($fieldType, ['text', 'email', 'tel', 'date', 'number', 'url', 'time']) ? $fieldType : 'text' }}"
+              class="form-control text-center" id="{{ $inputId }}"
+              wire:model.live.debounce.500ms="childForm.{{ $fieldKey }}" placeholder="{{ $fieldPlaceholder }}"
+              @if($fieldType==='number' ) step="{{ $f['step'] ?? 'any' }}" @if(isset($f['min'])) min="{{ $f['min'] }}"
+              @endif @if(isset($f['max'])) max="{{ $f['max'] }}" @endif @endif>
+
+            @endif
+
+            {{-- أخطاء التحقق --}}
+            @error($fieldKey)
+            <small class="text-danger d-block mt-1">
+              <i class="fas fa-exclamation-circle me-1"></i>
+              {{ $message }}
+            </small>
+            @enderror
+
+            @error('childUploads.' . $fieldKey)
+            <small class="text-danger d-block mt-1">
+              <i class="fas fa-exclamation-circle me-1"></i>
+              {{ $message }}
+            </small>
+            @enderror
+
+          </div>
+          @endforeach
+        </div>
+      </form>
 
 
 
@@ -3410,7 +3537,7 @@ UniversalForm — Blade View
   </div>
   @endif
 
- 
+
 
 </div>
 
